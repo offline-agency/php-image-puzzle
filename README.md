@@ -2,6 +2,7 @@
 
 [![CI](https://github.com/gfabbian/php-image-puzzle/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/gfabbian/php-image-puzzle/actions/workflows/ci.yml)
 [![codecov](https://codecov.io/gh/gfabbian/php-image-puzzle/graph/badge.svg)](https://codecov.io/gh/gfabbian/php-image-puzzle)
+[![Downloads](https://img.shields.io/packagist/dt/offline-agency/image-puzzle)](https://packagist.org/packages/offline-agency/image-puzzle)
 [![PHP](https://img.shields.io/badge/PHP-8.4%20%7C%208.5-777BB4?logo=php)](https://www.php.net/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
