@@ -129,10 +129,26 @@ Out of scope for the first version (possible later):
 
 Custom edge styles implement `EdgeStyleInterface` (see [docs/EDGE_STYLES.md](docs/EDGE_STYLES.md)). Built-in styles include `NoEdgeStyle`, `RoundedCornersStyle`, and classic tab/socket styles (`LineStyle`, `JigsawStyle`, `ArcStyle`, `HalfCircleStyle`, `SinusStyle`). You can also create styles from JSON config with `EdgeStyleFactory::fromArray()` or `EdgeStyleFactory::fromFile()`. Third-party packages can provide additional styles as plugins.
 
-## Credits
+## Contributing
 
-Inspired by the original [pear/Image_Puzzle](https://github.com/pear/Image_Puzzle) (archived). This project is a from-scratch implementation with a modern API (PHP 8.4 and 8.5, Composer, edge styles, export manifest).
+Please see [CONTRIBUTING](CONTRIBUTING.md) for details.
+
+## Security
+
+If you discover any security-related issues, please email <support@offlineagency.com> instead of using the issue
+tracker.
+
+## Credits
+Inspired by the original [pear/Image_Puzzle](https://github.com/pear/Image_Puzzle) (archived). This project is a from-scratch implementation with a modern API (PHP 8.4+, Composer, edge styles, export manifest).
+- [Offline Agency](https://github.com/offline-agency)
+- [Giacomo Fabbian](https://github.com/Giacomo92)
+- [All Contributors](https://github.com/offline-agency/laravel-webex/graphs/contributors)
+
+## About us
+
+Offline Agency is a web design agency based in Padua, Italy. You'll find an overview of our
+projects [on our website](https://offlineagency.it/).
 
 ## License
 
-MIT. See [LICENSE](LICENSE).
+The MIT License (MIT). Please see [License File](LICENSE.md) for more information.
