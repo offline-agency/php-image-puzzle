@@ -1,7 +1,7 @@
 # Image Puzzle
 
-[![CI](https://github.com/gfabbian/php-image-puzzle/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/gfabbian/php-image-puzzle/actions/workflows/ci.yml)
-[![codecov](https://codecov.io/gh/gfabbian/php-image-puzzle/graph/badge.svg)](https://codecov.io/gh/gfabbian/php-image-puzzle)
+[![CI](https://github.com/offline-agency/php-image-puzzle/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/offline-agency/php-image-puzzle/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/offline-agency/php-image-puzzle/graph/badge.svg)](https://codecov.io/gh/offline-agency/php-image-puzzle)
 [![PHP](https://img.shields.io/badge/PHP-8.4%20%7C%208.5-777BB4?logo=php)](https://www.php.net/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
