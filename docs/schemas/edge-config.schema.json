@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/gfabbian/php-image-puzzle/schemas/edge-config.schema.json",
+  "title": "Edge config",
+  "description": "Configuration for puzzle piece edge style and shape.",
+  "type": "object",
+  "required": ["edge"],
+  "properties": {
+    "edge": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "no_edge",
+            "line",
+            "jigsaw",
+            "arc",
+            "half_circle",
+            "sinus",
+            "rounded_corners"
+          ],
+          "description": "Built-in edge style: no_edge, line, jigsaw, arc, half_circle, sinus, rounded_corners."
+        },
+        "options": {
+          "type": "object",
+          "description": "Style-specific options. Only radius is used for rounded_corners.",
+          "properties": {
+            "radius": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Corner radius for rounded_corners (default 4)."
+            }
+          },
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

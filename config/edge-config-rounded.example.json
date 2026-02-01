@@ -1,0 +1,8 @@
+{
+  "edge": {
+    "type": "rounded_corners",
+    "options": {
+      "radius": 6
+    }
+  }
+}

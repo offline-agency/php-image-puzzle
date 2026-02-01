@@ -1,0 +1,45 @@
+{
+    "source": "sample.png",
+    "rows": 2,
+    "cols": 2,
+    "sourceWidth": 32,
+    "sourceHeight": 32,
+    "pieces": [
+        {
+            "row": 0,
+            "col": 0,
+            "x": 0,
+            "y": 0,
+            "width": 16,
+            "height": 16,
+            "filename": "piece_0_0.png"
+        },
+        {
+            "row": 0,
+            "col": 1,
+            "x": 16,
+            "y": 0,
+            "width": 16,
+            "height": 16,
+            "filename": "piece_0_1.png"
+        },
+        {
+            "row": 1,
+            "col": 0,
+            "x": 0,
+            "y": 16,
+            "width": 16,
+            "height": 16,
+            "filename": "piece_1_0.png"
+        },
+        {
+            "row": 1,
+            "col": 1,
+            "x": 16,
+            "y": 16,
+            "width": 16,
+            "height": 16,
+            "filename": "piece_1_1.png"
+        }
+    ]
+}

@@ -1,0 +1,13 @@
+{
+  "input": "path/to/image.jpg",
+  "rows": 4,
+  "cols": 6,
+  "edge": {
+    "type": "jigsaw"
+  },
+  "output": {
+    "directory": "output/puzzle",
+    "manifestFilename": "manifest.json",
+    "format": "png"
+  }
+}

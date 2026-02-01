@@ -1,0 +1,38 @@
+{
+    "name": "offline-agency/image-puzzle",
+    "version": "1.0.0",
+    "description": "Split images into a grid of puzzle pieces with optional edge styles; export as PNG and JSON manifest.",
+    "license": "MIT",
+    "require": {
+        "php": "^8.4",
+        "ext-gd": "*"
+    },
+    "suggest": {
+        "ext-pcntl": "For parallel export (CLI)"
+    },
+    "require-dev": {
+        "phpstan/phpstan": "^2.0",
+        "pestphp/pest": "^4.3",
+        "phpunit/phpunit": "^12.5"
+    },
+    "autoload": {
+        "psr-4": {
+            "ImagePuzzle\\": "src/"
+        }
+    },
+    "autoload-dev": {},
+    "scripts": {
+        "test": "pest",
+        "qa": "pest",
+        "phpstan": "phpstan analyse"
+    },
+    "minimum-stability": "stable",
+    "config": {
+        "allow-plugins": {
+            "pestphp/pest-plugin": true,
+            "pestphp/pest-plugin-arch": true,
+            "pestphp/pest-plugin-mutate": true,
+            "pestphp/pest-plugin-profanity": true
+        }
+    }
+}
