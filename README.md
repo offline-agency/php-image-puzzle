@@ -9,11 +9,15 @@ Split images into a grid of puzzle pieces, optionally apply edge styles, and exp
 
 **Requirements:** PHP 8.4 or 8.5, [ext-gd](https://www.php.net/manual/en/book.image.php).
 
+![Php Image Puzzle](https://banners.beyondco.de/Php%20Image%20Puzzle.png?theme=dark&packageManager=composer+require&packageName=offline-agency%2Fimage-puzzle&pattern=architect&style=style_1&description=Create+puzzle+from+an+image&md=1&showWatermark=0&fontSize=100px&images=https%3A%2F%2Fwww.php.net%2Fimages%2Flogos%2Fnew-php-logo.svg)
+
+
 ## Installation
 
 ```bash
 composer require offline-agency/image-puzzle
 ```
+
 
 ## Quickstart
 
