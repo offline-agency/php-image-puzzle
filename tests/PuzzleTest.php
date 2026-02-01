@@ -7,6 +7,15 @@ use ImagePuzzle\ExportOptions;
 use ImagePuzzle\Piece;
 use ImagePuzzle\PuzzleGenerator;
 
+test('getRows getCols getWidth getHeight return puzzle dimensions', function (): void {
+    $generator = new PuzzleGenerator();
+    $puzzle = $generator->generateFromFile(__DIR__ . '/fixtures/sample.png', 2, 3);
+    expect($puzzle->getRows())->toBe(2);
+    expect($puzzle->getCols())->toBe(3);
+    expect($puzzle->getWidth())->toBe(32);
+    expect($puzzle->getHeight())->toBe(32);
+});
+
 test('getSourceBasename returns basename when puzzle created from file', function (): void {
     $generator = new PuzzleGenerator();
     $puzzle = $generator->generateFromFile(__DIR__ . '/fixtures/sample.png', 2, 2);
@@ -53,6 +62,13 @@ test('getPiece with negative col throws', function (): void {
     $generator = new PuzzleGenerator();
     $puzzle = $generator->generateFromFile(__DIR__ . '/fixtures/sample.png', 2, 2);
     expect(fn () => $puzzle->getPiece(0, -1))
+        ->toThrow(\ImagePuzzle\Exception\InvalidArgumentException::class, 'Invalid piece index');
+});
+
+test('getPiece with row out of range throws', function (): void {
+    $generator = new PuzzleGenerator();
+    $puzzle = $generator->generateFromFile(__DIR__ . '/fixtures/sample.png', 2, 2);
+    expect(fn () => $puzzle->getPiece(2, 0))
         ->toThrow(\ImagePuzzle\Exception\InvalidArgumentException::class, 'Invalid piece index');
 });
 

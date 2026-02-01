@@ -1,6 +1,7 @@
 # Image Puzzle
 
-[![CI](https://github.com/gfabbian/php-image-puzzle/actions/workflows/ci.yml/badge.svg)](https://github.com/gfabbian/php-image-puzzle/actions/workflows/ci.yml)
+[![CI](https://github.com/gfabbian/php-image-puzzle/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/gfabbian/php-image-puzzle/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/gfabbian/php-image-puzzle/graph/badge.svg)](https://codecov.io/gh/gfabbian/php-image-puzzle)
 [![PHP](https://img.shields.io/badge/PHP-8.4%20%7C%208.5-777BB4?logo=php)](https://www.php.net/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
@@ -91,7 +92,7 @@ When the image size is not evenly divisible by rows/cols, **remainder pixels are
 - [docs/EDGE_EXAMPLES.md](docs/EDGE_EXAMPLES.md) – Example image for every edge type
 - [docs/SPLIT_STRATEGY.md](docs/SPLIT_STRATEGY.md) – Customizing grid split strategy
 
-JSON schemas for config and manifest: [docs/schemas/](docs/schemas/) (`edge-config.schema.json`, `puzzle-config.schema.json`, `piece.schema.json`, `manifest.schema.json`).
+JSON schemas for config and manifest: [docs/schemas/](docs/schemas/) (`edge-config.schema.json`, `puzzle-config.schema.json`, `piece.schema.json`, `manifest.schema.json`). Config files are JSON-only; to use YAML or other formats, decode in your code (e.g. `yaml_parse_file()` if ext-yaml is available) and pass the resulting array to `EdgeStyleFactory::fromArray($config)`.
 
 ## Example script
 
@@ -100,7 +101,7 @@ php examples/generate.php input.jpg 4 6 output_dir
 php examples/generate.php input.jpg 4 6 output_dir --config=config/edge-config.json
 ```
 
-Prints the manifest path and a short summary. Use `--config=<path>` to load edge style from a JSON config file.
+Prints the manifest path and a short summary. Use `--config=<path>` to load edge style from a JSON config file. To use YAML, decode in your code and pass the array to `EdgeStyleFactory::fromArray()`.
 
 ## Image formats (GD)
 
@@ -118,16 +119,9 @@ Supported input formats: PNG, JPEG, GIF (as detected by GD). The exporter suppor
 - **"unsuported image type"** – GD may not support that type; check `imagetypes()` or use JPEG/PNG.
 - **GD not found** – Install ext-gd: `apt-get install php-gd`, or enable it in `php.ini`.
 
-## Scope and future work
-
-Out of scope for the first version (possible later):
-
-- **Per-edge or per-piece style** – Different style per side (top/right/bottom/left) or per piece would require a new abstraction (e.g. composite edge style or per-edge factory using `PieceContext`) and is not implied by “edge schema and shape of all pieces” for a first version.
-- **YAML dependency** – Config is JSON-only to keep the library free of extra dependencies. YAML can be added later or you can decode externally and pass the array to `EdgeStyleFactory::fromArray()`.
-
 ## Extensions
 
-Custom edge styles implement `EdgeStyleInterface` (see [docs/EDGE_STYLES.md](docs/EDGE_STYLES.md)). Built-in styles include `NoEdgeStyle`, `RoundedCornersStyle`, and classic tab/socket styles (`LineStyle`, `JigsawStyle`, `ArcStyle`, `HalfCircleStyle`, `SinusStyle`). You can also create styles from JSON config with `EdgeStyleFactory::fromArray()` or `EdgeStyleFactory::fromFile()`. Third-party packages can provide additional styles as plugins.
+Custom edge styles implement `EdgeStyleInterface` (see [docs/EDGE_STYLES.md](docs/EDGE_STYLES.md)). Built-in styles include `NoEdgeStyle`, `RoundedCornersStyle`, and classic tab/socket styles (`LineStyle`, `JigsawStyle`, `ArcStyle`, `HalfCircleStyle`, `SinusStyle`). For per-side styles use `CompositeEdgeStyle`; for per-piece styles (e.g. by row/col or border vs inner) use `ResolverEdgeStyle`. You can create styles from JSON config with `EdgeStyleFactory::fromArray()` or `EdgeStyleFactory::fromFile()`. Third-party packages can provide additional styles as plugins.
 
 ## Credits
 

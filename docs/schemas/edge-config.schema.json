@@ -19,9 +19,42 @@
             "arc",
             "half_circle",
             "sinus",
-            "rounded_corners"
+            "rounded_corners",
+            "composite"
           ],
-          "description": "Built-in edge style: no_edge, line, jigsaw, arc, half_circle, sinus, rounded_corners."
+          "description": "Built-in edge style, or composite for per-side styles (top, right, bottom, left)."
+        },
+        "top": {
+          "type": "object",
+          "description": "Edge style for top side (used when type is composite).",
+          "properties": {
+            "type": { "type": "string" },
+            "options": { "type": "object" }
+          }
+        },
+        "right": {
+          "type": "object",
+          "description": "Edge style for right side (used when type is composite).",
+          "properties": {
+            "type": { "type": "string" },
+            "options": { "type": "object" }
+          }
+        },
+        "bottom": {
+          "type": "object",
+          "description": "Edge style for bottom side (used when type is composite).",
+          "properties": {
+            "type": { "type": "string" },
+            "options": { "type": "object" }
+          }
+        },
+        "left": {
+          "type": "object",
+          "description": "Edge style for left side (used when type is composite).",
+          "properties": {
+            "type": { "type": "string" },
+            "options": { "type": "object" }
+          }
         },
         "options": {
           "type": "object",

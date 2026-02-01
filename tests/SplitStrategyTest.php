@@ -39,6 +39,13 @@ test('DefaultSplitStrategy totalSize zero', function (): void {
     expect($splits)->toBe([0]);
 });
 
+test('DefaultSplitStrategy split 7 into 3 segments returns remainder on last', function (): void {
+    $strategy = new DefaultSplitStrategy();
+    $splits = $strategy->split(7, 3);
+    expect($splits)->toBe([2, 2, 3]);
+    expect(array_sum($splits))->toBe(7);
+});
+
 test('PuzzleGenerator with DefaultSplitStrategy produces same result as default', function (): void {
     $generator = new PuzzleGenerator(null, null, null, new DefaultSplitStrategy());
     $puzzle = $generator->generateFromFile(__DIR__ . '/fixtures/sample.png', 2, 2);

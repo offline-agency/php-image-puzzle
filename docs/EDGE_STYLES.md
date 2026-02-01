@@ -15,7 +15,7 @@ $edgeStyle = EdgeStyleFactory::fromArray($config);
 $generator = new PuzzleGenerator($edgeStyle);
 ```
 
-Config must contain an `edge` object with `type` (one of: `no_edge`, `line`, `jigsaw`, `arc`, `half_circle`, `sinus`, `rounded_corners`) and optional `options` (e.g. `radius` for `rounded_corners`). From a file: `EdgeStyleFactory::fromFile('config/edge-config.json')` (JSON only). YAML is out of scope; see [README § Scope and future work](../README.md#scope-and-future-work).
+Config must contain an `edge` object with `type` (one of: `no_edge`, `line`, `jigsaw`, `arc`, `half_circle`, `sinus`, `rounded_corners`, or `composite` for per-side styles) and optional `options` (e.g. `radius` for `rounded_corners`). From a file: `EdgeStyleFactory::fromFile('config/edge-config.json')` (JSON only). To use YAML or other formats, decode in your code and pass the array to `EdgeStyleFactory::fromArray($config)`.
 
 **JSON Schemas:** [edge-config.schema.json](schemas/edge-config.schema.json), [puzzle-config.schema.json](schemas/puzzle-config.schema.json), [piece.schema.json](schemas/piece.schema.json). See [EDGE_EXAMPLES.md](EDGE_EXAMPLES.md) for one example image per edge type.
 
@@ -45,6 +45,7 @@ interface EdgeStyleInterface
 - `getX()`, `getY()` – top-left offset in the source image
 - `getWidth()`, `getHeight()` – piece dimensions
 - `getSourceWidth()`, `getSourceHeight()` – source image dimensions
+- `getTotalRows()`, `getTotalCols()` – grid size (for border detection)
 
 Use these if your style needs to vary by position (e.g. different treatment for border vs inner pieces).
 
@@ -119,6 +120,64 @@ Sinusoidal (wavy) edge: the boundary follows a sine wave along each edge (two cy
 use ImagePuzzle\EdgeStyle\SinusStyle;
 
 $generator = new PuzzleGenerator(new SinusStyle());
+```
+
+## Per-side and per-piece styles
+
+### CompositeEdgeStyle (per-side)
+
+Use a different style for each side (top, right, bottom, left). In code or from config with `type: "composite"` and `top`, `right`, `bottom`, `left` (each a sub-config with `type` and optional `options`).
+
+**From config:**
+
+```json
+{
+  "edge": {
+    "type": "composite",
+    "top": { "type": "line" },
+    "right": { "type": "jigsaw" },
+    "bottom": { "type": "jigsaw" },
+    "left": { "type": "line" }
+  }
+}
+```
+
+```php
+$edgeStyle = EdgeStyleFactory::fromArray($config);
+$generator = new PuzzleGenerator($edgeStyle);
+```
+
+**In code:**
+
+```php
+use ImagePuzzle\EdgeStyle\CompositeEdgeStyle;
+use ImagePuzzle\EdgeStyle\LineStyle;
+use ImagePuzzle\EdgeStyle\JigsawStyle;
+
+$edgeStyle = new CompositeEdgeStyle(
+    new LineStyle(),   // top
+    new JigsawStyle(), // right
+    new JigsawStyle(), // bottom
+    new LineStyle(),   // left
+);
+$generator = new PuzzleGenerator($edgeStyle);
+```
+
+### ResolverEdgeStyle (per-piece)
+
+Use a different style per piece based on `PieceContext` (e.g. border vs inner, or by row/col). Resolver is PHP-only (no JSON config).
+
+```php
+use ImagePuzzle\EdgeStyle\ResolverEdgeStyle;
+use ImagePuzzle\EdgeStyle\NoEdgeStyle;
+use ImagePuzzle\EdgeStyle\JigsawStyle;
+
+$resolver = fn (\ImagePuzzle\PieceContext $ctx): \ImagePuzzle\EdgeStyle\EdgeStyleInterface => 
+    ($ctx->getRow() === 0 || $ctx->getRow() === $ctx->getTotalRows() - 1
+     || $ctx->getCol() === 0 || $ctx->getCol() === $ctx->getTotalCols() - 1)
+        ? new NoEdgeStyle()
+        : new JigsawStyle();
+$generator = new PuzzleGenerator(new ResolverEdgeStyle($resolver));
 ```
 
 ## Implementing a custom style

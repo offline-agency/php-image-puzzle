@@ -361,6 +361,26 @@ test('export invokes onPieceAfterSave after each piece write', function (): void
     @rmdir($outDir);
 });
 
+test('export when onManifestBuild returns non encodable data throws ExportFailedException', function (): void {
+    $outDir = getTempDir();
+    $generator = new PuzzleGenerator();
+    $puzzle = $generator->generateFromFile(__DIR__ . '/fixtures/sample.png', 1, 1);
+    $options = new ExportOptions(
+        onManifestBuild: function (array $manifest): array {
+            $manifest['invalid'] = NAN;
+            return $manifest;
+        },
+    );
+    expect(fn () => $puzzle->export($outDir, $options))
+        ->toThrow(\ImagePuzzle\Exception\ExportFailedException::class, 'Failed to write manifest');
+    if (is_dir($outDir)) {
+        foreach (glob($outDir . '/*') ?: [] as $f) {
+            @unlink($f);
+        }
+        @rmdir($outDir);
+    }
+});
+
 test('export onManifestBuild can add and modify manifest', function (): void {
     $outDir = getTempDir();
     $generator = new PuzzleGenerator();
@@ -459,6 +479,66 @@ test('export with baseDirectory when output outside base throws', function (): v
     $puzzle = $generator->generateFromFile(__DIR__ . '/fixtures/sample.png', 1, 1);
     expect(fn () => $puzzle->export($outDir, new ExportOptions(), $baseDir))
         ->toThrow(\ImagePuzzle\Exception\ExportFailedException::class, 'Output directory must be inside base directory');
+    @rmdir($baseDir);
+    if (is_dir($outDir)) {
+        @rmdir($outDir);
+    }
+});
+
+test('export with baseDirectory when base directory does not exist throws', function (): void {
+    $outDir = getTempDir();
+    mkdir($outDir, 0755, true);
+    $baseDir = getTempDir();
+    $generator = new PuzzleGenerator();
+    $puzzle = $generator->generateFromFile(__DIR__ . '/fixtures/sample.png', 1, 1);
+    expect(fn () => $puzzle->export($outDir, new ExportOptions(), $baseDir))
+        ->toThrow(\ImagePuzzle\Exception\ExportFailedException::class, 'Base directory does not exist or is not a directory');
+    foreach (glob($outDir . '/*') ?: [] as $f) {
+        @unlink($f);
+    }
+    @rmdir($outDir);
+});
+
+test('exportParallel with baseDirectory when output inside base succeeds', function (): void {
+    $baseDir = getTempDir();
+    $outDir = $baseDir . '/subdir';
+    $exporter = new \ImagePuzzle\Exporter();
+    $options = new ExportOptions();
+    $result = $exporter->exportParallel(
+        __DIR__ . '/fixtures/sample.png',
+        $outDir,
+        1,
+        1,
+        $options,
+        1,
+        null,
+        $baseDir,
+    );
+    expect($result->getOutputDirectory())->toBe($outDir);
+    expect($result->getFiles())->toHaveCount(2);
+    foreach ($result->getFiles() as $f) {
+        @unlink($f);
+    }
+    @rmdir($outDir);
+    @rmdir($baseDir);
+});
+
+test('exportParallel with baseDirectory when output outside base throws', function (): void {
+    $baseDir = getTempDir();
+    mkdir($baseDir, 0755, true);
+    $outDir = getTempDir();
+    $exporter = new \ImagePuzzle\Exporter();
+    $options = new ExportOptions();
+    expect(fn () => $exporter->exportParallel(
+        __DIR__ . '/fixtures/sample.png',
+        $outDir,
+        1,
+        1,
+        $options,
+        1,
+        null,
+        $baseDir,
+    ))->toThrow(\ImagePuzzle\Exception\ExportFailedException::class, 'Output directory must be inside base directory');
     @rmdir($baseDir);
     if (is_dir($outDir)) {
         @rmdir($outDir);

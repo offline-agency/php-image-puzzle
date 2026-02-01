@@ -93,6 +93,8 @@ final class PuzzleGenerator
                 $image,
                 $width,
                 $height,
+                $rows,
+                $cols,
                 $edgeStyle,
             );
         }
@@ -149,6 +151,8 @@ final class PuzzleGenerator
                     $image,
                     $width,
                     $height,
+                    $rows,
+                    $cols,
                     $edgeStyle,
                 );
                 $x += $pieceWidth;

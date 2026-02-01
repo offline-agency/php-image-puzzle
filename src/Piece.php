@@ -19,6 +19,8 @@ final class Piece
         private readonly GdImage $sourceImage,
         private readonly int $sourceWidth,
         private readonly int $sourceHeight,
+        private readonly int $totalRows,
+        private readonly int $totalCols,
         private readonly EdgeStyleInterface $edgeStyle,
     ) {
     }
@@ -66,6 +68,8 @@ final class Piece
             $this->height,
             $this->sourceWidth,
             $this->sourceHeight,
+            $this->totalRows,
+            $this->totalCols,
         );
         return $this->edgeStyle->apply($piece, $context);
     }

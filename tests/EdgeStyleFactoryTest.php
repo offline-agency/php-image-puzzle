@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use ImagePuzzle\EdgeStyle\ArcStyle;
+use ImagePuzzle\EdgeStyle\CompositeEdgeStyle;
 use ImagePuzzle\EdgeStyle\EdgeStyleFactory;
 use ImagePuzzle\EdgeStyle\EdgeStyleInterface;
 use ImagePuzzle\EdgeStyle\HalfCircleStyle;
@@ -50,7 +51,7 @@ test('fromArray rounded_corners without options uses default radius', function (
     $image = imagecreatetruecolor(20, 20);
     expect($image)->not->toBeFalse();
     imagesavealpha($image, true);
-    $context = new \ImagePuzzle\PieceContext(0, 0, 0, 0, 20, 20, 100, 100);
+    $context = new \ImagePuzzle\PieceContext(0, 0, 0, 0, 20, 20, 100, 100, 4, 4);
     $result = $style->apply($image, $context);
     expect($result)->toBeInstanceOf(\GdImage::class);
 });
@@ -66,7 +67,7 @@ test('fromArray rounded_corners with options.radius uses that value', function (
     $image = imagecreatetruecolor(30, 30);
     expect($image)->not->toBeFalse();
     imagesavealpha($image, true);
-    $context = new \ImagePuzzle\PieceContext(0, 0, 0, 0, 30, 30, 100, 100);
+    $context = new \ImagePuzzle\PieceContext(0, 0, 0, 0, 30, 30, 100, 100, 4, 4);
     $result = $style->apply($image, $context);
     expect($result)->toBeInstanceOf(\GdImage::class);
 });
@@ -182,4 +183,50 @@ test('fromFile invalid JSON throws', function (): void {
             unlink($tmp);
         }
     }
+});
+
+test('fromArray composite returns CompositeEdgeStyle with top right bottom left', function (): void {
+    $config = [
+        'edge' => [
+            'type' => 'composite',
+            'top' => ['type' => 'line'],
+            'right' => ['type' => 'jigsaw'],
+            'bottom' => ['type' => 'jigsaw'],
+            'left' => ['type' => 'line'],
+        ],
+    ];
+    $style = EdgeStyleFactory::fromArray($config);
+    expect($style)->toBeInstanceOf(CompositeEdgeStyle::class)
+        ->and($style)->toBeInstanceOf(EdgeStyleInterface::class);
+    $image = imagecreatetruecolor(16, 16);
+    expect($image)->not->toBeFalse();
+    imagesavealpha($image, true);
+    $context = new \ImagePuzzle\PieceContext(0, 0, 0, 0, 16, 16, 100, 100, 2, 2);
+    $result = $style->apply($image, $context);
+    expect($result)->toBeInstanceOf(\GdImage::class);
+    expect(imagesx($result))->toBe(16);
+    expect(imagesy($result))->toBe(16);
+});
+
+test('fromArray composite with missing side uses no_edge default', function (): void {
+    $config = [
+        'edge' => [
+            'type' => 'composite',
+            'top' => ['type' => 'rounded_corners', 'options' => ['radius' => 2]],
+        ],
+    ];
+    $style = EdgeStyleFactory::fromArray($config);
+    expect($style)->toBeInstanceOf(CompositeEdgeStyle::class);
+});
+
+test('fromArray composite nested composite throws', function (): void {
+    expect(fn () => EdgeStyleFactory::fromArray([
+        'edge' => [
+            'type' => 'composite',
+            'top' => ['type' => 'composite', 'top' => ['type' => 'line']],
+            'right' => ['type' => 'line'],
+            'bottom' => ['type' => 'line'],
+            'left' => ['type' => 'line'],
+        ],
+    ]))->toThrow(InvalidArgumentException::class, 'Nested composite');
 });

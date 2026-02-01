@@ -57,6 +57,7 @@ jobs:
         with:
           php-version: ${{ matrix.php }}
           extensions: gd
+          coverage: pcov
 
       - name: Get Composer cache directory
         id: composer-cache
@@ -73,4 +74,11 @@ jobs:
         run: composer install --no-progress --prefer-dist
 
       - name: Run tests
-        run: composer test
+        run: mkdir -p build && vendor/bin/pest --coverage-clover=build/coverage.xml
+
+      - name: Upload coverage to Codecov
+        if: matrix.php == '8.4'
+        uses: codecov/codecov-action@v4
+        with:
+          files: build/coverage.xml
+          fail_ci_if_error: false

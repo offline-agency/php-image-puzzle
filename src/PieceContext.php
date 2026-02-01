@@ -15,6 +15,8 @@ final class PieceContext
         private readonly int $height,
         private readonly int $sourceWidth,
         private readonly int $sourceHeight,
+        private readonly int $totalRows,
+        private readonly int $totalCols,
     ) {
     }
 
@@ -56,5 +58,15 @@ final class PieceContext
     public function getSourceHeight(): int
     {
         return $this->sourceHeight;
+    }
+
+    public function getTotalRows(): int
+    {
+        return $this->totalRows;
+    }
+
+    public function getTotalCols(): int
+    {
+        return $this->totalCols;
     }
 }

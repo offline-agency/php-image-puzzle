@@ -33,7 +33,46 @@ final class EdgeStyleFactory
 
         $options = isset($edge['options']) && is_array($edge['options']) ? $edge['options'] : [];
 
+        if ($edge['type'] === 'composite') {
+            return self::createComposite($edge);
+        }
+
         return self::createFromType($edge['type'], $options);
+    }
+
+    /**
+     * @param array<string, mixed> $edge Edge config with type "composite" and top, right, bottom, left
+     */
+    private static function createComposite(array $edge): EdgeStyleInterface
+    {
+        $top = isset($edge['top']) && is_array($edge['top']) ? $edge['top'] : ['type' => 'no_edge'];
+        $right = isset($edge['right']) && is_array($edge['right']) ? $edge['right'] : ['type' => 'no_edge'];
+        $bottom = isset($edge['bottom']) && is_array($edge['bottom']) ? $edge['bottom'] : ['type' => 'no_edge'];
+        $left = isset($edge['left']) && is_array($edge['left']) ? $edge['left'] : ['type' => 'no_edge'];
+
+        return new CompositeEdgeStyle(
+            self::createFromEdgeSpec($top),
+            self::createFromEdgeSpec($right),
+            self::createFromEdgeSpec($bottom),
+            self::createFromEdgeSpec($left),
+        );
+    }
+
+    /**
+     * Build one style from a sub-config with "type" and optional "options".
+     *
+     * @param array<string, mixed> $spec Must have "type" (string); may have "options" (array).
+     */
+    private static function createFromEdgeSpec(array $spec): EdgeStyleInterface
+    {
+        if (!isset($spec['type']) || !is_string($spec['type'])) {
+            throw new InvalidArgumentException('Edge spec must contain a "type" string.');
+        }
+        if ($spec['type'] === 'composite') {
+            throw new InvalidArgumentException('Nested composite edge type is not supported.');
+        }
+        $options = isset($spec['options']) && is_array($spec['options']) ? $spec['options'] : [];
+        return self::createFromType($spec['type'], $options);
     }
 
     /**

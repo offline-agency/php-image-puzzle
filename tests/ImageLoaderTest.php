@@ -29,6 +29,23 @@ test('loadFromFile loads valid JPEG', function (): void {
     expect($image)->toBeInstanceOf(GdImage::class);
 })->skip($skipNoGd, 'ext-gd required');
 
+test('loadFromFile loads valid GIF', function (): void {
+    $tmp = sys_get_temp_dir() . '/image-puzzle-loader-test-' . uniqid() . '.gif';
+    $im = imagecreate(2, 2);
+    expect($im)->not->toBeFalse();
+    imagegif($im, $tmp);
+    imagedestroy($im);
+    try {
+        $loader = new ImageLoader();
+        $image = $loader->loadFromFile($tmp);
+        expect($image)->toBeInstanceOf(GdImage::class);
+        expect(imagesx($image))->toBe(2);
+        expect(imagesy($image))->toBe(2);
+    } finally {
+        @unlink($tmp);
+    }
+})->skip($skipNoGd, 'ext-gd required');
+
 test('loadFromFile with empty path throws', function (): void {
     $loader = new ImageLoader();
     expect(fn () => $loader->loadFromFile(''))
