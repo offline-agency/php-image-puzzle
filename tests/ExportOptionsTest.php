@@ -173,3 +173,18 @@ test('resolvePieceFilename with mixed placeholders and grid context', function (
     $options = new ExportOptions(filenamePattern: 'piece_{row}_{col}_{index}.png');
     expect($options->resolvePieceFilename(1, 2, 3, 4))->toBe('piece_1_2_6.png');
 });
+
+test('resolvePieceFilename with pattern without extension and format PNG leaves as-is', function (): void {
+    $options = new ExportOptions(filenamePattern: 'tile_{row}_{col}');
+    expect($options->resolvePieceFilename(0, 1))->toBe('tile_0_1');
+});
+
+test('resolvePieceFilename with only row placeholder', function (): void {
+    $options = new ExportOptions(filenamePattern: 'row_{row}.png');
+    expect($options->resolvePieceFilename(2, 3))->toBe('row_2.png');
+});
+
+test('resolvePieceFilename with only col placeholder', function (): void {
+    $options = new ExportOptions(filenamePattern: 'col_{col}.png');
+    expect($options->resolvePieceFilename(1, 4))->toBe('col_4.png');
+});

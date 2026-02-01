@@ -205,6 +205,36 @@ test('generatePiecesFromGd with empty indices returns empty array', function ():
     imagedestroy($image);
 });
 
+test('generateAndExport with invalid path throws', function (): void {
+    $outDir = sys_get_temp_dir() . '/image-puzzle-invalid-' . uniqid();
+    expect(fn () => PuzzleGenerator::generateAndExport(
+        __DIR__ . '/fixtures/nonexistent.png',
+        $outDir,
+        2,
+        2,
+    ))->toThrow(InvalidArgumentException::class, 'not readable');
+});
+
+test('generateAndExport with edge style and custom ExportOptions', function (): void {
+    $outDir = sys_get_temp_dir() . '/image-puzzle-style-opts-' . uniqid();
+    $options = new \ImagePuzzle\ExportOptions(manifestFilename: 'custom-manifest.json');
+    $style = new \ImagePuzzle\EdgeStyle\RoundedCornersStyle(2);
+    $result = PuzzleGenerator::generateAndExport(
+        __DIR__ . '/fixtures/sample.png',
+        $outDir,
+        1,
+        1,
+        $style,
+        $options,
+    );
+    expect($result->getManifestPath())->toEndWith('custom-manifest.json');
+    expect($result->getFiles())->toHaveCount(2);
+    foreach ($result->getFiles() as $f) {
+        @unlink($f);
+    }
+    @rmdir($outDir);
+});
+
 test('generateAndExport produces same result as three-step flow', function (): void {
     $outDirOneShot = sys_get_temp_dir() . '/image-puzzle-one-shot-' . uniqid();
     $outDirThree = sys_get_temp_dir() . '/image-puzzle-three-' . uniqid();

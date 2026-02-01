@@ -103,6 +103,19 @@ test('export with default options uses default ExportOptions', function (): void
     @rmdir($outDir);
 });
 
+test('export with baseDirectory null succeeds', function (): void {
+    $generator = new PuzzleGenerator();
+    $puzzle = $generator->generateFromFile(__DIR__ . '/fixtures/sample.png', 1, 1);
+    $outDir = sys_get_temp_dir() . '/image-puzzle-null-base-' . uniqid();
+    $result = $puzzle->export($outDir, new ExportOptions(), null);
+    expect($result->getOutputDirectory())->toBe($outDir);
+    expect($result->getFiles())->toHaveCount(2);
+    foreach ($result->getFiles() as $f) {
+        @unlink($f);
+    }
+    @rmdir($outDir);
+});
+
 test('puzzle from generator with injected exporter uses that exporter on export', function (): void {
     $exporter = new Exporter();
     $generator = new PuzzleGenerator(null, null, $exporter);

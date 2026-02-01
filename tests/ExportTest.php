@@ -10,6 +10,19 @@ function getTempDir(): string
     return sys_get_temp_dir() . '/image-puzzle-export-' . uniqid();
 }
 
+test('export with directory trailing slash normalizes path', function (): void {
+    $outDir = getTempDir() . DIRECTORY_SEPARATOR;
+    $generator = new PuzzleGenerator();
+    $puzzle = $generator->generateFromFile(__DIR__ . '/fixtures/sample.png', 1, 1);
+    $result = $puzzle->export($outDir, new ExportOptions());
+    expect($result->getOutputDirectory())->not->toEndWith(DIRECTORY_SEPARATOR);
+    expect(rtrim($result->getOutputDirectory(), '/\\'))->toBe(rtrim($outDir, '/\\'));
+    foreach ($result->getFiles() as $f) {
+        @unlink($f);
+    }
+    @rmdir(rtrim($outDir, '/\\'));
+});
+
 test('export creates directory and writes files', function (): void {
     $outDir = getTempDir();
     $generator = new PuzzleGenerator();
@@ -401,6 +414,26 @@ test('export onManifestBuild can add and modify manifest', function (): void {
     $written = json_decode((string) file_get_contents($result->getManifestPath()), true);
     expect($written['customKey'])->toBe('customValue');
     expect($written['pieces'][0]['customPieceKey'])->toBe(42);
+    foreach ($result->getFiles() as $f) {
+        @unlink($f);
+    }
+    @rmdir($outDir);
+});
+
+test('exportParallel with workers zero falls back to sequential export', function (): void {
+    $outDir = getTempDir();
+    $exporter = new \ImagePuzzle\Exporter();
+    $options = new ExportOptions();
+    $result = $exporter->exportParallel(
+        __DIR__ . '/fixtures/sample.png',
+        $outDir,
+        2,
+        2,
+        $options,
+        0,
+    );
+    expect($result->getFiles())->toHaveCount(5);
+    expect($result->getManifest()['pieces'])->toHaveCount(4);
     foreach ($result->getFiles() as $f) {
         @unlink($f);
     }

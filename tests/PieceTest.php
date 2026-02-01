@@ -38,6 +38,15 @@ test('toGdImage returns valid image with correct dimensions', function (): void 
     expect(imagesy($image))->toBe($piece->getHeight());
 });
 
+test('piece toGdImage with NoEdgeStyle returns image of same dimensions', function (): void {
+    $generator = new PuzzleGenerator(new \ImagePuzzle\EdgeStyle\NoEdgeStyle());
+    $puzzle = $generator->generateFromFile(__DIR__ . '/fixtures/sample.png', 2, 2);
+    $piece = $puzzle->getPiece(0, 0);
+    $image = $piece->toGdImage();
+    expect(imagesx($image))->toBe($piece->getWidth());
+    expect(imagesy($image))->toBe($piece->getHeight());
+});
+
 test('last piece in grid has remainder dimensions when source not divisible', function (): void {
     $generator = new PuzzleGenerator();
     $puzzle = $generator->generateFromFile(__DIR__ . '/fixtures/sample.jpg', 3, 3);

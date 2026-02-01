@@ -28,3 +28,17 @@ test('edge piece context', function (): void {
     expect($context->getTotalRows())->toBe(2);
     expect($context->getTotalCols())->toBe(2);
 });
+
+test('last piece in grid context', function (): void {
+    $context = new PieceContext(2, 3, 60, 40, 20, 20, 100, 80, 3, 4);
+    expect($context->getRow())->toBe(2);
+    expect($context->getCol())->toBe(3);
+    expect($context->getX())->toBe(60);
+    expect($context->getY())->toBe(40);
+    expect($context->getWidth())->toBe(20);
+    expect($context->getHeight())->toBe(20);
+    expect($context->getSourceWidth())->toBe(100);
+    expect($context->getSourceHeight())->toBe(80);
+    expect($context->getTotalRows())->toBe(3);
+    expect($context->getTotalCols())->toBe(4);
+});
