@@ -65,3 +65,59 @@ test('apply modifies piece when different styles per side', function (): void {
     expect($alphaAt($result, (int) floor($width / 2), 0))->toBe(0);
     expect($alphaAt($result, $width - 1, 0))->toBe(127);
 });
+
+test('apply when copyImage fails (0x0 context) continues without throwing', function (): void {
+    $style = new CompositeEdgeStyle(
+        new LineStyle(),
+        new LineStyle(),
+        new LineStyle(),
+        new LineStyle(),
+    );
+    $image = imagecreatetruecolor(1, 1);
+    expect($image)->not->toBeFalse();
+    imagesavealpha($image, true);
+    $context = new PieceContext(0, 0, 0, 0, 0, 0, 1, 1, 1, 1);
+    try {
+        $result = $style->apply($image, $context);
+        expect($result)->toBe($image);
+        expect(imagesx($result))->toBe(1);
+        expect(imagesy($result))->toBe(1);
+    } catch (\ValueError $e) {
+        expect($e->getMessage())->toContain('must be greater than 0');
+    }
+});
+
+test('apply when sub-style returns different image destroys styled image', function (): void {
+    $styleThatReturnsNewImage = new class implements EdgeStyleInterface {
+        public function apply(\GdImage $piece, \ImagePuzzle\PieceContext $context): \GdImage
+        {
+            $w = imagesx($piece);
+            $h = imagesy($piece);
+            $new = imagecreatetruecolor($w, $h);
+            if ($new === false) {
+                return $piece;
+            }
+            imagesavealpha($new, true);
+            imagealphablending($new, false);
+            imagecopy($new, $piece, 0, 0, 0, 0, $w, $h);
+            imagealphablending($new, true);
+            return $new;
+        }
+    };
+    $style = new CompositeEdgeStyle(
+        $styleThatReturnsNewImage,
+        new LineStyle(),
+        new LineStyle(),
+        new LineStyle(),
+    );
+    $width = 8;
+    $height = 8;
+    $image = imagecreatetruecolor($width, $height);
+    expect($image)->not->toBeFalse();
+    imagesavealpha($image, true);
+    $context = new PieceContext(0, 0, 0, 0, $width, $height, 32, 32, 2, 2);
+    $result = $style->apply($image, $context);
+    expect($result)->toBe($image);
+    expect(imagesx($result))->toBe($width);
+    expect(imagesy($result))->toBe($height);
+});

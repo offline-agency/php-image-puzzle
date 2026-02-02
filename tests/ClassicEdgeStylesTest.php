@@ -125,6 +125,18 @@ test('SinusStyle apply returns image with same dimensions', function (): void {
     expect(imagesy($result))->toBe($height);
 });
 
+test('SinusStyle apply with context width 0 hits length <= 0 branch', function (): void {
+    $style = new SinusStyle();
+    $image = imagecreatetruecolor(1, 1);
+    expect($image)->not->toBeFalse();
+    imagesavealpha($image, true);
+    $context = new PieceContext(0, 0, 0, 0, 0, 1, 1, 1, 1, 1);
+    $result = $style->apply($image, $context);
+    expect($result)->toBe($image);
+    expect(imagesx($result))->toBe(1);
+    expect(imagesy($result))->toBe(1);
+});
+
 test('JigsawStyle integration with PuzzleGenerator and export', function (): void {
     $generator = new PuzzleGenerator(new JigsawStyle());
     $puzzle = $generator->generateFromFile(__DIR__ . '/fixtures/sample.png', 2, 2);

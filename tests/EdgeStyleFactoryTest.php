@@ -82,6 +82,11 @@ test('fromArray rounded_corners with options.radius as string casts to int', fun
     expect($style)->toBeInstanceOf(RoundedCornersStyle::class);
 });
 
+test('fromArray with options as non-array uses empty options', function (): void {
+    $style = EdgeStyleFactory::fromArray(['edge' => ['type' => 'jigsaw', 'options' => 'not-array']]);
+    expect($style)->toBeInstanceOf(JigsawStyle::class);
+});
+
 test('fromArray missing edge throws', function (): void {
     expect(fn () => EdgeStyleFactory::fromArray([]))
         ->toThrow(InvalidArgumentException::class, 'contain an "edge" object');
