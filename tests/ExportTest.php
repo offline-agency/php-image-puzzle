@@ -10,6 +10,19 @@ function getTempDir(): string
     return sys_get_temp_dir() . '/image-puzzle-export-' . uniqid();
 }
 
+test('export with directory trailing slash normalizes path', function (): void {
+    $outDir = getTempDir() . DIRECTORY_SEPARATOR;
+    $generator = new PuzzleGenerator();
+    $puzzle = $generator->generateFromFile(__DIR__ . '/fixtures/sample.png', 1, 1);
+    $result = $puzzle->export($outDir, new ExportOptions());
+    expect($result->getOutputDirectory())->not->toEndWith(DIRECTORY_SEPARATOR);
+    expect(rtrim($result->getOutputDirectory(), '/\\'))->toBe(rtrim($outDir, '/\\'));
+    foreach ($result->getFiles() as $f) {
+        @unlink($f);
+    }
+    @rmdir(rtrim($outDir, '/\\'));
+});
+
 test('export creates directory and writes files', function (): void {
     $outDir = getTempDir();
     $generator = new PuzzleGenerator();
@@ -145,6 +158,26 @@ test('export to non-writable directory throws', function (): void {
     @chmod($outDir, 0755);
     @rmdir($outDir);
 })->skip(!function_exists('chmod') || PHP_OS_FAMILY === 'Windows', 'chmod / writability test not reliable on this platform');
+
+test('export when output directory cannot be created throws Failed to create directory', function (): void {
+    $baseDir = getTempDir();
+    mkdir($baseDir, 0755);
+    $outDir = $baseDir . DIRECTORY_SEPARATOR . 'subdir';
+    chmod($baseDir, 0555);
+    set_error_handler(static function (): bool {
+        return true;
+    }, E_WARNING | E_NOTICE);
+    try {
+        $generator = new PuzzleGenerator();
+        $puzzle = $generator->generateFromFile(__DIR__ . '/fixtures/sample.png', 1, 1);
+        expect(fn () => $puzzle->export($outDir, new ExportOptions()))
+            ->toThrow(\ImagePuzzle\Exception\ExportFailedException::class, 'Failed to create directory');
+    } finally {
+        restore_error_handler();
+        @chmod($baseDir, 0755);
+        @rmdir($baseDir);
+    }
+})->skip(!function_exists('chmod') || PHP_OS_FAMILY === 'Windows', 'chmod not reliable on this platform');
 
 test('export with overwrite false does not overwrite existing piece files', function (): void {
     $outDir = getTempDir();
@@ -319,6 +352,63 @@ test('exportParallel with 2 workers when pcntl available produces correct manife
     @rmdir($outDir);
 })->skip(!extension_loaded('pcntl') || PHP_SAPI !== 'cli', 'pcntl and CLI required');
 
+test('exportParallel when worker throws onPieceBeforeSave throws', function (): void {
+    if (!extension_loaded('pcntl') || PHP_SAPI !== 'cli') {
+        expect(true)->toBeTrue();
+        return;
+    }
+    $outDir = getTempDir();
+    $exporter = new \ImagePuzzle\Exporter();
+    $options = new ExportOptions(
+        onPieceBeforeSave: function (\ImagePuzzle\Piece $piece): void {
+            throw new \RuntimeException('Worker abort');
+        },
+    );
+    try {
+        $exporter->exportParallel(
+            __DIR__ . '/fixtures/sample.png',
+            $outDir,
+            2,
+            2,
+            $options,
+            2,
+        );
+        expect(false)->toBeTrue('Expected exception');
+    } catch (\ImagePuzzle\Exception\ExportFailedException $e) {
+        expect($e->getMessage())->toMatch('/A worker failed during parallel export|Failed to write manifest/');
+    } catch (\RuntimeException $e) {
+        expect($e->getMessage())->toContain('Worker abort');
+    }
+    if (is_dir($outDir)) {
+        foreach (glob($outDir . '/*') ?: [] as $f) {
+            @unlink($f);
+        }
+        @rmdir($outDir);
+    }
+})->skip(!extension_loaded('pcntl') || PHP_SAPI !== 'cli', 'pcntl and CLI required');
+
+test('export when onPieceBeforeSave throws propagates exception', function (): void {
+    $outDir = getTempDir();
+    $generator = new PuzzleGenerator();
+    $puzzle = $generator->generateFromFile(__DIR__ . '/fixtures/sample.png', 2, 2);
+    $options = new ExportOptions(
+        onPieceBeforeSave: function (\ImagePuzzle\Piece $piece): void {
+            if ($piece->getRow() === 1 && $piece->getCol() === 0) {
+                throw new \RuntimeException('Abort save');
+            }
+        },
+    );
+    expect(fn () => $puzzle->export($outDir, $options))
+        ->toThrow(\RuntimeException::class, 'Abort save');
+    if (is_dir($outDir)) {
+        $files = glob($outDir . '/*') ?: [];
+        foreach ($files as $f) {
+            @unlink($f);
+        }
+        @rmdir($outDir);
+    }
+});
+
 test('export invokes onPieceBeforeSave before each piece write', function (): void {
     $outDir = getTempDir();
     $generator = new PuzzleGenerator();
@@ -401,6 +491,26 @@ test('export onManifestBuild can add and modify manifest', function (): void {
     $written = json_decode((string) file_get_contents($result->getManifestPath()), true);
     expect($written['customKey'])->toBe('customValue');
     expect($written['pieces'][0]['customPieceKey'])->toBe(42);
+    foreach ($result->getFiles() as $f) {
+        @unlink($f);
+    }
+    @rmdir($outDir);
+});
+
+test('exportParallel with workers zero falls back to sequential export', function (): void {
+    $outDir = getTempDir();
+    $exporter = new \ImagePuzzle\Exporter();
+    $options = new ExportOptions();
+    $result = $exporter->exportParallel(
+        __DIR__ . '/fixtures/sample.png',
+        $outDir,
+        2,
+        2,
+        $options,
+        0,
+    );
+    expect($result->getFiles())->toHaveCount(5);
+    expect($result->getManifest()['pieces'])->toHaveCount(4);
     foreach ($result->getFiles() as $f) {
         @unlink($f);
     }

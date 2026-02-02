@@ -92,3 +92,15 @@ test('loadFromFile with directory path throws', function (): void {
     expect(fn () => $loader->loadFromFile(__DIR__ . '/fixtures'))
         ->toThrow(UnsupportedImageTypeException::class);
 })->skip($skipNoGd, 'ext-gd required');
+
+test('loadFromFile with corrupt JPEG content throws', function (): void {
+    $tmp = sys_get_temp_dir() . '/image-puzzle-loader-test-' . uniqid() . '.jpg';
+    file_put_contents($tmp, 'not a valid jpeg');
+    try {
+        $loader = new ImageLoader();
+        expect(fn () => $loader->loadFromFile($tmp))
+            ->toThrow(UnsupportedImageTypeException::class);
+    } finally {
+        @unlink($tmp);
+    }
+})->skip($skipNoGd, 'ext-gd required');

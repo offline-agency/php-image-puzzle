@@ -94,3 +94,18 @@ test('PuzzleGenerator with invalid split strategy wrong sum throws', function ()
     expect(fn () => $generator->generateFromFile(__DIR__ . '/fixtures/sample.png', 2, 2))
         ->toThrow(\ImagePuzzle\Exception\InvalidArgumentException::class, 'sum to');
 });
+
+test('DefaultSplitStrategy 100 into 5 segments distributes remainder to last', function (): void {
+    $strategy = new DefaultSplitStrategy();
+    $splits = $strategy->split(100, 5);
+    expect($splits)->toBe([20, 20, 20, 20, 20]);
+    expect(array_sum($splits))->toBe(100);
+});
+
+test('DefaultSplitStrategy 101 into 5 segments puts remainder on last segment', function (): void {
+    $strategy = new DefaultSplitStrategy();
+    $splits = $strategy->split(101, 5);
+    expect($splits)->toHaveCount(5);
+    expect(array_sum($splits))->toBe(101);
+    expect($splits[4])->toBe(21);
+});

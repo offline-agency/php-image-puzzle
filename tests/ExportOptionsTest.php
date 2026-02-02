@@ -110,6 +110,13 @@ test('withQuality returns new instance with quality changed', function (): void 
     expect($options->getQuality())->toBe(9);
 });
 
+test('quality boundaries 0 and 100 are accepted', function (): void {
+    $options0 = new ExportOptions(quality: 0);
+    $options100 = new ExportOptions(quality: 100);
+    expect($options0->getQuality())->toBe(0);
+    expect($options100->getQuality())->toBe(100);
+});
+
 test('withFilenamePattern returns new instance with pattern changed', function (): void {
     $options = new ExportOptions();
     $modified = $options->withFilenamePattern('tile_{row}x{col}.png');
@@ -172,4 +179,19 @@ test('resolvePieceFilename leaves index rows cols placeholders when grid context
 test('resolvePieceFilename with mixed placeholders and grid context', function (): void {
     $options = new ExportOptions(filenamePattern: 'piece_{row}_{col}_{index}.png');
     expect($options->resolvePieceFilename(1, 2, 3, 4))->toBe('piece_1_2_6.png');
+});
+
+test('resolvePieceFilename with pattern without extension and format PNG leaves as-is', function (): void {
+    $options = new ExportOptions(filenamePattern: 'tile_{row}_{col}');
+    expect($options->resolvePieceFilename(0, 1))->toBe('tile_0_1');
+});
+
+test('resolvePieceFilename with only row placeholder', function (): void {
+    $options = new ExportOptions(filenamePattern: 'row_{row}.png');
+    expect($options->resolvePieceFilename(2, 3))->toBe('row_2.png');
+});
+
+test('resolvePieceFilename with only col placeholder', function (): void {
+    $options = new ExportOptions(filenamePattern: 'col_{col}.png');
+    expect($options->resolvePieceFilename(1, 4))->toBe('col_4.png');
 });
