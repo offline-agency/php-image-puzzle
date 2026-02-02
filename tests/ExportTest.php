@@ -159,6 +159,22 @@ test('export to non-writable directory throws', function (): void {
     @rmdir($outDir);
 })->skip(!function_exists('chmod') || PHP_OS_FAMILY === 'Windows', 'chmod / writability test not reliable on this platform');
 
+test('export when output directory cannot be created throws Failed to create directory', function (): void {
+    $baseDir = getTempDir();
+    mkdir($baseDir, 0755);
+    $outDir = $baseDir . DIRECTORY_SEPARATOR . 'subdir';
+    chmod($baseDir, 0555);
+    try {
+        $generator = new PuzzleGenerator();
+        $puzzle = $generator->generateFromFile(__DIR__ . '/fixtures/sample.png', 1, 1);
+        expect(fn () => $puzzle->export($outDir, new ExportOptions()))
+            ->toThrow(\ImagePuzzle\Exception\ExportFailedException::class, 'Failed to create directory');
+    } finally {
+        @chmod($baseDir, 0755);
+        @rmdir($baseDir);
+    }
+})->skip(!function_exists('chmod') || PHP_OS_FAMILY === 'Windows', 'chmod not reliable on this platform');
+
 test('export with overwrite false does not overwrite existing piece files', function (): void {
     $outDir = getTempDir();
     $generator = new PuzzleGenerator();
@@ -331,6 +347,28 @@ test('exportParallel with 2 workers when pcntl available produces correct manife
     }
     @rmdir($outDir);
 })->skip(!extension_loaded('pcntl') || PHP_SAPI !== 'cli', 'pcntl and CLI required');
+
+test('export when onPieceBeforeSave throws propagates exception', function (): void {
+    $outDir = getTempDir();
+    $generator = new PuzzleGenerator();
+    $puzzle = $generator->generateFromFile(__DIR__ . '/fixtures/sample.png', 2, 2);
+    $options = new ExportOptions(
+        onPieceBeforeSave: function (\ImagePuzzle\Piece $piece): void {
+            if ($piece->getRow() === 1 && $piece->getCol() === 0) {
+                throw new \RuntimeException('Abort save');
+            }
+        },
+    );
+    expect(fn () => $puzzle->export($outDir, $options))
+        ->toThrow(\RuntimeException::class, 'Abort save');
+    if (is_dir($outDir)) {
+        $files = glob($outDir . '/*') ?: [];
+        foreach ($files as $f) {
+            @unlink($f);
+        }
+        @rmdir($outDir);
+    }
+});
 
 test('export invokes onPieceBeforeSave before each piece write', function (): void {
     $outDir = getTempDir();

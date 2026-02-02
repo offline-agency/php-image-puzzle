@@ -41,6 +41,8 @@ test('exceptions are throwable', function (): void {
         ->toThrow(InvalidArgumentException::class, 'test');
     expect(fn () => throw new ExportFailedException('test'))
         ->toThrow(ExportFailedException::class, 'test');
+    expect(fn () => throw new GdNotAvailableException('test'))
+        ->toThrow(GdNotAvailableException::class, 'test');
     expect(fn () => throw new UnsupportedImageTypeException('test'))
         ->toThrow(UnsupportedImageTypeException::class, 'test');
 });

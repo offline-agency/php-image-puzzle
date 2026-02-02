@@ -110,6 +110,13 @@ test('withQuality returns new instance with quality changed', function (): void 
     expect($options->getQuality())->toBe(9);
 });
 
+test('quality boundaries 0 and 100 are accepted', function (): void {
+    $options0 = new ExportOptions(quality: 0);
+    $options100 = new ExportOptions(quality: 100);
+    expect($options0->getQuality())->toBe(0);
+    expect($options100->getQuality())->toBe(100);
+});
+
 test('withFilenamePattern returns new instance with pattern changed', function (): void {
     $options = new ExportOptions();
     $modified = $options->withFilenamePattern('tile_{row}x{col}.png');

@@ -51,33 +51,17 @@ test('getPieces yields Piece instances', function (): void {
     expect($piece)->toBeInstanceOf(Piece::class);
 });
 
-test('getPiece with negative row throws', function (): void {
+test('getPiece with invalid indices throws', function (int $row, int $col): void {
     $generator = new PuzzleGenerator();
     $puzzle = $generator->generateFromFile(__DIR__ . '/fixtures/sample.png', 2, 2);
-    expect(fn () => $puzzle->getPiece(-1, 0))
+    expect(fn () => $puzzle->getPiece($row, $col))
         ->toThrow(\ImagePuzzle\Exception\InvalidArgumentException::class, 'Invalid piece index');
-});
-
-test('getPiece with negative col throws', function (): void {
-    $generator = new PuzzleGenerator();
-    $puzzle = $generator->generateFromFile(__DIR__ . '/fixtures/sample.png', 2, 2);
-    expect(fn () => $puzzle->getPiece(0, -1))
-        ->toThrow(\ImagePuzzle\Exception\InvalidArgumentException::class, 'Invalid piece index');
-});
-
-test('getPiece with row out of range throws', function (): void {
-    $generator = new PuzzleGenerator();
-    $puzzle = $generator->generateFromFile(__DIR__ . '/fixtures/sample.png', 2, 2);
-    expect(fn () => $puzzle->getPiece(2, 0))
-        ->toThrow(\ImagePuzzle\Exception\InvalidArgumentException::class, 'Invalid piece index');
-});
-
-test('getPiece with col out of range throws', function (): void {
-    $generator = new PuzzleGenerator();
-    $puzzle = $generator->generateFromFile(__DIR__ . '/fixtures/sample.png', 2, 2);
-    expect(fn () => $puzzle->getPiece(0, 2))
-        ->toThrow(\ImagePuzzle\Exception\InvalidArgumentException::class, 'Invalid piece index');
-});
+})->with([
+    'negative row' => [-1, 0],
+    'negative col' => [0, -1],
+    'row out of range' => [2, 0],
+    'col out of range' => [0, 2],
+]);
 
 test('getPiece error message includes grid dimensions', function (): void {
     $generator = new PuzzleGenerator();

@@ -42,3 +42,11 @@ test('last piece in grid context', function (): void {
     expect($context->getTotalRows())->toBe(3);
     expect($context->getTotalCols())->toBe(4);
 });
+
+test('single cell grid context', function (): void {
+    $context = new PieceContext(0, 0, 0, 0, 100, 50, 100, 50, 1, 1);
+    expect($context->getTotalRows())->toBe(1);
+    expect($context->getTotalCols())->toBe(1);
+    expect($context->getWidth())->toBe(100);
+    expect($context->getHeight())->toBe(50);
+});
