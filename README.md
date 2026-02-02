@@ -1,7 +1,7 @@
 # Image Puzzle
 
-[![CI](https://github.com/gfabbian/php-image-puzzle/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/gfabbian/php-image-puzzle/actions/workflows/ci.yml)
-[![codecov](https://codecov.io/gh/gfabbian/php-image-puzzle/graph/badge.svg)](https://codecov.io/gh/gfabbian/php-image-puzzle)
+[![CI](https://github.com/offline-agency/php-image-puzzle/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/offline-agency/php-image-puzzle/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/offline-agency/php-image-puzzle/graph/badge.svg)](https://codecov.io/gh/offline-agency/php-image-puzzle)
 [![Downloads](https://img.shields.io/packagist/dt/offline-agency/image-puzzle)](https://packagist.org/packages/offline-agency/image-puzzle)
 [![PHP](https://img.shields.io/badge/PHP-8.4%20%7C%208.5-777BB4?logo=php)](https://www.php.net/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
@@ -10,11 +10,15 @@ Split images into a grid of puzzle pieces, optionally apply edge styles, and exp
 
 **Requirements:** PHP 8.4 or 8.5, [ext-gd](https://www.php.net/manual/en/book.image.php).
 
+![Php Image Puzzle](https://banners.beyondco.de/Php%20Image%20Puzzle.png?theme=dark&packageManager=composer+require&packageName=offline-agency%2Fimage-puzzle&pattern=architect&style=style_1&description=Create+puzzle+from+an+image&md=1&showWatermark=0&fontSize=100px&images=https%3A%2F%2Fwww.php.net%2Fimages%2Flogos%2Fnew-php-logo.svg)
+
+
 ## Installation
 
 ```bash
 composer require offline-agency/image-puzzle
 ```
+
 
 ## Quickstart
 
