@@ -164,12 +164,16 @@ test('export when output directory cannot be created throws Failed to create dir
     mkdir($baseDir, 0755);
     $outDir = $baseDir . DIRECTORY_SEPARATOR . 'subdir';
     chmod($baseDir, 0555);
+    set_error_handler(static function (): bool {
+        return true;
+    }, E_WARNING | E_NOTICE);
     try {
         $generator = new PuzzleGenerator();
         $puzzle = $generator->generateFromFile(__DIR__ . '/fixtures/sample.png', 1, 1);
         expect(fn () => $puzzle->export($outDir, new ExportOptions()))
             ->toThrow(\ImagePuzzle\Exception\ExportFailedException::class, 'Failed to create directory');
     } finally {
+        restore_error_handler();
         @chmod($baseDir, 0755);
         @rmdir($baseDir);
     }
@@ -346,6 +350,41 @@ test('exportParallel with 2 workers when pcntl available produces correct manife
         @unlink($f);
     }
     @rmdir($outDir);
+})->skip(!extension_loaded('pcntl') || PHP_SAPI !== 'cli', 'pcntl and CLI required');
+
+test('exportParallel when worker throws onPieceBeforeSave throws', function (): void {
+    if (!extension_loaded('pcntl') || PHP_SAPI !== 'cli') {
+        expect(true)->toBeTrue();
+        return;
+    }
+    $outDir = getTempDir();
+    $exporter = new \ImagePuzzle\Exporter();
+    $options = new ExportOptions(
+        onPieceBeforeSave: function (\ImagePuzzle\Piece $piece): void {
+            throw new \RuntimeException('Worker abort');
+        },
+    );
+    try {
+        $exporter->exportParallel(
+            __DIR__ . '/fixtures/sample.png',
+            $outDir,
+            2,
+            2,
+            $options,
+            2,
+        );
+        expect(false)->toBeTrue('Expected exception');
+    } catch (\ImagePuzzle\Exception\ExportFailedException $e) {
+        expect($e->getMessage())->toMatch('/A worker failed during parallel export|Failed to write manifest/');
+    } catch (\RuntimeException $e) {
+        expect($e->getMessage())->toContain('Worker abort');
+    }
+    if (is_dir($outDir)) {
+        foreach (glob($outDir . '/*') ?: [] as $f) {
+            @unlink($f);
+        }
+        @rmdir($outDir);
+    }
 })->skip(!extension_loaded('pcntl') || PHP_SAPI !== 'cli', 'pcntl and CLI required');
 
 test('export when onPieceBeforeSave throws propagates exception', function (): void {
