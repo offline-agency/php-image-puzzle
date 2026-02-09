@@ -104,3 +104,31 @@ test('loadFromFile with corrupt JPEG content throws', function (): void {
         @unlink($tmp);
     }
 })->skip($skipNoGd, 'ext-gd required');
+
+test('loadFromFile with file that exif_imagetype cannot determine throws Could not determine image type', function (): void {
+    $tmp = sys_get_temp_dir() . '/image-puzzle-loader-test-' . uniqid() . '.png';
+    file_put_contents($tmp, 'x');
+    try {
+        $loader = new ImageLoader();
+        expect(fn () => $loader->loadFromFile($tmp))
+            ->toThrow(UnsupportedImageTypeException::class, 'Could not determine image type');
+    } finally {
+        @unlink($tmp);
+    }
+})->skip($skipNoGd, 'ext-gd required');
+
+test('loadFromFile with valid BMP throws Unsupported image type and uses getTypeName default', function (): void {
+    $tmp = sys_get_temp_dir() . '/image-puzzle-loader-test-' . uniqid() . '.bmp';
+    $bmp = "BM" . pack('V', 54 + 3) . pack('v', 0) . pack('v', 0) . pack('V', 54);
+    $bmp .= pack('V', 40) . pack('V', 1) . pack('v', 1) . pack('v', 24) . str_repeat("\x00", 24);
+    $bmp .= "\xFF\x00\x00";
+    file_put_contents($tmp, $bmp);
+    try {
+        $loader = new ImageLoader();
+        expect(fn () => $loader->loadFromFile($tmp))
+            ->toThrow(UnsupportedImageTypeException::class, 'Unsupported image type')
+            ->toThrow(UnsupportedImageTypeException::class, 'Only PNG, JPEG, and GIF');
+    } finally {
+        @unlink($tmp);
+    }
+})->skip($skipNoGd, 'ext-gd required');

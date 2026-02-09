@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+use ImagePuzzle\EdgeStyle\NoEdgeStyle;
+use ImagePuzzle\Piece;
 use ImagePuzzle\PuzzleGenerator;
 
 test('piece coordinates and dimensions', function (): void {
@@ -56,4 +58,31 @@ test('last piece in grid has remainder dimensions when source not divisible', fu
     expect($pieceLast->getHeight())->toBeGreaterThanOrEqual($pieceFirst->getHeight());
     expect($pieceFirst->getWidth() + $puzzle->getPiece(0, 1)->getWidth() + $puzzle->getPiece(0, 2)->getWidth())
         ->toBe($puzzle->getWidth());
+});
+
+test('toGdImage when imagecreatetruecolor fails throws', function (): void {
+    $sourceImage = imagecreatefrompng(__DIR__ . '/fixtures/sample.png');
+    expect($sourceImage)->not->toBeFalse();
+    $piece = new Piece(
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        $sourceImage,
+        32,
+        32,
+        1,
+        1,
+        new NoEdgeStyle(),
+    );
+    try {
+        $piece->toGdImage();
+        expect(false)->toBeTrue('Expected exception');
+    } catch (\RuntimeException $e) {
+        expect($e->getMessage())->toContain('Failed to create piece image');
+    } catch (\ValueError $e) {
+        expect($e->getMessage())->toContain('must be greater than 0');
+    }
 });
