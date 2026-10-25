@@ -15,8 +15,16 @@ import type { Messages } from './messages.js';
 import { styles } from './styles.js';
 import { createGridView } from './views/grid.js';
 import { createJigsawView } from './views/jigsaw.js';
+import { createMemoryView } from './views/memory.js';
 import { createNonogramView } from './views/nonogram.js';
 import type { ModeView, ViewContext } from './views/types.js';
+
+/** Mode views; every other kind uses the grid view. */
+const VIEWS: Partial<Record<string, (context: ViewContext) => ModeView>> = {
+  jigsaw: createJigsawView,
+  nonogram: createNonogramView,
+  memory: createMemoryView,
+};
 
 /** Largest definition document fetched from `src` (matches the PHP GameDefinition::MAX_JSON_BYTES). */
 export const MAX_DEFINITION_BYTES = 4 * 1024 * 1024;
@@ -320,12 +328,8 @@ export function createPlayer(target: HTMLElement | ShadowRoot, options: PlayerOp
         setView('error', `Could not load ${url}`);
       },
     };
-    view =
-      definition.kind === 'jigsaw'
-        ? createJigsawView(context)
-        : definition.kind === 'nonogram'
-          ? createNonogramView(context)
-          : createGridView(context);
+    const factory = VIEWS[definition.kind] ?? createGridView;
+    view = factory(context);
     slot.replaceChildren(view.element);
   }
 

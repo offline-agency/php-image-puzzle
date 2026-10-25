@@ -82,6 +82,16 @@ button:focus-visible { outline: 3px solid var(--ipp-focus); outline-offset: 2px;
 .piece.is-hint .outline { stroke: var(--ipp-hint); stroke-width: 3; }
 
 
+.memory { position: relative; display: grid; grid-template-columns: repeat(var(--ipp-cols), minmax(0, 1fr)); gap: var(--ipp-gap, 4px); width: 100%; direction: ltr; padding: 0.25rem; background: var(--ipp-surface); border-radius: var(--ipp-radius); user-select: none; -webkit-user-select: none; }
+.card { aspect-ratio: var(--ipp-card-aspect); padding: 0.25rem; margin: 0; border: 1px solid var(--ipp-border); border-radius: var(--ipp-radius); background-color: var(--ipp-bg); background-repeat: no-repeat; color: var(--ipp-fg); font: inherit; cursor: pointer; overflow: hidden; display: grid; place-items: center; transition: background-color var(--ipp-duration) ease, opacity var(--ipp-duration) ease; touch-action: manipulation; }
+.card[data-state='down'] { background-image: repeating-linear-gradient(45deg, var(--ipp-accent) 0 6px, transparent 6px 12px); background-color: var(--ipp-surface); }
+.card[data-state='matched'] { cursor: default; opacity: 0.75; }
+.card.is-correct { box-shadow: inset 0 0 0 3px var(--ipp-correct); opacity: 1; }
+.card:focus-visible { outline: 3px solid var(--ipp-focus); outline-offset: 2px; }
+.card:disabled { cursor: default; }
+.card-text { font-size: clamp(0.75rem, 3cqi, 1.25rem); font-weight: 600; text-align: center; overflow-wrap: anywhere; }
+.memory[data-loading='true'] .card[data-state='up'], .memory[data-loading='true'] .card[data-state='matched'] { background-image: none; }
+
 .nonogram-tools { display: flex; gap: 0.25rem; }
 .nonogram { --ipp-clue: minmax(2.5rem, auto); display: grid; grid-template-columns: var(--ipp-clue) repeat(var(--ipp-cols), minmax(0, 1fr)); width: 100%; direction: ltr; background: var(--ipp-surface); border-radius: var(--ipp-radius); padding: 0.25rem; user-select: none; -webkit-user-select: none; font-variant-numeric: tabular-nums; }
 .nonogram-row, .nonogram-body { display: contents; }
@@ -105,14 +115,15 @@ button:focus-visible { outline: 3px solid var(--ipp-focus); outline-offset: 2px;
 
 @keyframes ipp-hint { 50% { opacity: 0.5; } }
 @media (prefers-reduced-motion: reduce) {
-  :host(:not([data-motion='full'])) .tile, :host(:not([data-motion='full'])) .piece { transition: none; }
+  :host(:not([data-motion='full'])) .tile, :host(:not([data-motion='full'])) .piece, :host(:not([data-motion='full'])) .card { transition: none; }
   :host(:not([data-motion='full'])) .is-hint, :host(:not([data-motion='full'])) .is-hint .outline { animation: none; }
 }
-:host([data-motion='reduce']) .tile, :host([data-motion='reduce']) .piece { transition: none; }
+:host([data-motion='reduce']) .tile, :host([data-motion='reduce']) .piece, :host([data-motion='reduce']) .card { transition: none; }
 :host([data-motion='reduce']) .is-hint, :host([data-motion='reduce']) .is-hint .outline { animation: none; }
 @media (forced-colors: active) {
   .tile:focus-visible, button:focus-visible { outline-color: Highlight; }
   .cell[data-state='filled'] { background: CanvasText; }
+  .card[data-state='down'] { background-image: none; background-color: GrayText; }
   .cell[data-state='crossed']::before, .cell[data-state='crossed']::after { background: GrayText; }
   .piece:focus-visible .outline { stroke: Highlight; }
 }

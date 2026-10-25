@@ -12,13 +12,15 @@ lives in a separate **state** document. Both are versioned JSON validated by
 | `rotation` | `{"type":"rotate","tile":id,"direction":"cw"\|"ccw"}` | `{"orientations":[deg,…]}` per tile | yes | Tiles never move |
 | `strips` | `{"type":"move","strip":id,"to":index}` | `{"order":[id,…]}` | yes | Remove, then insert at `to` |
 | `jigsaw` | `{"type":"place","piece":id,"x":int,"y":int}` | `{"pieces":[{"x","y","placed"},…]}` per tile | yes | Pieces from an export manifest; any topology |
+| `memory` | `{"type":"flip","card":id}` | `{"cards":[id,…],"matched":[id,…],"revealed":[id,…]}` | no | Pairs of cards; see [Memory](#memory) |
 | `nonogram` | `{"type":"mark","cell":index,"state":"filled"\|"crossed"\|"unknown"}` | `{"cells":"1x.…"}` one character per cell | yes | Generated from the image pixels; see [Nonogram](#nonogram) |
 
 The grid modes and jigsaw support undo, redo, reset and shuffle; a nonogram
-has no shuffle (its start is always the empty grid). The `capabilities` of
+has no shuffle (its start is always the empty grid) and memory has no undo,
+redo or hint (they would reveal hidden cards). The `capabilities` of
 each definition are authoritative and players hide controls whose capability
 is `false`. `Modes::rules()` reports a kind that this version does not ship
-(memory, tangram) instead of mapping it to another game.
+(tangram) instead of mapping it to another game.
 
 ## Creating definitions
 
@@ -59,6 +61,7 @@ measure of solution length.
 | rotation | 3×3, 0/180° | 4×4, quarter turns | 6×6, quarter turns | `rows`, `cols`, `orientations` |
 | strips | 4 horizontal | 8 horizontal | 14 vertical | `count` (2–128), `axis` |
 | jigsaw | 3×4, snap 25 % of the smallest cell | 6×8, 15 % | 10×12, 8 % | `snap` argument |
+| memory | 3×4 cards (6 pairs) | 4×4 (8 pairs) | 4×6 (12 pairs), no highlight | `rows`, `cols` (2–8, even product), `labels` |
 | nonogram | 10×10, highlight solved lines | 15×15, highlight | 20×20, no highlight | `rows`, `cols` (2–30), `threshold`, `invert`, `requireUnique` |
 
 All custom presets also accept `assistance` (`preview`, `numbers`,
@@ -84,6 +87,43 @@ the tray (`rules.tray`) starts more than `rules.snap` pixels to its right and
 `rules.area` bounds every piece box. A placement whose box is within `snap`
 pixels of the solved box on both axes snaps and locks; otherwise the box must
 stay inside the area.
+
+## Memory
+
+Find the two cards of every pair. `GameFactory::create(GameKind::Memory, …)`
+divides the image into one region per pair, choosing the region grid whose
+cells are closest to square (`GameFactory::regions()`), and deals two cards
+per region. Cards have stable IDs, `p{k}-a` and `p{k}-b`, listed pair by
+pair; a card's ID never depends on what it shows, so two identical-looking
+regions are still different pairs.
+
+With `labels` (custom preset, one 1–120 byte label per pair), the second
+card of each pair shows its label instead of the picture: a picture/word
+association. Labels may not contain control characters or surrounding spaces.
+
+**State machine** (all transitions are deterministic rules; nothing depends
+on time):
+
+| Situation | `flip` of card X |
+| --- | --- |
+| X is matched | illegal |
+| X is the only face-up card | illegal |
+| no face-up card | X turns face up |
+| one face-up card of the same pair | both move to `matched` |
+| one face-up card of another pair | both stay face up (a mismatch) |
+| two face-up cards (a mismatch) | both turn face down, then X turns face up (X may be one of them) |
+
+The puzzle is complete when every card is matched. How long a mismatch stays
+visible is a player choice: the bundled player turns it face down on screen
+after one second, but the state keeps both cards in `revealed` until the next
+flip, so saving and restoring at any moment gives the same game. `moves`
+counts flips.
+
+**Fairness and privacy:** the player never puts a face-down card's picture or
+label in the DOM, and face-up picture cards are announced as "picture N" so
+the game can be played with a screen reader. A determined player can still
+read the layout from the definition or the saved state in the browser: memory
+in the browser is a game, not a secure test.
 
 ## Nonogram
 

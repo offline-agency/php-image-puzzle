@@ -31,6 +31,7 @@ export { allowedOrientations } from './rules/rotation.js';
 export { stripAxis } from './rules/strips.js';
 export { playArea, renderedRect, snapDistance, trayRect } from './rules/jigsaw.js';
 export { cellRect, cellSize } from './rules/grid.js';
+export { MEMORY_MAX_SIDE, MEMORY_MAX_TEXT_BYTES, MEMORY_MIN_SIDE, memoryPair, memoryText } from './rules/memory.js';
 export {
   NONOGRAM_MAX_SIDE,
   NONOGRAM_MIN_SIDE,
@@ -70,6 +71,7 @@ export type {
   GameStateDocument,
   JigsawBoard,
   JigsawPiece,
+  MemoryBoard,
   NonogramBoard,
   NonogramMark,
   Media,

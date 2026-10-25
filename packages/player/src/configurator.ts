@@ -74,7 +74,8 @@ type FieldSpec =
   | { readonly key: string; readonly type: 'int'; readonly min: number; readonly max: number; readonly optional?: boolean }
   | { readonly key: string; readonly type: 'choice'; readonly options: readonly string[] }
   | { readonly key: 'orientations'; readonly type: 'angles' }
-  | { readonly key: string; readonly type: 'flag' };
+  | { readonly key: string; readonly type: 'flag' }
+  | { readonly key: string; readonly type: 'lines' };
 
 /** Custom parameters per mode, with the ranges the PHP generator accepts (GameFactory, DefinitionBuilder). */
 const FIELDS: Readonly<Record<BuildKind, readonly FieldSpec[]>> = {
@@ -110,6 +111,11 @@ const FIELDS: Readonly<Record<BuildKind, readonly FieldSpec[]>> = {
     { key: 'invert', type: 'flag' },
     { key: 'requireUnique', type: 'flag' },
   ],
+  memory: [
+    { key: 'rows', type: 'int', min: 2, max: 8 },
+    { key: 'cols', type: 'int', min: 2, max: 8 },
+    { key: 'labels', type: 'lines' },
+  ],
 };
 
 const ANGLES = [0, 90, 180, 270] as const;
@@ -137,7 +143,7 @@ label { display: grid; gap: 0.25rem; font-size: 0.875rem; }
 .inline { display: flex; flex-wrap: wrap; gap: 0.5rem 1rem; }
 .inline label { display: flex; align-items: center; gap: 0.375rem; }
 input, select, button { font: inherit; font-size: 0.875rem; color: var(--ipp-fg); }
-input[type='number'], select { min-height: 2.5rem; padding: 0.25rem 0.5rem; border: 1px solid var(--ipp-border); border-radius: var(--ipp-radius); background: var(--ipp-bg); width: 100%; }
+input[type='number'], select, textarea { min-height: 2.5rem; padding: 0.25rem 0.5rem; border: 1px solid var(--ipp-border); border-radius: var(--ipp-radius); background: var(--ipp-bg); width: 100%; }
 input[type='checkbox'] { width: 1.125rem; height: 1.125rem; accent-color: var(--ipp-accent); }
 input[aria-invalid='true'], select[aria-invalid='true'] { border-color: var(--ipp-error); }
 .row { display: flex; gap: 0.5rem; align-items: end; }
@@ -358,6 +364,26 @@ export function createConfigurator(target: HTMLElement | ShadowRoot, options: Co
         customBody.append(label);
         continue;
       }
+      if (field.type === 'lines') {
+        // One entry per line; an empty box leaves the key out.
+        const label = el(doc, 'label', { style: 'grid-column: 1 / -1' });
+        const area = el(doc, 'textarea', { name: field.key, rows: '4', 'data-field': `custom.${field.key}` });
+        const value = draft.custom[field.key];
+        area.value = Array.isArray(value) ? value.filter((line): line is string => typeof line === 'string').join('\n') : '';
+        area.disabled = disabled;
+        area.addEventListener('input', () => {
+          const lines = area.value
+            .split('\n')
+            .map((line) => line.trim())
+            .filter((line) => line !== '');
+          if (lines.length === 0) Reflect.deleteProperty(draft.custom, field.key);
+          else draft.custom[field.key] = lines;
+          update();
+        });
+        label.append(el(doc, 'span', {}, `${fieldLabel(field.key)} ${messages.optional}`), area);
+        customBody.append(label);
+        continue;
+      }
       const label = el(doc, 'label');
       const text = el(
         doc,
@@ -442,7 +468,9 @@ export function createConfigurator(target: HTMLElement | ShadowRoot, options: Co
     for (const control of [kindSelect, presetSelect, seedInput, seedButton, cropReset, ...Object.values(cropInputs)]) {
       control.disabled = disabled;
     }
-    for (const control of customBody.querySelectorAll<HTMLInputElement | HTMLSelectElement>('input, select')) {
+    for (const control of customBody.querySelectorAll<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>(
+      'input, select, textarea',
+    )) {
       control.disabled = disabled;
     }
     cropReset.disabled = disabled || draft.crop === null;

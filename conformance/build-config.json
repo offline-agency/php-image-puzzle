@@ -40,6 +40,12 @@
             "invert",
             "requireUnique",
             "assistance"
+        ],
+        "memory": [
+            "rows",
+            "cols",
+            "labels",
+            "assistance"
         ]
     },
     "cases": [
@@ -209,8 +215,14 @@
                 "preset": "easy",
                 "seed": 0
             },
-            "valid": false,
-            "error": "config.kind must be one of sliding, swap, rotation, strips, jigsaw, nonogram."
+            "valid": true,
+            "normalized": {
+                "format": "image-puzzle/build-config",
+                "version": 1,
+                "kind": "memory",
+                "preset": "easy",
+                "seed": 0
+            }
         },
         {
             "document": {

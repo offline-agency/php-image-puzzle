@@ -22,6 +22,14 @@ test.describe('plain JavaScript player (examples/player/index.html)', () => {
           cells[last - 1] = null;
           player.importState({ ...player.exportState(), board: { cells }, history: { past: [], future: [] }, completed: false });
           player.dispatchAction({ type: 'slide', tile: cells[last] });
+        } else if (definition.kind === 'memory') {
+          // No hints in memory: flip both cards of every pair.
+          for (const tile of definition.tiles) {
+            if (player.engine.status !== 'complete' && tile.id.endsWith('-a')) {
+              player.dispatchAction({ type: 'flip', card: tile.id });
+              player.dispatchAction({ type: 'flip', card: tile.id.replace(/-a$/, '-b') });
+            }
+          }
         } else {
           for (let i = 0; i < 500 && player.engine.status !== 'complete'; i++) {
             const action = player.engine.hint();

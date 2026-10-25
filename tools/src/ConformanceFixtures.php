@@ -52,6 +52,8 @@ final class ConformanceFixtures
             'strips-vertical' => $factory->create(GameKind::Strips, $source, 'source.png', 'custom', ['count' => 5, 'axis' => 'vertical'], 16),
             'jigsaw' => self::jigsaw($factory, 'rect', 2, 3),
             'jigsaw-hex' => self::jigsaw($factory, 'hex', 2, 2),
+            'memory' => $factory->create(GameKind::Memory, $source, 'source.png', 'easy', [], 18),
+            'memory-labels' => $factory->create(GameKind::Memory, $source, 'source.png', 'custom', ['rows' => 2, 'cols' => 3, 'labels' => ['one', 'two', 'drei']], 19),
             'nonogram' => self::nonogram($factory, ['..##..', '.####.', '######', '##..##', '#....#', '######']),
             // Two diagonals: the clues also fit the mirrored picture.
             'nonogram-ambiguous' => self::nonogram($factory, ['#...', '.#..', '..#.', '...#']),
@@ -280,7 +282,8 @@ final class ConformanceFixtures
             $action = $rules->hint($definition, $board) ?? $rules->legalActions($definition, $board)[0];
             $steps[] = self::step($definition, $board, $action);
             $board = $rules->apply($definition, $board, $action);
-            if ($definition->kind === GameKind::Sliding && $i >= 12) {
+            // Sliding has no hints and memory none either: a short prefix is enough.
+            if (($definition->kind === GameKind::Sliding || $definition->kind === GameKind::Memory) && $i >= 12) {
                 break;
             }
         }
@@ -349,6 +352,12 @@ final class ConformanceFixtures
 
                 return ['pieces' => $pieces];
             })(),
+            GameKind::Memory => (static function () use ($solved): array {
+                $ids = self::asList($solved['cards']);
+                $last = array_slice($ids, -2);
+
+                return ['cards' => $ids, 'matched' => array_slice($ids, 0, -2), 'revealed' => [$last[0]]];
+            })(),
             default => $rules->apply($definition, $solved, $rules->legalActions($definition, $solved)[0]),
         };
     }
@@ -406,6 +415,12 @@ final class ConformanceFixtures
                 ['type' => 'place', 'piece' => $first, 'x' => -500, 'y' => 0],
                 ['type' => 'place', 'piece' => 'zz', 'x' => 0, 'y' => 0],
                 ['type' => 'place', 'piece' => $first, 'x' => 1.5, 'y' => 0],
+            ],
+            GameKind::Memory => [
+                ['type' => 'flip', 'card' => 'zz'],
+                ['type' => 'flip', 'card' => 'p0-a', 'peek' => true],
+                ['type' => 'conceal'],
+                ['type' => 'flip', 'card' => 'P0-A'],
             ],
             GameKind::Nonogram => [
                 ['type' => 'mark', 'cell' => 0, 'state' => 'unknown'],
@@ -491,6 +506,14 @@ final class ConformanceFixtures
                 ['name' => 'placed away from home', 'board' => ['pieces' => self::replaceAt($solved['pieces'], 0, ['x' => 1, 'y' => 1, 'placed' => true])]],
                 ['name' => 'inside snap zone but loose', 'board' => ['pieces' => self::replaceAt($solved['pieces'], 0, self::loose($solved['pieces']))]],
                 ['name' => 'outside area', 'board' => ['pieces' => self::replaceAt($solved['pieces'], 0, ['x' => -9999, 'y' => 0, 'placed' => false])]],
+            ],
+            GameKind::Memory => [
+                ['name' => 'one pair matched, a mismatch face up', 'board' => ['cards' => $solved['cards'], 'matched' => ['p0-b', 'p0-a'], 'revealed' => ['p1-a', 'p2-b']]],
+                ['name' => 'half a pair matched', 'board' => ['cards' => $solved['cards'], 'matched' => ['p0-a'], 'revealed' => []]],
+                ['name' => 'matched card face up', 'board' => ['cards' => $solved['cards'], 'matched' => ['p0-a', 'p0-b'], 'revealed' => ['p0-a']]],
+                ['name' => 'unresolved pair face up', 'board' => ['cards' => $solved['cards'], 'matched' => [], 'revealed' => ['p1-a', 'p1-b']]],
+                ['name' => 'three face up', 'board' => ['cards' => $solved['cards'], 'matched' => [], 'revealed' => ['p0-a', 'p1-a', 'p2-a']]],
+                ['name' => 'repeated card', 'board' => ['cards' => self::replace($solved['cards'], 'p1-a', 'p0-a'), 'matched' => [], 'revealed' => []]],
             ],
             GameKind::Nonogram => [
                 ['name' => 'partly marked', 'board' => ['cells' => '1x' . str_repeat('.', $cells - 2)]],

@@ -1,0 +1,170 @@
+{
+    "id": "gd1-d8985c376dd4f7c5c1b581c4a0b1af75e4411dc8efea9ad13bc53d8610429e97",
+    "$schema": "https://raw.githubusercontent.com/offline-agency/php-image-puzzle/HEAD/docs/schemas/game/v1/definition.schema.json",
+    "format": "image-puzzle/game-definition",
+    "version": 1,
+    "kind": "memory",
+    "generator": {
+        "algorithm": 1
+    },
+    "seed": 8,
+    "preset": {
+        "name": "custom",
+        "version": 1
+    },
+    "source": {
+        "width": 640,
+        "height": 480,
+        "sha256": "ddeb783c0a5e5bc2927c98903abcebdbaa01ccae446c8337c2278a8f3901b80d"
+    },
+    "media": {
+        "image": "picture.png"
+    },
+    "board": {
+        "rows": 2,
+        "cols": 4,
+        "crop": {
+            "x": 0,
+            "y": 0,
+            "width": 640,
+            "height": 480
+        }
+    },
+    "tiles": [
+        {
+            "id": "p0-a",
+            "home": 0,
+            "rect": {
+                "x": 0,
+                "y": 0,
+                "width": 320,
+                "height": 240
+            },
+            "pair": "p0",
+            "face": "image"
+        },
+        {
+            "id": "p0-b",
+            "home": 1,
+            "rect": {
+                "x": 0,
+                "y": 0,
+                "width": 320,
+                "height": 240
+            },
+            "pair": "p0",
+            "face": "text",
+            "text": "Yellow"
+        },
+        {
+            "id": "p1-a",
+            "home": 2,
+            "rect": {
+                "x": 320,
+                "y": 0,
+                "width": 320,
+                "height": 240
+            },
+            "pair": "p1",
+            "face": "image"
+        },
+        {
+            "id": "p1-b",
+            "home": 3,
+            "rect": {
+                "x": 320,
+                "y": 0,
+                "width": 320,
+                "height": 240
+            },
+            "pair": "p1",
+            "face": "text",
+            "text": "Green"
+        },
+        {
+            "id": "p2-a",
+            "home": 4,
+            "rect": {
+                "x": 0,
+                "y": 240,
+                "width": 320,
+                "height": 240
+            },
+            "pair": "p2",
+            "face": "image"
+        },
+        {
+            "id": "p2-b",
+            "home": 5,
+            "rect": {
+                "x": 0,
+                "y": 240,
+                "width": 320,
+                "height": 240
+            },
+            "pair": "p2",
+            "face": "text",
+            "text": "Purple"
+        },
+        {
+            "id": "p3-a",
+            "home": 6,
+            "rect": {
+                "x": 320,
+                "y": 240,
+                "width": 320,
+                "height": 240
+            },
+            "pair": "p3",
+            "face": "image"
+        },
+        {
+            "id": "p3-b",
+            "home": 7,
+            "rect": {
+                "x": 320,
+                "y": 240,
+                "width": 320,
+                "height": 240
+            },
+            "pair": "p3",
+            "face": "text",
+            "text": "Red"
+        }
+    ],
+    "rules": {
+        "regions": {
+            "rows": 2,
+            "cols": 2
+        }
+    },
+    "actions": [
+        "flip"
+    ],
+    "capabilities": {
+        "undo": false,
+        "redo": false,
+        "reset": true,
+        "shuffle": true,
+        "hint": false
+    },
+    "assistance": {
+        "preview": true,
+        "numbers": false,
+        "highlightCorrect": false
+    },
+    "initial": {
+        "cards": [
+            "p1-a",
+            "p2-a",
+            "p2-b",
+            "p0-a",
+            "p1-b",
+            "p0-b",
+            "p3-a",
+            "p3-b"
+        ],
+        "matched": [],
+        "revealed": []
+    }
+}

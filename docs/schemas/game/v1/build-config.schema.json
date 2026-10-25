@@ -9,7 +9,7 @@
     "$schema": { "type": "string" },
     "format": { "const": "image-puzzle/build-config" },
     "version": { "const": 1 },
-    "kind": { "enum": ["sliding", "swap", "rotation", "strips", "jigsaw", "nonogram"] },
+    "kind": { "enum": ["sliding", "swap", "rotation", "strips", "jigsaw", "nonogram", "memory"] },
     "preset": { "enum": ["easy", "medium", "hard", "custom"] },
     "custom": { "type": "object", "minProperties": 1 },
     "seed": { "type": "integer", "minimum": 0, "maximum": 4294967295 },
@@ -54,7 +54,11 @@
     },
     {
       "if": { "properties": { "kind": { "const": "nonogram" } } },
-      "then": { "properties": { "custom": { "propertyNames": { "enum": ["rows", "cols", "threshold", "invert", "requireUnique"] } } } }
+      "then": { "properties": { "custom": { "propertyNames": { "enum": ["rows", "cols", "threshold", "invert", "requireUnique", "assistance"] } } } }
+    },
+    {
+      "if": { "properties": { "kind": { "const": "memory" } } },
+      "then": { "properties": { "custom": { "propertyNames": { "enum": ["rows", "cols", "labels", "assistance"] } } } }
     }
   ]
 }

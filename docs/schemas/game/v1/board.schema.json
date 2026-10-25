@@ -47,6 +47,16 @@
       },
       "additionalProperties": false
     },
+    "memory": {
+      "type": "object",
+      "required": ["cards", "matched", "revealed"],
+      "properties": {
+        "cards": { "type": "array", "minItems": 4, "maxItems": 64, "uniqueItems": true, "items": { "$ref": "#/$defs/id" }, "description": "Card IDs by position, row-major." },
+        "matched": { "type": "array", "maxItems": 64, "uniqueItems": true, "items": { "$ref": "#/$defs/id" }, "description": "Matched cards in the order they were matched." },
+        "revealed": { "type": "array", "maxItems": 2, "uniqueItems": true, "items": { "$ref": "#/$defs/id" }, "description": "Unmatched face-up cards; two means a mismatch that the next flip turns face down." }
+      },
+      "additionalProperties": false
+    },
     "nonogram": {
       "type": "object",
       "required": ["cells"],
@@ -60,6 +70,7 @@
         { "$ref": "#/$defs/rotation" },
         { "$ref": "#/$defs/strips" },
         { "$ref": "#/$defs/jigsaw" },
+        { "$ref": "#/$defs/memory" },
         { "$ref": "#/$defs/nonogram" }
       ]
     }

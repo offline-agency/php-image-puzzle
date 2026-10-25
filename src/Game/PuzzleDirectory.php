@@ -110,8 +110,9 @@ final readonly class PuzzleDirectory
      */
     public function outlines(): array
     {
-        if ($this->definition->tiles === []) {
-            // A nonogram is drawn by the player; printing its picture would print the solution.
+        if (in_array($this->definition->kind, [GameKind::Nonogram, GameKind::Memory], true)) {
+            // A nonogram's picture is its solution; memory cards come in identical
+            // pairs that one cut sheet cannot hold.
             throw new InvalidArgumentException("A {$this->definition->kind->value} puzzle has no pieces to cut; play it in the browser or export a bundle.");
         }
         $outlines = [];

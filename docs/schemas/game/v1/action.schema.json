@@ -36,6 +36,12 @@
     },
     {
       "type": "object",
+      "required": ["type", "card"],
+      "properties": { "type": { "const": "flip" }, "card": { "$ref": "#/$defs/id" } },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
       "required": ["type", "cell", "state"],
       "properties": { "type": { "const": "mark" }, "cell": { "type": "integer", "minimum": 0 }, "state": { "enum": ["filled", "crossed", "unknown"] } },
       "additionalProperties": false

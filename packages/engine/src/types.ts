@@ -100,7 +100,16 @@ export interface NonogramBoard {
   readonly cells: string;
 }
 
-export type Board = SlidingBoard | SwapBoard | RotationBoard | StripsBoard | JigsawBoard | NonogramBoard;
+export interface MemoryBoard {
+  /** Card IDs by position, row-major. */
+  readonly cards: readonly string[];
+  /** Matched cards in the order they were matched. */
+  readonly matched: readonly string[];
+  /** Unmatched face-up cards; two means a mismatch that the next flip turns face down. */
+  readonly revealed: readonly string[];
+}
+
+export type Board = SlidingBoard | SwapBoard | RotationBoard | StripsBoard | JigsawBoard | NonogramBoard | MemoryBoard;
 
 export type NonogramMark = 'filled' | 'crossed' | 'unknown';
 
@@ -110,7 +119,8 @@ export type Action =
   | { readonly type: 'rotate'; readonly tile: string; readonly direction: 'cw' | 'ccw' }
   | { readonly type: 'move'; readonly strip: string; readonly to: number }
   | { readonly type: 'place'; readonly piece: string; readonly x: number; readonly y: number }
-  | { readonly type: 'mark'; readonly cell: number; readonly state: NonogramMark };
+  | { readonly type: 'mark'; readonly cell: number; readonly state: NonogramMark }
+  | { readonly type: 'flip'; readonly card: string };
 
 /** Exported state document (docs/schemas/game/v1/state.schema.json). */
 export interface GameStateDocument {

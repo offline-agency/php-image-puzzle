@@ -10,6 +10,7 @@ use ImagePuzzle\Exception\InvalidDefinitionException;
 use ImagePuzzle\Game\Nonogram\NonogramGenerator;
 use ImagePuzzle\Game\Nonogram\NonogramSolver;
 use ImagePuzzle\Game\Rules\JigsawRules;
+use ImagePuzzle\Game\Rules\MemoryRules;
 use ImagePuzzle\Geometry\Bounds;
 
 /**
@@ -29,6 +30,7 @@ final class GameFactory
         'rotation' => ['rows', 'cols', 'orientations'],
         'strips' => ['count', 'axis'],
         'nonogram' => ['rows', 'cols', 'threshold', 'invert', 'requireUnique'],
+        'memory' => ['rows', 'cols', 'labels'],
     ];
 
     /**
@@ -53,6 +55,7 @@ final class GameFactory
             GameKind::Swap => $this->grid($kind, $source, $image, $preset, $seed, self::side($params, 'rows', 1, 16), self::side($params, 'cols', 1, 16), $assistance, false, static fn (): array => []),
             GameKind::Rotation => $this->rotation($source, $image, $preset, $seed, $params, $assistance),
             GameKind::Strips => $this->strips($source, $image, $preset, $seed, $params, $assistance),
+            GameKind::Memory => $this->memory($source, $image, $preset, $seed, $params, $assistance),
             default => throw new InvalidArgumentException("The {$kind->value} mode has its own factory."),
         };
     }
@@ -241,6 +244,74 @@ final class GameFactory
         }
 
         return GameDefinition::create($kind, $seed, $preset, Presets::VERSION, $source->width, $source->height, $source->sha256, $image, $rows, $cols, $crop, $tiles, $rules($tiles), $assistance);
+    }
+
+    /**
+     * Memory cards: one image region per pair, the regions as close to square
+     * as the pair count allows. With "labels" (one per pair), the second card
+     * of each pair shows its label instead of the picture.
+     *
+     * @param array<string, mixed> $params
+     * @param array{preview: bool, numbers: bool, highlightCorrect: bool} $assistance
+     */
+    private function memory(SourceImage $source, string $image, string $preset, int $seed, array $params, array $assistance): GameDefinition
+    {
+        $rows = self::side($params, 'rows', MemoryRules::MIN_SIDE, MemoryRules::MAX_SIDE);
+        $cols = self::side($params, 'cols', MemoryRules::MIN_SIDE, MemoryRules::MAX_SIDE);
+        if (($rows * $cols) % 2 !== 0) {
+            throw new InvalidArgumentException("A memory board needs an even number of cards, got {$rows}x{$cols}.");
+        }
+        $pairs = intdiv($rows * $cols, 2);
+        $labels = null;
+        if (isset($params['labels'])) {
+            $labels = [];
+            foreach (Doc::list($params['labels'], 'parameters.labels', $pairs) as $i => $label) {
+                $labels[] = MemoryRules::text($label, "parameters.labels[{$i}]");
+            }
+            if (count($labels) !== $pairs) {
+                throw new InvalidArgumentException("parameters.labels needs one label per pair ({$pairs}), got " . count($labels) . '.');
+            }
+        }
+        [$regionRows, $regionCols] = self::regions($pairs, $source->width, $source->height);
+        $w = intdiv($source->width, $regionCols);
+        $h = intdiv($source->height, $regionRows);
+        if ($w < 1 || $h < 1) {
+            throw new InvalidArgumentException("A {$source->width}x{$source->height} image cannot hold {$pairs} memory pictures.");
+        }
+        $crop = new Bounds(intdiv($source->width - $w * $regionCols, 2), intdiv($source->height - $h * $regionRows, 2), Doc::positiveValue($w * $regionCols, 'crop width'), Doc::positiveValue($h * $regionRows, 'crop height'));
+        $tiles = [];
+        for ($pair = 0; $pair < $pairs; $pair++) {
+            $rect = new Bounds($crop->x + ($pair % $regionCols) * $w, $crop->y + intdiv($pair, $regionCols) * $h, Doc::positiveValue($w, 'region width'), Doc::positiveValue($h, 'region height'));
+            $tiles[] = new Tile("p{$pair}-a", 2 * $pair, $rect, ['pair' => "p{$pair}", 'face' => 'image']);
+            $tiles[] = new Tile("p{$pair}-b", 2 * $pair + 1, $rect, $labels === null ? ['pair' => "p{$pair}", 'face' => 'image'] : ['pair' => "p{$pair}", 'face' => 'text', 'text' => $labels[$pair]]);
+        }
+
+        return GameDefinition::create(GameKind::Memory, $seed, $preset, Presets::VERSION, $source->width, $source->height, $source->sha256, $image, $rows, $cols, $crop, $tiles, ['regions' => ['rows' => $regionRows, 'cols' => $regionCols]], $assistance);
+    }
+
+    /**
+     * Rows and columns of $count equal regions of a width x height image whose
+     * cells are closest to square (fewer rows on a tie).
+     *
+     * @return array{0: int, 1: int}
+     */
+    public static function regions(int $count, int $width, int $height): array
+    {
+        $best = [1, $count];
+        $bestScore = INF;
+        for ($rows = 1; $rows <= $count; $rows++) {
+            if ($count % $rows !== 0) {
+                continue;
+            }
+            $cols = intdiv($count, $rows);
+            $score = abs(log(($width / $cols) / ($height / $rows)));
+            if ($score < $bestScore - 1e-9) {
+                $best = [$rows, $cols];
+                $bestScore = $score;
+            }
+        }
+
+        return $best;
     }
 
     /**

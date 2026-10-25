@@ -191,6 +191,41 @@
       }
     },
     {
+      "if": { "properties": { "kind": { "const": "memory" } } },
+      "then": {
+        "properties": {
+          "actions": { "const": ["flip"] },
+          "board": { "properties": { "rows": { "minimum": 2, "maximum": 8 }, "cols": { "minimum": 2, "maximum": 8 } } },
+          "tiles": {
+            "minItems": 4,
+            "maxItems": 64,
+            "items": {
+              "required": ["pair", "face"],
+              "properties": {
+                "pair": { "type": "string", "pattern": "^p[0-9]{1,2}$" },
+                "face": { "enum": ["image", "text"] },
+                "text": { "type": "string", "minLength": 1, "maxLength": 120 }
+              }
+            }
+          },
+          "rules": {
+            "type": "object",
+            "required": ["regions"],
+            "properties": {
+              "regions": {
+                "type": "object",
+                "required": ["rows", "cols"],
+                "properties": { "rows": { "type": "integer", "minimum": 1, "maximum": 32 }, "cols": { "type": "integer", "minimum": 1, "maximum": 32 } },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          "initial": { "$ref": "board.schema.json#/$defs/memory" }
+        }
+      }
+    },
+    {
       "if": { "properties": { "kind": { "const": "nonogram" } } },
       "then": {
         "properties": {
@@ -248,7 +283,10 @@
         "rect": { "$ref": "#/$defs/rect" },
         "rendered": { "$ref": "#/$defs/rect" },
         "image": { "type": "string", "pattern": "^[A-Za-z0-9_][A-Za-z0-9._-]*(/[A-Za-z0-9_][A-Za-z0-9._-]*)*$" },
-        "path": { "type": "string", "pattern": "^M[-0-9. LZ]+$" }
+        "path": { "type": "string", "pattern": "^M[-0-9. LZ]+$" },
+        "pair": { "type": "string" },
+        "face": { "type": "string" },
+        "text": { "type": "string" }
       },
       "additionalProperties": false
     }

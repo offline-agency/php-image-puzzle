@@ -1,0 +1,1213 @@
+{
+    "name": "memory",
+    "definition": {
+        "id": "gd1-e4423934ba72db6fa539c63ea5756a103d523720f2d1834f29c862a79b569031",
+        "$schema": "https://raw.githubusercontent.com/offline-agency/php-image-puzzle/HEAD/docs/schemas/game/v1/definition.schema.json",
+        "format": "image-puzzle/game-definition",
+        "version": 1,
+        "kind": "memory",
+        "generator": {
+            "algorithm": 1
+        },
+        "seed": 18,
+        "preset": {
+            "name": "easy",
+            "version": 1
+        },
+        "source": {
+            "width": 640,
+            "height": 480,
+            "sha256": "4d6255a6c425d543f7f9167565e0c111596081fe6a2e6eb6f238296e9b24e704"
+        },
+        "media": {
+            "image": "source.png"
+        },
+        "board": {
+            "rows": 3,
+            "cols": 4,
+            "crop": {
+                "x": 0,
+                "y": 0,
+                "width": 639,
+                "height": 480
+            }
+        },
+        "tiles": [
+            {
+                "id": "p0-a",
+                "home": 0,
+                "rect": {
+                    "x": 0,
+                    "y": 0,
+                    "width": 213,
+                    "height": 240
+                },
+                "pair": "p0",
+                "face": "image"
+            },
+            {
+                "id": "p0-b",
+                "home": 1,
+                "rect": {
+                    "x": 0,
+                    "y": 0,
+                    "width": 213,
+                    "height": 240
+                },
+                "pair": "p0",
+                "face": "image"
+            },
+            {
+                "id": "p1-a",
+                "home": 2,
+                "rect": {
+                    "x": 213,
+                    "y": 0,
+                    "width": 213,
+                    "height": 240
+                },
+                "pair": "p1",
+                "face": "image"
+            },
+            {
+                "id": "p1-b",
+                "home": 3,
+                "rect": {
+                    "x": 213,
+                    "y": 0,
+                    "width": 213,
+                    "height": 240
+                },
+                "pair": "p1",
+                "face": "image"
+            },
+            {
+                "id": "p2-a",
+                "home": 4,
+                "rect": {
+                    "x": 426,
+                    "y": 0,
+                    "width": 213,
+                    "height": 240
+                },
+                "pair": "p2",
+                "face": "image"
+            },
+            {
+                "id": "p2-b",
+                "home": 5,
+                "rect": {
+                    "x": 426,
+                    "y": 0,
+                    "width": 213,
+                    "height": 240
+                },
+                "pair": "p2",
+                "face": "image"
+            },
+            {
+                "id": "p3-a",
+                "home": 6,
+                "rect": {
+                    "x": 0,
+                    "y": 240,
+                    "width": 213,
+                    "height": 240
+                },
+                "pair": "p3",
+                "face": "image"
+            },
+            {
+                "id": "p3-b",
+                "home": 7,
+                "rect": {
+                    "x": 0,
+                    "y": 240,
+                    "width": 213,
+                    "height": 240
+                },
+                "pair": "p3",
+                "face": "image"
+            },
+            {
+                "id": "p4-a",
+                "home": 8,
+                "rect": {
+                    "x": 213,
+                    "y": 240,
+                    "width": 213,
+                    "height": 240
+                },
+                "pair": "p4",
+                "face": "image"
+            },
+            {
+                "id": "p4-b",
+                "home": 9,
+                "rect": {
+                    "x": 213,
+                    "y": 240,
+                    "width": 213,
+                    "height": 240
+                },
+                "pair": "p4",
+                "face": "image"
+            },
+            {
+                "id": "p5-a",
+                "home": 10,
+                "rect": {
+                    "x": 426,
+                    "y": 240,
+                    "width": 213,
+                    "height": 240
+                },
+                "pair": "p5",
+                "face": "image"
+            },
+            {
+                "id": "p5-b",
+                "home": 11,
+                "rect": {
+                    "x": 426,
+                    "y": 240,
+                    "width": 213,
+                    "height": 240
+                },
+                "pair": "p5",
+                "face": "image"
+            }
+        ],
+        "rules": {
+            "regions": {
+                "rows": 2,
+                "cols": 3
+            }
+        },
+        "actions": [
+            "flip"
+        ],
+        "capabilities": {
+            "undo": false,
+            "redo": false,
+            "reset": true,
+            "shuffle": true,
+            "hint": false
+        },
+        "assistance": {
+            "preview": true,
+            "numbers": false,
+            "highlightCorrect": true
+        },
+        "initial": {
+            "cards": [
+                "p1-b",
+                "p5-b",
+                "p2-a",
+                "p1-a",
+                "p4-b",
+                "p0-b",
+                "p0-a",
+                "p2-b",
+                "p5-a",
+                "p3-a",
+                "p4-a",
+                "p3-b"
+            ],
+            "matched": [],
+            "revealed": []
+        }
+    },
+    "solved": {
+        "cards": [
+            "p0-a",
+            "p0-b",
+            "p1-a",
+            "p1-b",
+            "p2-a",
+            "p2-b",
+            "p3-a",
+            "p3-b",
+            "p4-a",
+            "p4-b",
+            "p5-a",
+            "p5-b"
+        ],
+        "matched": [
+            "p0-a",
+            "p0-b",
+            "p1-a",
+            "p1-b",
+            "p2-a",
+            "p2-b",
+            "p3-a",
+            "p3-b",
+            "p4-a",
+            "p4-b",
+            "p5-a",
+            "p5-b"
+        ],
+        "revealed": []
+    },
+    "scrambles": [
+        {
+            "seed": 0,
+            "board": {
+                "cards": [
+                    "p3-b",
+                    "p4-b",
+                    "p1-b",
+                    "p2-b",
+                    "p5-a",
+                    "p2-a",
+                    "p3-a",
+                    "p4-a",
+                    "p0-a",
+                    "p0-b",
+                    "p5-b",
+                    "p1-a"
+                ],
+                "matched": [],
+                "revealed": []
+            }
+        },
+        {
+            "seed": 1,
+            "board": {
+                "cards": [
+                    "p2-a",
+                    "p3-b",
+                    "p4-a",
+                    "p4-b",
+                    "p5-b",
+                    "p1-a",
+                    "p3-a",
+                    "p0-b",
+                    "p0-a",
+                    "p2-b",
+                    "p1-b",
+                    "p5-a"
+                ],
+                "matched": [],
+                "revealed": []
+            }
+        },
+        {
+            "seed": 2,
+            "board": {
+                "cards": [
+                    "p0-b",
+                    "p1-a",
+                    "p2-b",
+                    "p2-a",
+                    "p0-a",
+                    "p4-a",
+                    "p3-b",
+                    "p5-b",
+                    "p1-b",
+                    "p3-a",
+                    "p4-b",
+                    "p5-a"
+                ],
+                "matched": [],
+                "revealed": []
+            }
+        },
+        {
+            "seed": 99,
+            "board": {
+                "cards": [
+                    "p2-a",
+                    "p0-a",
+                    "p5-b",
+                    "p1-b",
+                    "p0-b",
+                    "p5-a",
+                    "p3-a",
+                    "p3-b",
+                    "p4-a",
+                    "p1-a",
+                    "p2-b",
+                    "p4-b"
+                ],
+                "matched": [],
+                "revealed": []
+            }
+        },
+        {
+            "seed": 4294967295,
+            "board": {
+                "cards": [
+                    "p2-b",
+                    "p3-b",
+                    "p3-a",
+                    "p4-a",
+                    "p1-a",
+                    "p0-a",
+                    "p5-a",
+                    "p4-b",
+                    "p2-a",
+                    "p1-b",
+                    "p0-b",
+                    "p5-b"
+                ],
+                "matched": [],
+                "revealed": []
+            }
+        }
+    ],
+    "legalActions": [
+        {
+            "type": "flip",
+            "card": "p1-b"
+        },
+        {
+            "type": "flip",
+            "card": "p5-b"
+        },
+        {
+            "type": "flip",
+            "card": "p2-a"
+        },
+        {
+            "type": "flip",
+            "card": "p1-a"
+        },
+        {
+            "type": "flip",
+            "card": "p4-b"
+        },
+        {
+            "type": "flip",
+            "card": "p0-b"
+        },
+        {
+            "type": "flip",
+            "card": "p0-a"
+        },
+        {
+            "type": "flip",
+            "card": "p2-b"
+        },
+        {
+            "type": "flip",
+            "card": "p5-a"
+        },
+        {
+            "type": "flip",
+            "card": "p3-a"
+        },
+        {
+            "type": "flip",
+            "card": "p4-a"
+        },
+        {
+            "type": "flip",
+            "card": "p3-b"
+        }
+    ],
+    "cases": [
+        {
+            "name": "play from initial",
+            "board": {
+                "cards": [
+                    "p1-b",
+                    "p5-b",
+                    "p2-a",
+                    "p1-a",
+                    "p4-b",
+                    "p0-b",
+                    "p0-a",
+                    "p2-b",
+                    "p5-a",
+                    "p3-a",
+                    "p4-a",
+                    "p3-b"
+                ],
+                "matched": [],
+                "revealed": []
+            },
+            "steps": [
+                {
+                    "action": {
+                        "type": "flip",
+                        "card": "p1-b"
+                    },
+                    "result": "ok",
+                    "board": {
+                        "cards": [
+                            "p1-b",
+                            "p5-b",
+                            "p2-a",
+                            "p1-a",
+                            "p4-b",
+                            "p0-b",
+                            "p0-a",
+                            "p2-b",
+                            "p5-a",
+                            "p3-a",
+                            "p4-a",
+                            "p3-b"
+                        ],
+                        "matched": [],
+                        "revealed": [
+                            "p1-b"
+                        ]
+                    },
+                    "complete": false,
+                    "progress": 0,
+                    "hint": null
+                },
+                {
+                    "action": {
+                        "type": "flip",
+                        "card": "p5-b"
+                    },
+                    "result": "ok",
+                    "board": {
+                        "cards": [
+                            "p1-b",
+                            "p5-b",
+                            "p2-a",
+                            "p1-a",
+                            "p4-b",
+                            "p0-b",
+                            "p0-a",
+                            "p2-b",
+                            "p5-a",
+                            "p3-a",
+                            "p4-a",
+                            "p3-b"
+                        ],
+                        "matched": [],
+                        "revealed": [
+                            "p1-b",
+                            "p5-b"
+                        ]
+                    },
+                    "complete": false,
+                    "progress": 0,
+                    "hint": null
+                },
+                {
+                    "action": {
+                        "type": "flip",
+                        "card": "p1-b"
+                    },
+                    "result": "ok",
+                    "board": {
+                        "cards": [
+                            "p1-b",
+                            "p5-b",
+                            "p2-a",
+                            "p1-a",
+                            "p4-b",
+                            "p0-b",
+                            "p0-a",
+                            "p2-b",
+                            "p5-a",
+                            "p3-a",
+                            "p4-a",
+                            "p3-b"
+                        ],
+                        "matched": [],
+                        "revealed": [
+                            "p1-b"
+                        ]
+                    },
+                    "complete": false,
+                    "progress": 0,
+                    "hint": null
+                },
+                {
+                    "action": {
+                        "type": "flip",
+                        "card": "p5-b"
+                    },
+                    "result": "ok",
+                    "board": {
+                        "cards": [
+                            "p1-b",
+                            "p5-b",
+                            "p2-a",
+                            "p1-a",
+                            "p4-b",
+                            "p0-b",
+                            "p0-a",
+                            "p2-b",
+                            "p5-a",
+                            "p3-a",
+                            "p4-a",
+                            "p3-b"
+                        ],
+                        "matched": [],
+                        "revealed": [
+                            "p1-b",
+                            "p5-b"
+                        ]
+                    },
+                    "complete": false,
+                    "progress": 0,
+                    "hint": null
+                },
+                {
+                    "action": {
+                        "type": "flip",
+                        "card": "p1-b"
+                    },
+                    "result": "ok",
+                    "board": {
+                        "cards": [
+                            "p1-b",
+                            "p5-b",
+                            "p2-a",
+                            "p1-a",
+                            "p4-b",
+                            "p0-b",
+                            "p0-a",
+                            "p2-b",
+                            "p5-a",
+                            "p3-a",
+                            "p4-a",
+                            "p3-b"
+                        ],
+                        "matched": [],
+                        "revealed": [
+                            "p1-b"
+                        ]
+                    },
+                    "complete": false,
+                    "progress": 0,
+                    "hint": null
+                },
+                {
+                    "action": {
+                        "type": "flip",
+                        "card": "p5-b"
+                    },
+                    "result": "ok",
+                    "board": {
+                        "cards": [
+                            "p1-b",
+                            "p5-b",
+                            "p2-a",
+                            "p1-a",
+                            "p4-b",
+                            "p0-b",
+                            "p0-a",
+                            "p2-b",
+                            "p5-a",
+                            "p3-a",
+                            "p4-a",
+                            "p3-b"
+                        ],
+                        "matched": [],
+                        "revealed": [
+                            "p1-b",
+                            "p5-b"
+                        ]
+                    },
+                    "complete": false,
+                    "progress": 0,
+                    "hint": null
+                },
+                {
+                    "action": {
+                        "type": "flip",
+                        "card": "p1-b"
+                    },
+                    "result": "ok",
+                    "board": {
+                        "cards": [
+                            "p1-b",
+                            "p5-b",
+                            "p2-a",
+                            "p1-a",
+                            "p4-b",
+                            "p0-b",
+                            "p0-a",
+                            "p2-b",
+                            "p5-a",
+                            "p3-a",
+                            "p4-a",
+                            "p3-b"
+                        ],
+                        "matched": [],
+                        "revealed": [
+                            "p1-b"
+                        ]
+                    },
+                    "complete": false,
+                    "progress": 0,
+                    "hint": null
+                },
+                {
+                    "action": {
+                        "type": "flip",
+                        "card": "p5-b"
+                    },
+                    "result": "ok",
+                    "board": {
+                        "cards": [
+                            "p1-b",
+                            "p5-b",
+                            "p2-a",
+                            "p1-a",
+                            "p4-b",
+                            "p0-b",
+                            "p0-a",
+                            "p2-b",
+                            "p5-a",
+                            "p3-a",
+                            "p4-a",
+                            "p3-b"
+                        ],
+                        "matched": [],
+                        "revealed": [
+                            "p1-b",
+                            "p5-b"
+                        ]
+                    },
+                    "complete": false,
+                    "progress": 0,
+                    "hint": null
+                },
+                {
+                    "action": {
+                        "type": "flip",
+                        "card": "p1-b"
+                    },
+                    "result": "ok",
+                    "board": {
+                        "cards": [
+                            "p1-b",
+                            "p5-b",
+                            "p2-a",
+                            "p1-a",
+                            "p4-b",
+                            "p0-b",
+                            "p0-a",
+                            "p2-b",
+                            "p5-a",
+                            "p3-a",
+                            "p4-a",
+                            "p3-b"
+                        ],
+                        "matched": [],
+                        "revealed": [
+                            "p1-b"
+                        ]
+                    },
+                    "complete": false,
+                    "progress": 0,
+                    "hint": null
+                },
+                {
+                    "action": {
+                        "type": "flip",
+                        "card": "p5-b"
+                    },
+                    "result": "ok",
+                    "board": {
+                        "cards": [
+                            "p1-b",
+                            "p5-b",
+                            "p2-a",
+                            "p1-a",
+                            "p4-b",
+                            "p0-b",
+                            "p0-a",
+                            "p2-b",
+                            "p5-a",
+                            "p3-a",
+                            "p4-a",
+                            "p3-b"
+                        ],
+                        "matched": [],
+                        "revealed": [
+                            "p1-b",
+                            "p5-b"
+                        ]
+                    },
+                    "complete": false,
+                    "progress": 0,
+                    "hint": null
+                },
+                {
+                    "action": {
+                        "type": "flip",
+                        "card": "p1-b"
+                    },
+                    "result": "ok",
+                    "board": {
+                        "cards": [
+                            "p1-b",
+                            "p5-b",
+                            "p2-a",
+                            "p1-a",
+                            "p4-b",
+                            "p0-b",
+                            "p0-a",
+                            "p2-b",
+                            "p5-a",
+                            "p3-a",
+                            "p4-a",
+                            "p3-b"
+                        ],
+                        "matched": [],
+                        "revealed": [
+                            "p1-b"
+                        ]
+                    },
+                    "complete": false,
+                    "progress": 0,
+                    "hint": null
+                },
+                {
+                    "action": {
+                        "type": "flip",
+                        "card": "p5-b"
+                    },
+                    "result": "ok",
+                    "board": {
+                        "cards": [
+                            "p1-b",
+                            "p5-b",
+                            "p2-a",
+                            "p1-a",
+                            "p4-b",
+                            "p0-b",
+                            "p0-a",
+                            "p2-b",
+                            "p5-a",
+                            "p3-a",
+                            "p4-a",
+                            "p3-b"
+                        ],
+                        "matched": [],
+                        "revealed": [
+                            "p1-b",
+                            "p5-b"
+                        ]
+                    },
+                    "complete": false,
+                    "progress": 0,
+                    "hint": null
+                },
+                {
+                    "action": {
+                        "type": "flip",
+                        "card": "p1-b"
+                    },
+                    "result": "ok",
+                    "board": {
+                        "cards": [
+                            "p1-b",
+                            "p5-b",
+                            "p2-a",
+                            "p1-a",
+                            "p4-b",
+                            "p0-b",
+                            "p0-a",
+                            "p2-b",
+                            "p5-a",
+                            "p3-a",
+                            "p4-a",
+                            "p3-b"
+                        ],
+                        "matched": [],
+                        "revealed": [
+                            "p1-b"
+                        ]
+                    },
+                    "complete": false,
+                    "progress": 0,
+                    "hint": null
+                }
+            ]
+        },
+        {
+            "name": "last move completes",
+            "board": {
+                "cards": [
+                    "p0-a",
+                    "p0-b",
+                    "p1-a",
+                    "p1-b",
+                    "p2-a",
+                    "p2-b",
+                    "p3-a",
+                    "p3-b",
+                    "p4-a",
+                    "p4-b",
+                    "p5-a",
+                    "p5-b"
+                ],
+                "matched": [
+                    "p0-a",
+                    "p0-b",
+                    "p1-a",
+                    "p1-b",
+                    "p2-a",
+                    "p2-b",
+                    "p3-a",
+                    "p3-b",
+                    "p4-a",
+                    "p4-b"
+                ],
+                "revealed": [
+                    "p5-a"
+                ]
+            },
+            "steps": [
+                {
+                    "action": {
+                        "type": "flip",
+                        "card": "p5-b"
+                    },
+                    "result": "ok",
+                    "board": {
+                        "cards": [
+                            "p0-a",
+                            "p0-b",
+                            "p1-a",
+                            "p1-b",
+                            "p2-a",
+                            "p2-b",
+                            "p3-a",
+                            "p3-b",
+                            "p4-a",
+                            "p4-b",
+                            "p5-a",
+                            "p5-b"
+                        ],
+                        "matched": [
+                            "p0-a",
+                            "p0-b",
+                            "p1-a",
+                            "p1-b",
+                            "p2-a",
+                            "p2-b",
+                            "p3-a",
+                            "p3-b",
+                            "p4-a",
+                            "p4-b",
+                            "p5-a",
+                            "p5-b"
+                        ],
+                        "revealed": []
+                    },
+                    "complete": true,
+                    "progress": 1,
+                    "hint": null
+                }
+            ]
+        },
+        {
+            "name": "rejected actions",
+            "board": {
+                "cards": [
+                    "p1-b",
+                    "p5-b",
+                    "p2-a",
+                    "p1-a",
+                    "p4-b",
+                    "p0-b",
+                    "p0-a",
+                    "p2-b",
+                    "p5-a",
+                    "p3-a",
+                    "p4-a",
+                    "p3-b"
+                ],
+                "matched": [],
+                "revealed": []
+            },
+            "steps": [
+                {
+                    "action": {
+                        "type": "teleport",
+                        "tile": "p0-a"
+                    },
+                    "result": "illegal"
+                },
+                {
+                    "action": {
+                        "type": "flip"
+                    },
+                    "result": "invalid"
+                },
+                {
+                    "action": {
+                        "type": "flip",
+                        "card": "zz"
+                    },
+                    "result": "illegal"
+                },
+                {
+                    "action": {
+                        "type": "flip",
+                        "card": "p0-a",
+                        "peek": true
+                    },
+                    "result": "invalid"
+                },
+                {
+                    "action": {
+                        "type": "conceal"
+                    },
+                    "result": "illegal"
+                },
+                {
+                    "action": {
+                        "type": "flip",
+                        "card": "P0-A"
+                    },
+                    "result": "invalid"
+                }
+            ]
+        }
+    ],
+    "imports": [
+        {
+            "name": "initial",
+            "board": {
+                "cards": [
+                    "p1-b",
+                    "p5-b",
+                    "p2-a",
+                    "p1-a",
+                    "p4-b",
+                    "p0-b",
+                    "p0-a",
+                    "p2-b",
+                    "p5-a",
+                    "p3-a",
+                    "p4-a",
+                    "p3-b"
+                ],
+                "matched": [],
+                "revealed": []
+            },
+            "valid": true
+        },
+        {
+            "name": "solved",
+            "board": {
+                "cards": [
+                    "p0-a",
+                    "p0-b",
+                    "p1-a",
+                    "p1-b",
+                    "p2-a",
+                    "p2-b",
+                    "p3-a",
+                    "p3-b",
+                    "p4-a",
+                    "p4-b",
+                    "p5-a",
+                    "p5-b"
+                ],
+                "matched": [
+                    "p0-a",
+                    "p0-b",
+                    "p1-a",
+                    "p1-b",
+                    "p2-a",
+                    "p2-b",
+                    "p3-a",
+                    "p3-b",
+                    "p4-a",
+                    "p4-b",
+                    "p5-a",
+                    "p5-b"
+                ],
+                "revealed": []
+            },
+            "valid": true
+        },
+        {
+            "name": "not an object",
+            "board": [
+                1,
+                2
+            ],
+            "valid": false
+        },
+        {
+            "name": "unknown field",
+            "board": {
+                "cards": [
+                    "p1-b",
+                    "p5-b",
+                    "p2-a",
+                    "p1-a",
+                    "p4-b",
+                    "p0-b",
+                    "p0-a",
+                    "p2-b",
+                    "p5-a",
+                    "p3-a",
+                    "p4-a",
+                    "p3-b"
+                ],
+                "matched": [],
+                "revealed": [],
+                "cheat": true
+            },
+            "valid": false
+        },
+        {
+            "name": "one pair matched, a mismatch face up",
+            "board": {
+                "cards": [
+                    "p0-a",
+                    "p0-b",
+                    "p1-a",
+                    "p1-b",
+                    "p2-a",
+                    "p2-b",
+                    "p3-a",
+                    "p3-b",
+                    "p4-a",
+                    "p4-b",
+                    "p5-a",
+                    "p5-b"
+                ],
+                "matched": [
+                    "p0-b",
+                    "p0-a"
+                ],
+                "revealed": [
+                    "p1-a",
+                    "p2-b"
+                ]
+            },
+            "valid": true
+        },
+        {
+            "name": "half a pair matched",
+            "board": {
+                "cards": [
+                    "p0-a",
+                    "p0-b",
+                    "p1-a",
+                    "p1-b",
+                    "p2-a",
+                    "p2-b",
+                    "p3-a",
+                    "p3-b",
+                    "p4-a",
+                    "p4-b",
+                    "p5-a",
+                    "p5-b"
+                ],
+                "matched": [
+                    "p0-a"
+                ],
+                "revealed": []
+            },
+            "valid": false
+        },
+        {
+            "name": "matched card face up",
+            "board": {
+                "cards": [
+                    "p0-a",
+                    "p0-b",
+                    "p1-a",
+                    "p1-b",
+                    "p2-a",
+                    "p2-b",
+                    "p3-a",
+                    "p3-b",
+                    "p4-a",
+                    "p4-b",
+                    "p5-a",
+                    "p5-b"
+                ],
+                "matched": [
+                    "p0-a",
+                    "p0-b"
+                ],
+                "revealed": [
+                    "p0-a"
+                ]
+            },
+            "valid": false
+        },
+        {
+            "name": "unresolved pair face up",
+            "board": {
+                "cards": [
+                    "p0-a",
+                    "p0-b",
+                    "p1-a",
+                    "p1-b",
+                    "p2-a",
+                    "p2-b",
+                    "p3-a",
+                    "p3-b",
+                    "p4-a",
+                    "p4-b",
+                    "p5-a",
+                    "p5-b"
+                ],
+                "matched": [],
+                "revealed": [
+                    "p1-a",
+                    "p1-b"
+                ]
+            },
+            "valid": false
+        },
+        {
+            "name": "three face up",
+            "board": {
+                "cards": [
+                    "p0-a",
+                    "p0-b",
+                    "p1-a",
+                    "p1-b",
+                    "p2-a",
+                    "p2-b",
+                    "p3-a",
+                    "p3-b",
+                    "p4-a",
+                    "p4-b",
+                    "p5-a",
+                    "p5-b"
+                ],
+                "matched": [],
+                "revealed": [
+                    "p0-a",
+                    "p1-a",
+                    "p2-a"
+                ]
+            },
+            "valid": false
+        },
+        {
+            "name": "repeated card",
+            "board": {
+                "cards": [
+                    "p0-a",
+                    "p0-b",
+                    "p0-a",
+                    "p1-b",
+                    "p2-a",
+                    "p2-b",
+                    "p3-a",
+                    "p3-b",
+                    "p4-a",
+                    "p4-b",
+                    "p5-a",
+                    "p5-b"
+                ],
+                "matched": [],
+                "revealed": []
+            },
+            "valid": false
+        }
+    ]
+}

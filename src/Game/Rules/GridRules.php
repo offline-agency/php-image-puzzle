@@ -83,7 +83,7 @@ abstract class GridRules implements ModeRules
      * @param list<string> $ids
      * @return list<string>
      */
-    protected static function permutation(mixed $value, array $ids, string $path): array
+    public static function permutation(mixed $value, array $ids, string $path): array
     {
         $list = Doc::list($value, $path, GameDefinition::MAX_TILES);
         if (count($list) !== count($ids)) {

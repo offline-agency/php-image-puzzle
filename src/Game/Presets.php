@@ -50,6 +50,11 @@ final class Presets
             'medium' => ['rows' => 15, 'cols' => 15, 'threshold' => 'auto', 'invert' => false, 'requireUnique' => false, 'assistance' => ['preview' => false, 'numbers' => false, 'highlightCorrect' => true]],
             'hard' => ['rows' => 20, 'cols' => 20, 'threshold' => 'auto', 'invert' => false, 'requireUnique' => false, 'assistance' => ['preview' => false, 'numbers' => false, 'highlightCorrect' => false]],
         ],
+        'memory' => [
+            'easy' => ['rows' => 3, 'cols' => 4, 'assistance' => ['preview' => true, 'numbers' => false, 'highlightCorrect' => true]],
+            'medium' => ['rows' => 4, 'cols' => 4, 'assistance' => ['preview' => true, 'numbers' => false, 'highlightCorrect' => true]],
+            'hard' => ['rows' => 4, 'cols' => 6, 'assistance' => ['preview' => false, 'numbers' => false, 'highlightCorrect' => false]],
+        ],
     ];
 
     /**

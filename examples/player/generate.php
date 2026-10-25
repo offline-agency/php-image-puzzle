@@ -72,6 +72,8 @@ $definitions = [
     'rotation' => $factory->create(GameKind::Rotation, $source, 'picture.png', 'medium', seed: 3),
     'strips' => $factory->create(GameKind::Strips, $source, 'picture.png', 'easy', seed: 4),
     'nonogram' => $factory->nonogram($source, $image, 'picture.png', 'easy', seed: 6),
+    'memory' => $factory->create(GameKind::Memory, $source, 'picture.png', 'easy', seed: 7),
+    'memory-labels' => $factory->create(GameKind::Memory, $source, 'picture.png', 'custom', ['rows' => 2, 'cols' => 4, 'labels' => ['Yellow', 'Green', 'Purple', 'Red']], seed: 8),
 ];
 
 foreach (['rect' => 'jigsaw', 'hex' => 'jigsaw-hex'] as $topology => $name) {

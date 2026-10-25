@@ -36,7 +36,15 @@ export interface ConfiguratorMessages {
 export const configuratorEn: ConfiguratorMessages = {
   label: 'Puzzle configuration',
   kind: 'Game mode',
-  kinds: { sliding: 'Sliding', swap: 'Swap', rotation: 'Rotation', strips: 'Strips', jigsaw: 'Jigsaw', nonogram: 'Nonogram' },
+  kinds: {
+    sliding: 'Sliding',
+    swap: 'Swap',
+    rotation: 'Rotation',
+    strips: 'Strips',
+    jigsaw: 'Jigsaw',
+    nonogram: 'Nonogram',
+    memory: 'Memory',
+  },
   preset: 'Difficulty',
   presets: { easy: 'Easy', medium: 'Medium', hard: 'Hard', custom: 'Custom' },
   parameters: 'Custom parameters',
@@ -53,6 +61,7 @@ export const configuratorEn: ConfiguratorMessages = {
     threshold: 'Darkness threshold (1-255, empty: automatic)',
     invert: 'Fill the light areas',
     requireUnique: 'Only accept a proven unique solution',
+    labels: 'Card labels, one per pair and line (the second card of each pair shows the label)',
   },
   choices: {
     horizontal: 'Horizontal',
@@ -95,7 +104,15 @@ export const configuratorEn: ConfiguratorMessages = {
 export const configuratorIt: ConfiguratorMessages = {
   label: 'Configurazione del puzzle',
   kind: 'Modalità di gioco',
-  kinds: { sliding: 'Scorrevole', swap: 'Scambio', rotation: 'Rotazione', strips: 'Strisce', jigsaw: 'Jigsaw', nonogram: 'Nonogramma' },
+  kinds: {
+    sliding: 'Scorrevole',
+    swap: 'Scambio',
+    rotation: 'Rotazione',
+    strips: 'Strisce',
+    jigsaw: 'Jigsaw',
+    nonogram: 'Nonogramma',
+    memory: 'Memory',
+  },
   preset: 'Difficoltà',
   presets: { easy: 'Facile', medium: 'Media', hard: 'Difficile', custom: 'Personalizzata' },
   parameters: 'Parametri personalizzati',
@@ -112,6 +129,7 @@ export const configuratorIt: ConfiguratorMessages = {
     threshold: 'Soglia di scuro (1-255, vuoto: automatica)',
     invert: 'Riempi le zone chiare',
     requireUnique: 'Accetta solo una soluzione unica dimostrata',
+    labels: "Etichette delle carte, una per coppia e per riga (la seconda carta di ogni coppia mostra l'etichetta)",
   },
   choices: {
     horizontal: 'Orizzontali',

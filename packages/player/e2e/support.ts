@@ -2,7 +2,7 @@ import { expect } from '@playwright/test';
 import type { Page } from '@playwright/test';
 import type { Player } from '../src/index.js';
 
-export const MODES = ['sliding', 'swap', 'rotation', 'strips', 'jigsaw', 'jigsaw-hex', 'nonogram'] as const;
+export const MODES = ['sliding', 'swap', 'rotation', 'strips', 'jigsaw', 'jigsaw-hex', 'nonogram', 'memory', 'memory-labels'] as const;
 /** PHP builds with alternative piece images (examples/player/assets/<name>/definition.json). */
 export const ASSET_BUILDS = ['jigsaw-responsive/definition', 'jigsaw-atlas/definition'] as const;
 export type Mode = (typeof MODES)[number] | (typeof ASSET_BUILDS)[number];
@@ -36,9 +36,9 @@ export async function openPlain(page: Page, mode: Mode = 'sliding', css?: string
 }
 
 export async function waitReady(page: Page, mode: Mode): Promise<void> {
-  const kind = mode.startsWith('jigsaw') ? 'jigsaw' : mode;
+  const kind = mode.startsWith('jigsaw') ? 'jigsaw' : mode.startsWith('memory') ? 'memory' : mode;
   await page.waitForFunction((k) => window.puzzlePlayer?.view === 'ready' && window.puzzlePlayer.engine.definition?.kind === k, kind);
-  await expect(page.locator('.image-puzzle-player :is(.board, .nonogram)')).toHaveAttribute('data-loading', 'false');
+  await expect(page.locator('.image-puzzle-player :is(.board, .nonogram, .memory)')).toHaveAttribute('data-loading', 'false');
 }
 
 export function moves(page: Page): Promise<number> {

@@ -3,7 +3,7 @@ import { fileURLToPath } from 'node:url';
 import Ajv2020 from 'ajv/dist/2020.js';
 import { describe, expect, it } from 'vitest';
 import { createEngine, definitionDocument as toDocument } from '../src/index.js';
-import type { EngineEventType } from '../src/index.js';
+import type { Action, EngineEventType } from '../src/index.js';
 import { definitionDocument } from './fixtures.js';
 
 /* The engine's exported documents and event payloads validate against the published schemas. */
@@ -21,7 +21,26 @@ function check(schema: string, value: unknown): void {
   expect(valid ? [] : validate.errors).toEqual([]);
 }
 
-describe.each(['sliding', 'swap', 'rotation', 'strips', 'jigsaw', 'jigsaw-hex', 'nonogram', 'nonogram-ambiguous'])('%s', (name) => {
+/** Memory has no hints: flip the partner of a single face-up card. */
+function memoryMove(engine: ReturnType<typeof createEngine>): Action | null {
+  const board = engine.exportState().board;
+  if (!('revealed' in board) || board.revealed.length !== 1) return null;
+  const card = board.revealed[0] as string;
+  return { type: 'flip', card: card.slice(0, -1) + (card.endsWith('a') ? 'b' : 'a') };
+}
+
+describe.each([
+  'sliding',
+  'swap',
+  'rotation',
+  'strips',
+  'jigsaw',
+  'jigsaw-hex',
+  'nonogram',
+  'nonogram-ambiguous',
+  'memory',
+  'memory-labels',
+])('%s', (name) => {
   it('definitions, states and every event payload match the schemas', () => {
     const engine = createEngine();
     const events: { type: string; detail: unknown }[] = [];
@@ -34,7 +53,7 @@ describe.each(['sliding', 'swap', 'rotation', 'strips', 'jigsaw', 'jigsaw-hex', 
     check('definition.schema.json', toDocument(definition));
     engine.start();
     for (let i = 0; i < 300 && engine.status !== 'complete'; i++) {
-      engine.dispatchAction(engine.hint() ?? engine.legalActions()[0]);
+      engine.dispatchAction(engine.hint() ?? memoryMove(engine) ?? engine.legalActions()[0]);
       if (i === 2) {
         engine.undo();
         engine.redo();

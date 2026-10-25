@@ -127,8 +127,8 @@ test('rejects unknown custom jigsaw keys and custom keys without the custom pres
 
 test('rejects modes without rules', function (): void {
     [$dir, $source] = builderWorkspace();
-    expect(fn () => (new DefinitionBuilder())->build($source, $dir . '/m', GameKind::Memory))
-        ->toThrow(InvalidArgumentException::class, 'memory');
+    expect(fn () => (new DefinitionBuilder())->build($source, $dir . '/m', GameKind::Tangram))
+        ->toThrow(InvalidArgumentException::class, 'tangram');
 });
 
 test('re-encodes an EXIF-rotated JPEG upright so browsers show the same pixels', function (): void {

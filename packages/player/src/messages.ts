@@ -46,6 +46,12 @@ export interface Messages {
   readonly nonogramColumn: string;
   readonly nonogramCell: string;
   readonly nonogramStates: Readonly<Record<string, string>>;
+  readonly memoryFaceDown: string;
+  readonly memoryCard: string;
+  readonly memoryMatchedCard: string;
+  readonly memoryPicture: string;
+  readonly memoryMatch: string;
+  readonly memoryMismatch: string;
   readonly instructions: Readonly<Record<string, string>>;
 }
 
@@ -93,12 +99,20 @@ export const en: Messages = {
   nonogramColumn: 'Column {n} clue {clue}',
   nonogramCell: 'Row {row}, column {col}: {state}',
   nonogramStates: { filled: 'filled', crossed: 'crossed out', unknown: 'empty' },
+  memoryFaceDown: 'Card {n}, face down',
+  memoryCard: 'Card {n}: {face}',
+  memoryMatchedCard: 'Card {n}: {face}, matched',
+  memoryPicture: 'picture {n}',
+  memoryMatch: 'Match!',
+  memoryMismatch: 'No match.',
   instructions: {
     sliding: 'Use the arrow keys to move between tiles and Enter to slide a tile next to the gap.',
     swap: 'Press Enter on two tiles to swap them. Escape cancels the selection.',
     rotation: 'Press Enter to rotate a tile clockwise, Shift+Enter to rotate it counter-clockwise.',
     strips: 'Press Enter to pick up a strip, the arrow keys to move it, and Enter again to drop it.',
     jigsaw: 'Tab to a piece, move it with the arrow keys (Shift for larger steps) and press Enter to drop it.',
+    memory:
+      'Find the pairs. Arrow keys move between cards, Enter or Space turns a card face up. Two cards that do not match turn face down with the next card you turn.',
     nonogram:
       'Fill cells so each row and column shows its clue: the lengths of its runs of filled cells, in order. Arrow keys move, Enter or Space fills or clears a cell, X crosses it out, Delete clears it.',
   },
@@ -148,12 +162,20 @@ export const it: Messages = {
   nonogramColumn: 'Indizio colonna {n}: {clue}',
   nonogramCell: 'Riga {row}, colonna {col}: {state}',
   nonogramStates: { filled: 'piena', crossed: 'segnata vuota', unknown: 'vuota' },
+  memoryFaceDown: 'Carta {n}, coperta',
+  memoryCard: 'Carta {n}: {face}',
+  memoryMatchedCard: 'Carta {n}: {face}, abbinata',
+  memoryPicture: 'immagine {n}',
+  memoryMatch: 'Coppia trovata!',
+  memoryMismatch: 'Non è una coppia.',
   instructions: {
     sliding: 'Usa le frecce per spostarti tra le tessere e Invio per far scorrere una tessera vicina allo spazio vuoto.',
     swap: 'Premi Invio su due tessere per scambiarle. Esc annulla la selezione.',
     rotation: 'Premi Invio per ruotare una tessera in senso orario, Maiusc+Invio in senso antiorario.',
     strips: 'Premi Invio per prendere una striscia, le frecce per spostarla e di nuovo Invio per lasciarla.',
     jigsaw: 'Usa Tab per scegliere un pezzo, le frecce per spostarlo (Maiusc per passi più lunghi) e Invio per lasciarlo.',
+    memory:
+      'Trova le coppie. Le frecce spostano tra le carte, Invio o Spazio scopre una carta. Due carte diverse si coprono quando scopri la carta successiva.',
     nonogram:
       'Riempi le caselle in modo che ogni riga e colonna mostri il suo indizio: le lunghezze dei gruppi di caselle piene, in ordine. Le frecce spostano, Invio o Spazio riempie o svuota una casella, X la segna vuota, Canc la svuota.',
   },
