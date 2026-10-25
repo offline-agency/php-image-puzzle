@@ -369,8 +369,18 @@ describe('bin/image-puzzle', function (): void {
             ->and(runBin(['validate', cliDir()])[0])->toBe(3);
     });
 
-    it('exits with 4 when GD cannot encode the requested format', function (): void {
-        [$code, , $err] = runBin(['generate', cliImage(), cliDir() . '/o', '--format=webp'], ['disable_functions=imagewebp']);
-        expect($code)->toBe(Application::EXIT_CAPABILITY)->and($err)->toContain('cannot encode webp');
+    it('exits with 4 when GD cannot encode the requested format', function (string $format): void {
+        $function = $format === 'jpeg' ? 'imagejpeg' : 'imagewebp';
+        [$code, , $err] = runBin(['generate', cliImage(), cliDir() . '/o', '--format=' . $format], ["disable_functions={$function}"]);
+        expect($code)->toBe(Application::EXIT_CAPABILITY)->and($err)->toContain("cannot encode {$format}");
+        [$code, $json] = runBin(['capabilities', '--json'], ["disable_functions={$function}"]);
+        expect($code)->toBe(0)->and(Fixtures::object(cliJson($json)['encode'])[$format])->toBeFalse();
+    })->with(['jpeg', 'webp']);
+
+    it('exits with 4 when a PDF cannot embed its JPEG picture', function (): void {
+        $puzzle = cliPuzzle();
+        [$code, , $err] = runBin(['pdf', $puzzle, dirname($puzzle) . '/p.pdf'], ['disable_functions=imagejpeg']);
+        expect($code)->toBe(Application::EXIT_CAPABILITY)->and($err)->toContain('cannot encode jpeg')
+            ->and(file_exists(dirname($puzzle) . '/p.pdf'))->toBeFalse();
     });
 });

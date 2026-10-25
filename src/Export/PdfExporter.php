@@ -7,6 +7,7 @@ namespace ImagePuzzle\Export;
 use GdImage;
 use ImagePuzzle\Exception\ExportFailedException;
 use ImagePuzzle\Exception\InvalidArgumentException;
+use ImagePuzzle\ExportOptions;
 use ImagePuzzle\Game\PuzzleDirectory;
 use ImagePuzzle\ImageLoader;
 use ImagePuzzle\ResourceLimits;
@@ -53,6 +54,8 @@ final class PdfExporter
         if (!$puzzle->hasLocalImage()) {
             throw new InvalidArgumentException('The source image is remote; a PDF needs the image file.');
         }
+        // The picture is embedded as JPEG.
+        ImageEncoder::assertSupported(ExportOptions::FORMAT_JPEG);
         $definition = $puzzle->definition;
         $plan = $this->plan($puzzle, $options);
         $crop = $definition->crop;

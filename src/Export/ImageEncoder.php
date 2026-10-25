@@ -25,8 +25,8 @@ final class ImageEncoder
         $info = gd_info();
 
         return [
-            ExportOptions::FORMAT_PNG => (bool) ($info['PNG Support'] ?? false),
-            ExportOptions::FORMAT_JPEG => (bool) ($info['JPEG Support'] ?? false),
+            ExportOptions::FORMAT_PNG => (bool) ($info['PNG Support'] ?? false) && function_exists('imagepng'),
+            ExportOptions::FORMAT_JPEG => (bool) ($info['JPEG Support'] ?? false) && function_exists('imagejpeg'),
             ExportOptions::FORMAT_WEBP => (bool) ($info['WebP Support'] ?? false) && function_exists('imagewebp'),
         ];
     }
