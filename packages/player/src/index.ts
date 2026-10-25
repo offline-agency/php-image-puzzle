@@ -20,3 +20,5 @@ export type { ImagePuzzleConfiguratorElement } from './configurator-element.js';
 export { configuratorEn, configuratorIt, resolveConfiguratorMessages } from './configurator-messages.js';
 export type { ConfiguratorMessages } from './configurator-messages.js';
 export { followThemeClass, themeTokens } from './theme.js';
+export { PLAYER_EVENTS, bindPlayer } from './binding.js';
+export type { PlayerBinding, PlayerBindingOptions, PlayerBindingProps, PlayerCreationOptions, PlayerHandlers } from './binding.js';

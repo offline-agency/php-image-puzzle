@@ -4,6 +4,7 @@
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "jsx": "react-jsx",
     "types": [],
     "strict": true,
     "exactOptionalPropertyTypes": true,
@@ -11,5 +12,5 @@
     "skipLibCheck": false,
     "noEmit": true
   },
-  "files": ["consumer.ts"]
+  "files": ["consumer.ts", "react-consumer.tsx", "vue-consumer.ts"]
 }

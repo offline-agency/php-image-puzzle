@@ -262,6 +262,54 @@ and `puzzle-error`. The `detail` is the engine payload. They are
 even through enclosing shadow roots. The `puzzle-` prefix avoids collisions
 with native `error` and `progress` events, which bubble to `window` handlers.
 
+## React and Vue
+
+`@offline-agency/image-puzzle-react` (React 19) and
+`@offline-agency/image-puzzle-vue` (Vue 3.5) are thin adapters on the same
+player. Each ships a component (`<ImagePuzzlePlayer>`) and a hook or
+composable (`useImagePuzzlePlayer`). Install only the adapter for your
+framework: it depends on the player, and its framework is its only peer
+dependency.
+
+Both adapters share one behaviour, checked by one test contract
+(`packages/player/test/adapter-contract.ts`) that also runs against the
+binding below:
+
+- `definition` or `src` changes load the new puzzle; a newer source cancels a
+  pending load. Definitions are compared by identity.
+- `initialState` is restored by the first load after mount only. Later sources
+  start fresh games, and a new `initialState` alone never reloads.
+- `locale`, `messages`, `theme` and `themeClass` apply live.
+- The other `PlayerOptions` are read on mount; remount (a new `key`) to change
+  them.
+- Event handlers are always the newest ones, without resubscribing.
+- Unmount destroys the player, its DOM and its listeners. Server rendering
+  outputs the empty container.
+
+Props, events, the imperative handle, Strict Mode and the Web Component route
+for each framework are documented in
+[packages/react/README.md](../packages/react/README.md) and
+[packages/vue/README.md](../packages/vue/README.md).
+
+### `bindPlayer`
+
+The adapters are built on `bindPlayer(target, options, handlers)` from the
+player package, which other frameworks can use the same way:
+
+```js
+import { bindPlayer } from '@offline-agency/image-puzzle-player';
+
+const binding = bindPlayer(element, { src: '/puzzles/swap.json', locale: 'en' }, () => ({
+  complete: ({ moves }) => console.log(moves),
+}));
+binding.update({ src: '/puzzles/jigsaw.json', locale: 'it' }); // after a prop change
+binding.destroy(); // on unmount
+```
+
+`handlers` is a function called on every event, so it can return the newest
+callbacks. `update()` applies the rules listed above; `binding.player` is the
+underlying player.
+
 ## Configurator
 
 `<image-puzzle-configurator>` edits a **build configuration**

@@ -4001,7 +4001,63 @@ function Jt(e = Gt) {
 	}
 	return customElements.define(e, n), n;
 }
+// src/binding.ts
+var Yt = [
+	"ready",
+	"move",
+	"state-change",
+	"progress",
+	"complete",
+	"error"
+];
+function Xt(e) {
+	return {
+		...e.controls === void 0 ? {} : { controls: e.controls },
+		...e.persist === void 0 ? {} : { persist: e.persist },
+		...e.motion === void 0 ? {} : { motion: e.motion },
+		...e.pauseWhenHidden === void 0 ? {} : { pauseWhenHidden: e.pauseWhenHidden },
+		...e.fetch === void 0 ? {} : { fetch: e.fetch },
+		...e.clock === void 0 ? {} : { clock: e.clock },
+		...e.randomSeed === void 0 ? {} : { randomSeed: e.randomSeed },
+		...e.onListenerError === void 0 ? {} : { onListenerError: e.onListenerError },
+		...e.locale === void 0 ? {} : { locale: e.locale },
+		...e.messages === void 0 ? {} : { messages: e.messages }
+	};
+}
+function Zt(e, t, n) {
+	let r = Wt(e, Xt(t)), i = [
+		r.subscribe("ready", (e) => n().ready?.(e)),
+		r.subscribe("move", (e) => n().move?.(e)),
+		r.subscribe("state-change", (e) => n()["state-change"]?.(e)),
+		r.subscribe("progress", (e) => n().progress?.(e)),
+		r.subscribe("complete", (e) => n().complete?.(e)),
+		r.subscribe("error", (e) => n().error?.(e))
+	], a, o = t.locale, s = t.messages, c, l, u = null, d = !1;
+	function f(e) {
+		if (d) return;
+		let t = e.definition ?? e.src;
+		if (t !== void 0 && t !== a) {
+			let n = a === void 0;
+			a = t, r.load(t, {
+				...n && e.initialState !== void 0 && e.initialState !== null ? { state: e.initialState } : {},
+				...e.baseUrl === void 0 ? {} : { baseUrl: e.baseUrl }
+			}).catch(() => void 0);
+		}
+		(e.locale !== o || e.messages !== s) && (o = e.locale, s = e.messages, r.setLocale(o, s)), e.theme !== c && (c = e.theme, c === void 0 ? r.element.removeAttribute("theme") : r.element.setAttribute("theme", c)), e.themeClass !== l && (l = e.themeClass, u?.(), u = l === void 0 || l === "" ? null : vt(r.element, l));
+	}
+	return f(t), {
+		player: r,
+		update: f,
+		destroy() {
+			if (!d) {
+				d = !0, u?.();
+				for (let e of i) e();
+				r.destroy();
+			}
+		}
+	};
+}
 Jt(), At();
-export { Ot as CONFIGURATOR_CHANGE_EVENT, Dt as CONFIGURATOR_TAG, Gt as DEFAULT_TAG, Kt as ELEMENT_EVENTS, Me as HISTORY_LIMIT, c as IllegalActionError, s as InvalidDocumentError, Bt as MAX_DEFINITION_BYTES, o as PuzzleError, rt as buildConfigDocument, at as configuratorEn, ot as configuratorIt, Et as createConfigurator, Re as createEngine, Wt as createPlayer, At as defineImagePuzzleConfigurator, Jt as defineImagePuzzlePlayer, pt as dictionaries, dt as en, vt as followThemeClass, $ as format, ht as formatTime, ft as it, tt as parseBuildConfig, Te as parseDefinition, ct as resolveConfiguratorMessages, mt as resolveMessages, _t as themeTokens };
+export { Ot as CONFIGURATOR_CHANGE_EVENT, Dt as CONFIGURATOR_TAG, Gt as DEFAULT_TAG, Kt as ELEMENT_EVENTS, Me as HISTORY_LIMIT, c as IllegalActionError, s as InvalidDocumentError, Bt as MAX_DEFINITION_BYTES, Yt as PLAYER_EVENTS, o as PuzzleError, Zt as bindPlayer, rt as buildConfigDocument, at as configuratorEn, ot as configuratorIt, Et as createConfigurator, Re as createEngine, Wt as createPlayer, At as defineImagePuzzleConfigurator, Jt as defineImagePuzzlePlayer, pt as dictionaries, dt as en, vt as followThemeClass, $ as format, ht as formatTime, ft as it, tt as parseBuildConfig, Te as parseDefinition, ct as resolveConfiguratorMessages, mt as resolveMessages, _t as themeTokens };
 
 //# sourceMappingURL=image-puzzle-player.bundle.js.map

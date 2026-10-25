@@ -99,6 +99,7 @@ When the image size is not evenly divisible by rows/cols, **remainder pixels are
 - [docs/PLAYER_API.md](docs/PLAYER_API.md) – Browser engine, player, `<image-puzzle-player>` and `<image-puzzle-configurator>`
 - [docs/LIVEWIRE.md](docs/LIVEWIRE.md) – Livewire 4 player component
 - [docs/FILAMENT.md](docs/FILAMENT.md) – Filament 5 widget, configuration field and authoring flow
+- [packages/react](packages/react/README.md) and [packages/vue](packages/vue/README.md) – React 19 and Vue 3 components on the shared player
 
 JSON schemas for config and manifest: [docs/schemas/](docs/schemas/) (`edge-config.schema.json`, `puzzle-config.schema.json`, `piece.schema.json`, `manifest.schema.json`). Config files are JSON-only; to use YAML or other formats, decode in your code (e.g. `yaml_parse_file()` if ext-yaml is available) and pass the resulting array to `EdgeStyleFactory::fromArray($config)`.
 

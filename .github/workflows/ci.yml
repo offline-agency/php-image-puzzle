@@ -212,7 +212,7 @@ jobs:
           retention-days: 7
 
   js-consumer:
-    name: Packed npm tarballs in a fresh consumer (types, SSR import)
+    name: Packed npm tarballs in a fresh consumer (types, SSR, React/Vue in three browsers)
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -223,6 +223,7 @@ jobs:
           node-version: '24'
           cache: npm
       - run: npm ci --no-fund --no-audit
+      - run: npx playwright install --with-deps chromium firefox webkit
       - run: tools/js-consumer/run.sh
 
   conformance:
