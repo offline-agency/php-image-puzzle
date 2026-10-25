@@ -1,0 +1,436 @@
+<?php
+
+declare(strict_types=1);
+
+namespace ImagePuzzle\Tools;
+
+use ImagePuzzle\Config\PuzzleConfig;
+use ImagePuzzle\Exception\IllegalActionException;
+use ImagePuzzle\Exception\InvalidDefinitionException;
+use ImagePuzzle\Game\GameDefinition;
+use ImagePuzzle\Game\GameFactory;
+use ImagePuzzle\Game\GameKind;
+use ImagePuzzle\Game\Presets;
+use ImagePuzzle\Game\Prng;
+use ImagePuzzle\Game\SourceImage;
+use ImagePuzzle\PuzzleGenerator;
+
+/**
+ * Golden fixtures that the TypeScript engine must reproduce exactly
+ * (conformance/*.json). They are generated from the PHP rules; a test fails
+ * when the committed files drift from what PHP produces.
+ */
+final class ConformanceFixtures
+{
+    /**
+     * @return array<string, array<string, mixed>> file name => document
+     */
+    public static function build(): array
+    {
+        $files = [
+            'prng.json' => self::prng(),
+            'presets.json' => Presets::export(),
+        ];
+        $factory = new GameFactory();
+        $source = new SourceImage(640, 480, hash('sha256', 'conformance-source'));
+        $definitions = [
+            'sliding' => $factory->create(GameKind::Sliding, $source, 'source.png', 'easy', [], 11),
+            'sliding-2x3' => $factory->create(GameKind::Sliding, $source, 'source.png', 'custom', ['rows' => 2, 'cols' => 3, 'scrambleMoves' => 25], 5),
+            'swap' => $factory->create(GameKind::Swap, $source, 'source.png', 'easy', [], 12),
+            'rotation' => $factory->create(GameKind::Rotation, $source, 'source.png', 'medium', [], 13),
+            'rotation-half' => $factory->create(GameKind::Rotation, $source, 'source.png', 'easy', [], 14),
+            'strips' => $factory->create(GameKind::Strips, $source, 'source.png', 'easy', [], 15),
+            'strips-vertical' => $factory->create(GameKind::Strips, $source, 'source.png', 'custom', ['count' => 5, 'axis' => 'vertical'], 16),
+            'jigsaw' => self::jigsaw($factory, 'rect', 2, 3),
+            'jigsaw-hex' => self::jigsaw($factory, 'hex', 2, 2),
+        ];
+        foreach ($definitions as $name => $definition) {
+            $files["mode-{$name}.json"] = self::mode($name, $definition);
+        }
+
+        return $files;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private static function prng(): array
+    {
+        $vectors = [];
+        foreach ([[0, ''], [1, 'a'], [42, 'test'], [4294967295, 'image-puzzle/scramble/sliding'], [123456789, 'Ünïcode ✓']] as [$seed, $stream]) {
+            $rng = new Prng($seed, $stream);
+            $uint32 = [];
+            for ($i = 0; $i < 8; $i++) {
+                $uint32[] = $rng->nextUint32();
+            }
+            $ints = [];
+            foreach ([1, 2, 3, 10, 1000, Prng::MAX_RANGE] as $n) {
+                $ints[] = ['n' => $n, 'value' => $rng->int($n)];
+            }
+            $vectors[] = [
+                'seed' => $seed,
+                'stream' => $stream,
+                'fnv1a' => Prng::fnv1a($stream),
+                'uint32' => $uint32,
+                'int' => $ints,
+                'shuffle' => $rng->shuffle(range(0, 9)),
+            ];
+        }
+
+        return ['algorithm' => 'fnv1a32-xor-seed + mulberry32', 'vectors' => $vectors];
+    }
+
+    private static function jigsaw(GameFactory $factory, string $topology, int $rows, int $cols): GameDefinition
+    {
+        $dir = sys_get_temp_dir() . '/image-puzzle-conformance-' . bin2hex(random_bytes(6));
+        mkdir($dir, 0700);
+        try {
+            $image = imagecreatetruecolor(120, 90);
+            imagefilledrectangle($image, 0, 0, 119, 89, (int) imagecolorallocate($image, 200, 100, 50));
+            imagepng($image, $dir . '/source.png');
+            $config = PuzzleConfig::fromArray([
+                'configVersion' => 2,
+                'rows' => $rows,
+                'cols' => $cols,
+                'edge' => ['type' => 'jigsaw'],
+                'geometry' => ['seed' => 9, 'samples' => 1, 'topology' => $topology],
+            ]);
+            $result = PuzzleGenerator::generateAndExport($dir . '/source.png', $dir . '/out', $rows, $cols, $config->edgeStyle(), $config->exportOptions(), geometry: $config->geometryOptions());
+            $manifest = json_decode((string) file_get_contents($result->getManifestPath()), true, 64, JSON_THROW_ON_ERROR);
+            if (!is_array($manifest)) {
+                throw new \RuntimeException('Manifest is not an object.');
+            }
+            $manifestArray = [];
+            foreach ($manifest as $key => $value) {
+                $manifestArray[(string) $key] = $value;
+            }
+
+            return $factory->jigsawFromManifest($manifestArray, 'source.png', 'easy', 21, null, 'pieces/');
+        } finally {
+            self::remove($dir);
+        }
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private static function mode(string $name, GameDefinition $definition): array
+    {
+        $rules = $definition->rules();
+        $scrambles = [];
+        foreach ([0, 1, 2, 99, 4294967295] as $seed) {
+            $scrambles[] = ['seed' => $seed, 'board' => $rules->scramble($definition, $seed)];
+        }
+
+        // Play hints (or the first legal action) from the initial board.
+        $board = $definition->initial;
+        $steps = [];
+        for ($i = 0; $i < 400 && !$rules->isComplete($definition, $board); $i++) {
+            $action = $rules->hint($definition, $board) ?? $rules->legalActions($definition, $board)[0];
+            $steps[] = self::step($definition, $board, $action);
+            $board = $rules->apply($definition, $board, $action);
+            if ($definition->kind === GameKind::Sliding && $i >= 12) {
+                break;
+            }
+        }
+        $cases = [['name' => 'play from initial', 'board' => $definition->initial, 'steps' => $steps]];
+        $cases[] = ['name' => 'last move completes', 'board' => self::nearlySolved($definition), 'steps' => self::finish($definition, self::nearlySolved($definition))];
+        $cases[] = ['name' => 'rejected actions', 'board' => $definition->initial, 'steps' => array_map(
+            static fn (array $action): array => self::step($definition, $definition->initial, $action),
+            self::badActions($definition),
+        )];
+
+        return [
+            'name' => $name,
+            'definition' => $definition->toArray(),
+            'solved' => $rules->solvedBoard($definition),
+            'scrambles' => $scrambles,
+            'legalActions' => $rules->legalActions($definition, $definition->initial),
+            'cases' => $cases,
+            'imports' => self::imports($definition),
+        ];
+    }
+
+    /**
+     * @param array<string, mixed> $board
+     * @param array<string, mixed> $action
+     * @return array<string, mixed>
+     */
+    private static function step(GameDefinition $definition, array $board, array $action): array
+    {
+        $rules = $definition->rules();
+        try {
+            $next = $rules->apply($definition, $board, $action);
+        } catch (IllegalActionException) {
+            return ['action' => $action, 'result' => 'illegal'];
+        } catch (InvalidDefinitionException) {
+            return ['action' => $action, 'result' => 'invalid'];
+        }
+
+        return [
+            'action' => $action,
+            'result' => 'ok',
+            'board' => $next,
+            'complete' => $rules->isComplete($definition, $next),
+            'progress' => $rules->progress($definition, $next),
+            'hint' => $rules->hint($definition, $next),
+        ];
+    }
+
+    /**
+     * A board one legal action away from solved.
+     *
+     * @return array<string, mixed>
+     */
+    private static function nearlySolved(GameDefinition $definition): array
+    {
+        $rules = $definition->rules();
+        $solved = $rules->solvedBoard($definition);
+
+        return match ($definition->kind) {
+            GameKind::Jigsaw => (static function () use ($definition, $solved): array {
+                $initial = $definition->initial;
+                $pieces = $solved['pieces'];
+                if (!is_array($pieces) || !is_array($initial['pieces']) || !isset($initial['pieces'][0])) {
+                    throw new \LogicException('Malformed jigsaw board.');
+                }
+                $pieces[0] = $initial['pieces'][0];
+
+                return ['pieces' => $pieces];
+            })(),
+            default => $rules->apply($definition, $solved, $rules->legalActions($definition, $solved)[0]),
+        };
+    }
+
+    /**
+     * @param array<string, mixed> $board
+     * @return list<array<string, mixed>>
+     */
+    private static function finish(GameDefinition $definition, array $board): array
+    {
+        $rules = $definition->rules();
+        foreach ($rules->legalActions($definition, $board) as $action) {
+            if ($rules->isComplete($definition, $rules->apply($definition, $board, $action))) {
+                return [self::step($definition, $board, $action)];
+            }
+        }
+
+        throw new \LogicException("No completing action for {$definition->kind->value}.");
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    private static function badActions(GameDefinition $definition): array
+    {
+        $first = $definition->tiles[0]->id;
+        $second = $definition->tiles[1]->id ?? $first;
+        $common = [
+            ['type' => 'teleport', 'tile' => $first],
+            ['type' => $definition->rules()->actionTypes()[0]],
+        ];
+
+        return [...$common, ...match ($definition->kind) {
+            GameKind::Sliding => [
+                ['type' => 'slide', 'tile' => 'zz'],
+                ['type' => 'slide', 'tile' => 'BAD ID'],
+                ['type' => 'slide', 'tile' => self::farTile($definition)],
+            ],
+            GameKind::Swap => [
+                ['type' => 'swap', 'a' => $first, 'b' => $first],
+                ['type' => 'swap', 'a' => $first, 'b' => 'zz'],
+                ['type' => 'swap', 'a' => $first, 'b' => $second, 'extra' => 1],
+            ],
+            GameKind::Rotation => [
+                ['type' => 'rotate', 'tile' => $first, 'direction' => 'up'],
+                ['type' => 'rotate', 'tile' => 'zz', 'direction' => 'cw'],
+            ],
+            GameKind::Strips => [
+                ['type' => 'move', 'strip' => $first, 'to' => 999],
+                ['type' => 'move', 'strip' => $first, 'to' => -1],
+                ['type' => 'move', 'strip' => 'zz', 'to' => 0],
+                ['type' => 'move', 'strip' => self::stripAt($definition, 0), 'to' => 0],
+            ],
+            GameKind::Jigsaw => [
+                ['type' => 'place', 'piece' => $first, 'x' => -500, 'y' => 0],
+                ['type' => 'place', 'piece' => 'zz', 'x' => 0, 'y' => 0],
+                ['type' => 'place', 'piece' => $first, 'x' => 1.5, 'y' => 0],
+            ],
+            default => [],
+        }];
+    }
+
+    private static function farTile(GameDefinition $definition): string
+    {
+        $cells = $definition->initial['cells'];
+        if (!is_array($cells)) {
+            throw new \LogicException('Malformed sliding board.');
+        }
+        $gap = (int) array_search(null, $cells, true);
+        $cols = $definition->cols;
+        foreach ($cells as $i => $id) {
+            $distance = abs(intdiv($i, $cols) - intdiv($gap, $cols)) + abs($i % $cols - $gap % $cols);
+            if (is_string($id) && $distance > 1) {
+                return $id;
+            }
+        }
+
+        throw new \LogicException('No far tile.');
+    }
+
+    private static function stripAt(GameDefinition $definition, int $index): string
+    {
+        $order = $definition->initial['order'];
+        if (!is_array($order) || !is_string($order[$index] ?? null)) {
+            throw new \LogicException('Malformed strips board.');
+        }
+
+        return $order[$index];
+    }
+
+    /**
+     * Imported boards and whether they must be accepted.
+     *
+     * @return list<array{name: string, board: mixed, valid: bool}>
+     */
+    private static function imports(GameDefinition $definition): array
+    {
+        $rules = $definition->rules();
+        $solved = $rules->solvedBoard($definition);
+        $initial = $definition->initial;
+        $cases = [
+            ['name' => 'initial', 'board' => $initial],
+            ['name' => 'solved', 'board' => $solved],
+            ['name' => 'not an object', 'board' => [1, 2]],
+            ['name' => 'unknown field', 'board' => $initial + ['cheat' => true]],
+        ];
+        $first = $definition->tiles[0]->id;
+        $second = $definition->tiles[1]->id ?? $first;
+        $cases = [...$cases, ...match ($definition->kind) {
+            GameKind::Sliding => [
+                ['name' => 'duplicate id', 'board' => ['cells' => self::replace($solved['cells'], $second, $first)]],
+                ['name' => 'two gaps', 'board' => ['cells' => self::replace($solved['cells'], $first, null)]],
+                ['name' => 'unreachable (two tiles exchanged)', 'board' => ['cells' => self::exchange($solved['cells'], 0, 1)]],
+                ['name' => 'missing cell', 'board' => ['cells' => self::drop($solved['cells'])]],
+            ],
+            GameKind::Swap => [
+                ['name' => 'duplicate id', 'board' => ['cells' => self::replace($solved['cells'], $second, $first)]],
+                ['name' => 'unknown id', 'board' => ['cells' => self::replace($solved['cells'], $first, 'zz')]],
+                ['name' => 'missing cell', 'board' => ['cells' => self::drop($solved['cells'])]],
+            ],
+            GameKind::Rotation => [
+                ['name' => 'invalid orientation', 'board' => ['orientations' => self::replaceAt($solved['orientations'], 0, 45)]],
+                ['name' => 'string orientation', 'board' => ['orientations' => self::replaceAt($solved['orientations'], 0, '90')]],
+                ['name' => 'missing tile', 'board' => ['orientations' => self::drop($solved['orientations'])]],
+            ],
+            GameKind::Strips => [
+                ['name' => 'duplicate id', 'board' => ['order' => self::replace($solved['order'], $second, $first)]],
+                ['name' => 'missing strip', 'board' => ['order' => self::drop($solved['order'])]],
+            ],
+            GameKind::Jigsaw => [
+                ['name' => 'placed away from home', 'board' => ['pieces' => self::replaceAt($solved['pieces'], 0, ['x' => 1, 'y' => 1, 'placed' => true])]],
+                ['name' => 'inside snap zone but loose', 'board' => ['pieces' => self::replaceAt($solved['pieces'], 0, self::loose($solved['pieces']))]],
+                ['name' => 'outside area', 'board' => ['pieces' => self::replaceAt($solved['pieces'], 0, ['x' => -9999, 'y' => 0, 'placed' => false])]],
+            ],
+            default => [],
+        }];
+
+        $out = [];
+        foreach ($cases as $case) {
+            try {
+                $rules->validateBoard($definition, $case['board']);
+                $valid = true;
+            } catch (InvalidDefinitionException) {
+                $valid = false;
+            }
+            $out[] = ['name' => $case['name'], 'board' => $case['board'], 'valid' => $valid];
+        }
+
+        return $out;
+    }
+
+    /**
+     * @return list<mixed>
+     */
+    private static function replace(mixed $list, mixed $search, mixed $replacement): array
+    {
+        $list = self::asList($list);
+        $index = array_search($search, $list, true);
+
+        return self::replaceAt($list, is_int($index) ? $index : 0, $replacement);
+    }
+
+    /**
+     * @return list<mixed>
+     */
+    private static function replaceAt(mixed $list, int $index, mixed $replacement): array
+    {
+        $list = self::asList($list);
+        $list[$index] = $replacement;
+
+        return array_values($list);
+    }
+
+    /**
+     * @return list<mixed>
+     */
+    private static function exchange(mixed $list, int $i, int $j): array
+    {
+        $list = self::asList($list);
+        [$list[$i], $list[$j]] = [$list[$j], $list[$i]];
+
+        return array_values($list);
+    }
+
+    /**
+     * @return list<mixed>
+     */
+    private static function drop(mixed $list): array
+    {
+        $list = self::asList($list);
+        array_pop($list);
+
+        return $list;
+    }
+
+    /**
+     * @return array{x: int, y: int, placed: false}
+     */
+    private static function loose(mixed $pieces): array
+    {
+        $first = self::asList($pieces)[0] ?? null;
+        if (!is_array($first) || !is_int($first['x'] ?? null) || !is_int($first['y'] ?? null)) {
+            throw new \LogicException('Malformed jigsaw piece.');
+        }
+
+        return ['x' => $first['x'] + 1, 'y' => $first['y'], 'placed' => false];
+    }
+
+    /**
+     * @return list<mixed>
+     */
+    private static function asList(mixed $value): array
+    {
+        if (!is_array($value) || !array_is_list($value)) {
+            throw new \LogicException('Expected a list.');
+        }
+
+        return $value;
+    }
+
+    private static function remove(string $path): void
+    {
+        if (is_file($path) || is_link($path)) {
+            unlink($path);
+
+            return;
+        }
+        $entries = scandir($path);
+        foreach ($entries === false ? [] : $entries as $entry) {
+            if ($entry !== '.' && $entry !== '..') {
+                self::remove($path . '/' . $entry);
+            }
+        }
+        rmdir($path);
+    }
+}

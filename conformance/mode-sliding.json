@@ -1,0 +1,814 @@
+{
+    "name": "sliding",
+    "definition": {
+        "id": "gd1-049ed7fbc7e5e5953e341fcb924ae453b8250284fdda51fa72ac1ad4965740a3",
+        "$schema": "https://raw.githubusercontent.com/offline-agency/php-image-puzzle/HEAD/docs/schemas/game/v1/definition.schema.json",
+        "format": "image-puzzle/game-definition",
+        "version": 1,
+        "kind": "sliding",
+        "generator": {
+            "algorithm": 1
+        },
+        "seed": 11,
+        "preset": {
+            "name": "easy",
+            "version": 1
+        },
+        "source": {
+            "width": 640,
+            "height": 480,
+            "sha256": "4d6255a6c425d543f7f9167565e0c111596081fe6a2e6eb6f238296e9b24e704"
+        },
+        "media": {
+            "image": "source.png"
+        },
+        "board": {
+            "rows": 3,
+            "cols": 3,
+            "crop": {
+                "x": 0,
+                "y": 0,
+                "width": 639,
+                "height": 480
+            }
+        },
+        "tiles": [
+            {
+                "id": "t0",
+                "home": 0,
+                "rect": {
+                    "x": 0,
+                    "y": 0,
+                    "width": 213,
+                    "height": 160
+                }
+            },
+            {
+                "id": "t1",
+                "home": 1,
+                "rect": {
+                    "x": 213,
+                    "y": 0,
+                    "width": 213,
+                    "height": 160
+                }
+            },
+            {
+                "id": "t2",
+                "home": 2,
+                "rect": {
+                    "x": 426,
+                    "y": 0,
+                    "width": 213,
+                    "height": 160
+                }
+            },
+            {
+                "id": "t3",
+                "home": 3,
+                "rect": {
+                    "x": 0,
+                    "y": 160,
+                    "width": 213,
+                    "height": 160
+                }
+            },
+            {
+                "id": "t4",
+                "home": 4,
+                "rect": {
+                    "x": 213,
+                    "y": 160,
+                    "width": 213,
+                    "height": 160
+                }
+            },
+            {
+                "id": "t5",
+                "home": 5,
+                "rect": {
+                    "x": 426,
+                    "y": 160,
+                    "width": 213,
+                    "height": 160
+                }
+            },
+            {
+                "id": "t6",
+                "home": 6,
+                "rect": {
+                    "x": 0,
+                    "y": 320,
+                    "width": 213,
+                    "height": 160
+                }
+            },
+            {
+                "id": "t7",
+                "home": 7,
+                "rect": {
+                    "x": 213,
+                    "y": 320,
+                    "width": 213,
+                    "height": 160
+                }
+            },
+            {
+                "id": "t8",
+                "home": 8,
+                "rect": {
+                    "x": 426,
+                    "y": 320,
+                    "width": 213,
+                    "height": 160
+                }
+            }
+        ],
+        "rules": {
+            "empty": "t8",
+            "scrambleMoves": 60
+        },
+        "actions": [
+            "slide"
+        ],
+        "capabilities": {
+            "undo": true,
+            "redo": true,
+            "reset": true,
+            "shuffle": true,
+            "hint": false
+        },
+        "assistance": {
+            "preview": true,
+            "numbers": true,
+            "highlightCorrect": true
+        },
+        "initial": {
+            "cells": [
+                "t0",
+                "t6",
+                "t2",
+                "t7",
+                null,
+                "t4",
+                "t1",
+                "t3",
+                "t5"
+            ]
+        }
+    },
+    "solved": {
+        "cells": [
+            "t0",
+            "t1",
+            "t2",
+            "t3",
+            "t4",
+            "t5",
+            "t6",
+            "t7",
+            null
+        ]
+    },
+    "scrambles": [
+        {
+            "seed": 0,
+            "board": {
+                "cells": [
+                    "t7",
+                    "t5",
+                    "t3",
+                    "t1",
+                    "t4",
+                    "t6",
+                    null,
+                    "t0",
+                    "t2"
+                ]
+            }
+        },
+        {
+            "seed": 1,
+            "board": {
+                "cells": [
+                    "t2",
+                    "t0",
+                    "t7",
+                    "t1",
+                    "t6",
+                    "t5",
+                    "t3",
+                    "t4",
+                    null
+                ]
+            }
+        },
+        {
+            "seed": 2,
+            "board": {
+                "cells": [
+                    "t3",
+                    "t4",
+                    null,
+                    "t1",
+                    "t7",
+                    "t6",
+                    "t5",
+                    "t0",
+                    "t2"
+                ]
+            }
+        },
+        {
+            "seed": 99,
+            "board": {
+                "cells": [
+                    "t7",
+                    "t5",
+                    "t2",
+                    "t1",
+                    "t4",
+                    "t6",
+                    null,
+                    "t3",
+                    "t0"
+                ]
+            }
+        },
+        {
+            "seed": 4294967295,
+            "board": {
+                "cells": [
+                    "t2",
+                    "t4",
+                    "t3",
+                    "t1",
+                    "t0",
+                    "t6",
+                    null,
+                    "t7",
+                    "t5"
+                ]
+            }
+        }
+    ],
+    "legalActions": [
+        {
+            "type": "slide",
+            "tile": "t6"
+        },
+        {
+            "type": "slide",
+            "tile": "t7"
+        },
+        {
+            "type": "slide",
+            "tile": "t4"
+        },
+        {
+            "type": "slide",
+            "tile": "t3"
+        }
+    ],
+    "cases": [
+        {
+            "name": "play from initial",
+            "board": {
+                "cells": [
+                    "t0",
+                    "t6",
+                    "t2",
+                    "t7",
+                    null,
+                    "t4",
+                    "t1",
+                    "t3",
+                    "t5"
+                ]
+            },
+            "steps": [
+                {
+                    "action": {
+                        "type": "slide",
+                        "tile": "t6"
+                    },
+                    "result": "ok",
+                    "board": {
+                        "cells": [
+                            "t0",
+                            null,
+                            "t2",
+                            "t7",
+                            "t6",
+                            "t4",
+                            "t1",
+                            "t3",
+                            "t5"
+                        ]
+                    },
+                    "complete": false,
+                    "progress": 0.25,
+                    "hint": null
+                },
+                {
+                    "action": {
+                        "type": "slide",
+                        "tile": "t0"
+                    },
+                    "result": "ok",
+                    "board": {
+                        "cells": [
+                            null,
+                            "t0",
+                            "t2",
+                            "t7",
+                            "t6",
+                            "t4",
+                            "t1",
+                            "t3",
+                            "t5"
+                        ]
+                    },
+                    "complete": false,
+                    "progress": 0.125,
+                    "hint": null
+                },
+                {
+                    "action": {
+                        "type": "slide",
+                        "tile": "t0"
+                    },
+                    "result": "ok",
+                    "board": {
+                        "cells": [
+                            "t0",
+                            null,
+                            "t2",
+                            "t7",
+                            "t6",
+                            "t4",
+                            "t1",
+                            "t3",
+                            "t5"
+                        ]
+                    },
+                    "complete": false,
+                    "progress": 0.25,
+                    "hint": null
+                },
+                {
+                    "action": {
+                        "type": "slide",
+                        "tile": "t0"
+                    },
+                    "result": "ok",
+                    "board": {
+                        "cells": [
+                            null,
+                            "t0",
+                            "t2",
+                            "t7",
+                            "t6",
+                            "t4",
+                            "t1",
+                            "t3",
+                            "t5"
+                        ]
+                    },
+                    "complete": false,
+                    "progress": 0.125,
+                    "hint": null
+                },
+                {
+                    "action": {
+                        "type": "slide",
+                        "tile": "t0"
+                    },
+                    "result": "ok",
+                    "board": {
+                        "cells": [
+                            "t0",
+                            null,
+                            "t2",
+                            "t7",
+                            "t6",
+                            "t4",
+                            "t1",
+                            "t3",
+                            "t5"
+                        ]
+                    },
+                    "complete": false,
+                    "progress": 0.25,
+                    "hint": null
+                },
+                {
+                    "action": {
+                        "type": "slide",
+                        "tile": "t0"
+                    },
+                    "result": "ok",
+                    "board": {
+                        "cells": [
+                            null,
+                            "t0",
+                            "t2",
+                            "t7",
+                            "t6",
+                            "t4",
+                            "t1",
+                            "t3",
+                            "t5"
+                        ]
+                    },
+                    "complete": false,
+                    "progress": 0.125,
+                    "hint": null
+                },
+                {
+                    "action": {
+                        "type": "slide",
+                        "tile": "t0"
+                    },
+                    "result": "ok",
+                    "board": {
+                        "cells": [
+                            "t0",
+                            null,
+                            "t2",
+                            "t7",
+                            "t6",
+                            "t4",
+                            "t1",
+                            "t3",
+                            "t5"
+                        ]
+                    },
+                    "complete": false,
+                    "progress": 0.25,
+                    "hint": null
+                },
+                {
+                    "action": {
+                        "type": "slide",
+                        "tile": "t0"
+                    },
+                    "result": "ok",
+                    "board": {
+                        "cells": [
+                            null,
+                            "t0",
+                            "t2",
+                            "t7",
+                            "t6",
+                            "t4",
+                            "t1",
+                            "t3",
+                            "t5"
+                        ]
+                    },
+                    "complete": false,
+                    "progress": 0.125,
+                    "hint": null
+                },
+                {
+                    "action": {
+                        "type": "slide",
+                        "tile": "t0"
+                    },
+                    "result": "ok",
+                    "board": {
+                        "cells": [
+                            "t0",
+                            null,
+                            "t2",
+                            "t7",
+                            "t6",
+                            "t4",
+                            "t1",
+                            "t3",
+                            "t5"
+                        ]
+                    },
+                    "complete": false,
+                    "progress": 0.25,
+                    "hint": null
+                },
+                {
+                    "action": {
+                        "type": "slide",
+                        "tile": "t0"
+                    },
+                    "result": "ok",
+                    "board": {
+                        "cells": [
+                            null,
+                            "t0",
+                            "t2",
+                            "t7",
+                            "t6",
+                            "t4",
+                            "t1",
+                            "t3",
+                            "t5"
+                        ]
+                    },
+                    "complete": false,
+                    "progress": 0.125,
+                    "hint": null
+                },
+                {
+                    "action": {
+                        "type": "slide",
+                        "tile": "t0"
+                    },
+                    "result": "ok",
+                    "board": {
+                        "cells": [
+                            "t0",
+                            null,
+                            "t2",
+                            "t7",
+                            "t6",
+                            "t4",
+                            "t1",
+                            "t3",
+                            "t5"
+                        ]
+                    },
+                    "complete": false,
+                    "progress": 0.25,
+                    "hint": null
+                },
+                {
+                    "action": {
+                        "type": "slide",
+                        "tile": "t0"
+                    },
+                    "result": "ok",
+                    "board": {
+                        "cells": [
+                            null,
+                            "t0",
+                            "t2",
+                            "t7",
+                            "t6",
+                            "t4",
+                            "t1",
+                            "t3",
+                            "t5"
+                        ]
+                    },
+                    "complete": false,
+                    "progress": 0.125,
+                    "hint": null
+                },
+                {
+                    "action": {
+                        "type": "slide",
+                        "tile": "t0"
+                    },
+                    "result": "ok",
+                    "board": {
+                        "cells": [
+                            "t0",
+                            null,
+                            "t2",
+                            "t7",
+                            "t6",
+                            "t4",
+                            "t1",
+                            "t3",
+                            "t5"
+                        ]
+                    },
+                    "complete": false,
+                    "progress": 0.25,
+                    "hint": null
+                }
+            ]
+        },
+        {
+            "name": "last move completes",
+            "board": {
+                "cells": [
+                    "t0",
+                    "t1",
+                    "t2",
+                    "t3",
+                    "t4",
+                    null,
+                    "t6",
+                    "t7",
+                    "t5"
+                ]
+            },
+            "steps": [
+                {
+                    "action": {
+                        "type": "slide",
+                        "tile": "t5"
+                    },
+                    "result": "ok",
+                    "board": {
+                        "cells": [
+                            "t0",
+                            "t1",
+                            "t2",
+                            "t3",
+                            "t4",
+                            "t5",
+                            "t6",
+                            "t7",
+                            null
+                        ]
+                    },
+                    "complete": true,
+                    "progress": 1,
+                    "hint": null
+                }
+            ]
+        },
+        {
+            "name": "rejected actions",
+            "board": {
+                "cells": [
+                    "t0",
+                    "t6",
+                    "t2",
+                    "t7",
+                    null,
+                    "t4",
+                    "t1",
+                    "t3",
+                    "t5"
+                ]
+            },
+            "steps": [
+                {
+                    "action": {
+                        "type": "teleport",
+                        "tile": "t0"
+                    },
+                    "result": "illegal"
+                },
+                {
+                    "action": {
+                        "type": "slide"
+                    },
+                    "result": "invalid"
+                },
+                {
+                    "action": {
+                        "type": "slide",
+                        "tile": "zz"
+                    },
+                    "result": "illegal"
+                },
+                {
+                    "action": {
+                        "type": "slide",
+                        "tile": "BAD ID"
+                    },
+                    "result": "invalid"
+                },
+                {
+                    "action": {
+                        "type": "slide",
+                        "tile": "t0"
+                    },
+                    "result": "illegal"
+                }
+            ]
+        }
+    ],
+    "imports": [
+        {
+            "name": "initial",
+            "board": {
+                "cells": [
+                    "t0",
+                    "t6",
+                    "t2",
+                    "t7",
+                    null,
+                    "t4",
+                    "t1",
+                    "t3",
+                    "t5"
+                ]
+            },
+            "valid": true
+        },
+        {
+            "name": "solved",
+            "board": {
+                "cells": [
+                    "t0",
+                    "t1",
+                    "t2",
+                    "t3",
+                    "t4",
+                    "t5",
+                    "t6",
+                    "t7",
+                    null
+                ]
+            },
+            "valid": true
+        },
+        {
+            "name": "not an object",
+            "board": [
+                1,
+                2
+            ],
+            "valid": false
+        },
+        {
+            "name": "unknown field",
+            "board": {
+                "cells": [
+                    "t0",
+                    "t6",
+                    "t2",
+                    "t7",
+                    null,
+                    "t4",
+                    "t1",
+                    "t3",
+                    "t5"
+                ],
+                "cheat": true
+            },
+            "valid": false
+        },
+        {
+            "name": "duplicate id",
+            "board": {
+                "cells": [
+                    "t0",
+                    "t0",
+                    "t2",
+                    "t3",
+                    "t4",
+                    "t5",
+                    "t6",
+                    "t7",
+                    null
+                ]
+            },
+            "valid": false
+        },
+        {
+            "name": "two gaps",
+            "board": {
+                "cells": [
+                    null,
+                    "t1",
+                    "t2",
+                    "t3",
+                    "t4",
+                    "t5",
+                    "t6",
+                    "t7",
+                    null
+                ]
+            },
+            "valid": false
+        },
+        {
+            "name": "unreachable (two tiles exchanged)",
+            "board": {
+                "cells": [
+                    "t1",
+                    "t0",
+                    "t2",
+                    "t3",
+                    "t4",
+                    "t5",
+                    "t6",
+                    "t7",
+                    null
+                ]
+            },
+            "valid": false
+        },
+        {
+            "name": "missing cell",
+            "board": {
+                "cells": [
+                    "t0",
+                    "t1",
+                    "t2",
+                    "t3",
+                    "t4",
+                    "t5",
+                    "t6",
+                    "t7"
+                ]
+            },
+            "valid": false
+        }
+    ]
+}

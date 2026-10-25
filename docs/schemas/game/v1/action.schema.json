@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/offline-agency/php-image-puzzle/HEAD/docs/schemas/game/v1/action.schema.json",
+  "title": "Game action",
+  "description": "A player action. Whether it is legal depends on the mode and the current board.",
+  "oneOf": [
+    {
+      "type": "object",
+      "required": ["type", "tile"],
+      "properties": { "type": { "const": "slide" }, "tile": { "$ref": "#/$defs/id" } },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": ["type", "a", "b"],
+      "properties": { "type": { "const": "swap" }, "a": { "$ref": "#/$defs/id" }, "b": { "$ref": "#/$defs/id" } },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": ["type", "tile", "direction"],
+      "properties": { "type": { "const": "rotate" }, "tile": { "$ref": "#/$defs/id" }, "direction": { "enum": ["cw", "ccw"] } },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": ["type", "strip", "to"],
+      "properties": { "type": { "const": "move" }, "strip": { "$ref": "#/$defs/id" }, "to": { "type": "integer", "minimum": 0 } },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": ["type", "piece", "x", "y"],
+      "properties": { "type": { "const": "place" }, "piece": { "$ref": "#/$defs/id" }, "x": { "type": "integer" }, "y": { "type": "integer" } },
+      "additionalProperties": false
+    }
+  ],
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[a-z][a-z0-9_-]{0,31}$" }
+  }
+}

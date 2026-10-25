@@ -64,7 +64,8 @@
         "format": "pint",
         "format:check": "pint --test",
         "schemas": "php tools/validate-schemas.php",
-        "mutate": "pest --mutate --parallel --everything --covered-only --min=60",
+        "conformance": "php tools/conformance.php",
+        "mutate": ["Composer\\Config::disableProcessTimeout", "tools/mutation/run.sh"],
         "benchmark": "php tools/benchmark.php",
         "release:test": "php tools/release/run-scenarios.php",
         "qa": [

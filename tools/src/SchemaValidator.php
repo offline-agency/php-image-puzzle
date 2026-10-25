@@ -38,8 +38,9 @@ final class SchemaValidator
     public function checkSchemaFiles(): array
     {
         $problems = [];
-        $files = glob(rtrim($this->schemaDir, '/') . '/*/*.schema.json');
-        $files = $files === false ? [] : $files;
+        $shallow = glob(rtrim($this->schemaDir, '/') . '/*/*.schema.json');
+        $nested = glob(rtrim($this->schemaDir, '/') . '/*/*/*.schema.json');
+        $files = [...$shallow === false ? [] : $shallow, ...$nested === false ? [] : $nested];
         foreach ($files as $file) {
             $relative = substr($file, strlen(rtrim($this->schemaDir, '/')) + 1);
             try {
@@ -68,6 +69,17 @@ final class SchemaValidator
         // JSON should use validateFile(), which keeps the distinction.
         $data = json_decode(json_encode($document, JSON_THROW_ON_ERROR), false, 512, JSON_THROW_ON_ERROR);
 
+        return $this->validateDecoded($data, $schemaPath);
+    }
+
+    /**
+     * Validates a decoded-as-objects value (json_decode(..., false)), which
+     * keeps {} distinct from [].
+     *
+     * @return list<string>
+     */
+    public function validateObjects(mixed $data, string $schemaPath): array
+    {
         return $this->validateDecoded($data, $schemaPath);
     }
 

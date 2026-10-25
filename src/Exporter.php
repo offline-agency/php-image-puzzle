@@ -177,8 +177,10 @@ final class Exporter implements ExporterInterface
             throw $e;
         } finally {
             if ($workerDir !== null && is_dir($workerDir)) {
-                $leftovers = glob($workerDir . DIRECTORY_SEPARATOR . '*');
-                foreach ($leftovers === false ? [] : $leftovers as $file) {
+                // Only the envelope files this export wrote; never a broader pattern.
+                $envelopes = glob($workerDir . DIRECTORY_SEPARATOR . 'worker-*.json');
+                $partial = glob($workerDir . DIRECTORY_SEPARATOR . 'worker-*.json.tmp');
+                foreach ([...$envelopes === false ? [] : $envelopes, ...$partial === false ? [] : $partial] as $file) {
                     @unlink($file);
                 }
                 @rmdir($workerDir);

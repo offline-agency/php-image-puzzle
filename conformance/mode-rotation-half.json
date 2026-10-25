@@ -1,0 +1,605 @@
+{
+    "name": "rotation-half",
+    "definition": {
+        "id": "gd1-88eac4da7c9dc7ff4fab6833de3c0ca470a655d470710170af5aa9e36f3561b0",
+        "$schema": "https://raw.githubusercontent.com/offline-agency/php-image-puzzle/HEAD/docs/schemas/game/v1/definition.schema.json",
+        "format": "image-puzzle/game-definition",
+        "version": 1,
+        "kind": "rotation",
+        "generator": {
+            "algorithm": 1
+        },
+        "seed": 14,
+        "preset": {
+            "name": "easy",
+            "version": 1
+        },
+        "source": {
+            "width": 640,
+            "height": 480,
+            "sha256": "4d6255a6c425d543f7f9167565e0c111596081fe6a2e6eb6f238296e9b24e704"
+        },
+        "media": {
+            "image": "source.png"
+        },
+        "board": {
+            "rows": 3,
+            "cols": 3,
+            "crop": {
+                "x": 0,
+                "y": 0,
+                "width": 639,
+                "height": 480
+            }
+        },
+        "tiles": [
+            {
+                "id": "t0",
+                "home": 0,
+                "rect": {
+                    "x": 0,
+                    "y": 0,
+                    "width": 213,
+                    "height": 160
+                }
+            },
+            {
+                "id": "t1",
+                "home": 1,
+                "rect": {
+                    "x": 213,
+                    "y": 0,
+                    "width": 213,
+                    "height": 160
+                }
+            },
+            {
+                "id": "t2",
+                "home": 2,
+                "rect": {
+                    "x": 426,
+                    "y": 0,
+                    "width": 213,
+                    "height": 160
+                }
+            },
+            {
+                "id": "t3",
+                "home": 3,
+                "rect": {
+                    "x": 0,
+                    "y": 160,
+                    "width": 213,
+                    "height": 160
+                }
+            },
+            {
+                "id": "t4",
+                "home": 4,
+                "rect": {
+                    "x": 213,
+                    "y": 160,
+                    "width": 213,
+                    "height": 160
+                }
+            },
+            {
+                "id": "t5",
+                "home": 5,
+                "rect": {
+                    "x": 426,
+                    "y": 160,
+                    "width": 213,
+                    "height": 160
+                }
+            },
+            {
+                "id": "t6",
+                "home": 6,
+                "rect": {
+                    "x": 0,
+                    "y": 320,
+                    "width": 213,
+                    "height": 160
+                }
+            },
+            {
+                "id": "t7",
+                "home": 7,
+                "rect": {
+                    "x": 213,
+                    "y": 320,
+                    "width": 213,
+                    "height": 160
+                }
+            },
+            {
+                "id": "t8",
+                "home": 8,
+                "rect": {
+                    "x": 426,
+                    "y": 320,
+                    "width": 213,
+                    "height": 160
+                }
+            }
+        ],
+        "rules": {
+            "orientations": [
+                0,
+                180
+            ]
+        },
+        "actions": [
+            "rotate"
+        ],
+        "capabilities": {
+            "undo": true,
+            "redo": true,
+            "reset": true,
+            "shuffle": true,
+            "hint": true
+        },
+        "assistance": {
+            "preview": true,
+            "numbers": false,
+            "highlightCorrect": true
+        },
+        "initial": {
+            "orientations": [
+                0,
+                180,
+                0,
+                0,
+                0,
+                180,
+                180,
+                0,
+                0
+            ]
+        }
+    },
+    "solved": {
+        "orientations": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+        ]
+    },
+    "scrambles": [
+        {
+            "seed": 0,
+            "board": {
+                "orientations": [
+                    180,
+                    180,
+                    0,
+                    0,
+                    180,
+                    0,
+                    180,
+                    180,
+                    0
+                ]
+            }
+        },
+        {
+            "seed": 1,
+            "board": {
+                "orientations": [
+                    180,
+                    0,
+                    0,
+                    0,
+                    0,
+                    180,
+                    0,
+                    0,
+                    180
+                ]
+            }
+        },
+        {
+            "seed": 2,
+            "board": {
+                "orientations": [
+                    180,
+                    0,
+                    0,
+                    180,
+                    180,
+                    0,
+                    0,
+                    0,
+                    0
+                ]
+            }
+        },
+        {
+            "seed": 99,
+            "board": {
+                "orientations": [
+                    180,
+                    180,
+                    180,
+                    180,
+                    180,
+                    0,
+                    180,
+                    180,
+                    180
+                ]
+            }
+        },
+        {
+            "seed": 4294967295,
+            "board": {
+                "orientations": [
+                    0,
+                    180,
+                    180,
+                    0,
+                    0,
+                    180,
+                    0,
+                    0,
+                    180
+                ]
+            }
+        }
+    ],
+    "legalActions": [
+        {
+            "type": "rotate",
+            "tile": "t0",
+            "direction": "cw"
+        },
+        {
+            "type": "rotate",
+            "tile": "t1",
+            "direction": "cw"
+        },
+        {
+            "type": "rotate",
+            "tile": "t2",
+            "direction": "cw"
+        },
+        {
+            "type": "rotate",
+            "tile": "t3",
+            "direction": "cw"
+        },
+        {
+            "type": "rotate",
+            "tile": "t4",
+            "direction": "cw"
+        },
+        {
+            "type": "rotate",
+            "tile": "t5",
+            "direction": "cw"
+        },
+        {
+            "type": "rotate",
+            "tile": "t6",
+            "direction": "cw"
+        },
+        {
+            "type": "rotate",
+            "tile": "t7",
+            "direction": "cw"
+        },
+        {
+            "type": "rotate",
+            "tile": "t8",
+            "direction": "cw"
+        }
+    ],
+    "cases": [
+        {
+            "name": "play from initial",
+            "board": {
+                "orientations": [
+                    0,
+                    180,
+                    0,
+                    0,
+                    0,
+                    180,
+                    180,
+                    0,
+                    0
+                ]
+            },
+            "steps": [
+                {
+                    "action": {
+                        "type": "rotate",
+                        "tile": "t1",
+                        "direction": "cw"
+                    },
+                    "result": "ok",
+                    "board": {
+                        "orientations": [
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            180,
+                            180,
+                            0,
+                            0
+                        ]
+                    },
+                    "complete": false,
+                    "progress": 0.7777777777777778,
+                    "hint": {
+                        "type": "rotate",
+                        "tile": "t5",
+                        "direction": "cw"
+                    }
+                },
+                {
+                    "action": {
+                        "type": "rotate",
+                        "tile": "t5",
+                        "direction": "cw"
+                    },
+                    "result": "ok",
+                    "board": {
+                        "orientations": [
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            180,
+                            0,
+                            0
+                        ]
+                    },
+                    "complete": false,
+                    "progress": 0.8888888888888888,
+                    "hint": {
+                        "type": "rotate",
+                        "tile": "t6",
+                        "direction": "cw"
+                    }
+                },
+                {
+                    "action": {
+                        "type": "rotate",
+                        "tile": "t6",
+                        "direction": "cw"
+                    },
+                    "result": "ok",
+                    "board": {
+                        "orientations": [
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0
+                        ]
+                    },
+                    "complete": true,
+                    "progress": 1,
+                    "hint": null
+                }
+            ]
+        },
+        {
+            "name": "last move completes",
+            "board": {
+                "orientations": [
+                    180,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0
+                ]
+            },
+            "steps": [
+                {
+                    "action": {
+                        "type": "rotate",
+                        "tile": "t0",
+                        "direction": "cw"
+                    },
+                    "result": "ok",
+                    "board": {
+                        "orientations": [
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0
+                        ]
+                    },
+                    "complete": true,
+                    "progress": 1,
+                    "hint": null
+                }
+            ]
+        },
+        {
+            "name": "rejected actions",
+            "board": {
+                "orientations": [
+                    0,
+                    180,
+                    0,
+                    0,
+                    0,
+                    180,
+                    180,
+                    0,
+                    0
+                ]
+            },
+            "steps": [
+                {
+                    "action": {
+                        "type": "teleport",
+                        "tile": "t0"
+                    },
+                    "result": "illegal"
+                },
+                {
+                    "action": {
+                        "type": "rotate"
+                    },
+                    "result": "invalid"
+                },
+                {
+                    "action": {
+                        "type": "rotate",
+                        "tile": "t0",
+                        "direction": "up"
+                    },
+                    "result": "invalid"
+                },
+                {
+                    "action": {
+                        "type": "rotate",
+                        "tile": "zz",
+                        "direction": "cw"
+                    },
+                    "result": "illegal"
+                }
+            ]
+        }
+    ],
+    "imports": [
+        {
+            "name": "initial",
+            "board": {
+                "orientations": [
+                    0,
+                    180,
+                    0,
+                    0,
+                    0,
+                    180,
+                    180,
+                    0,
+                    0
+                ]
+            },
+            "valid": true
+        },
+        {
+            "name": "solved",
+            "board": {
+                "orientations": [
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0
+                ]
+            },
+            "valid": true
+        },
+        {
+            "name": "not an object",
+            "board": [
+                1,
+                2
+            ],
+            "valid": false
+        },
+        {
+            "name": "unknown field",
+            "board": {
+                "orientations": [
+                    0,
+                    180,
+                    0,
+                    0,
+                    0,
+                    180,
+                    180,
+                    0,
+                    0
+                ],
+                "cheat": true
+            },
+            "valid": false
+        },
+        {
+            "name": "invalid orientation",
+            "board": {
+                "orientations": [
+                    45,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0
+                ]
+            },
+            "valid": false
+        },
+        {
+            "name": "string orientation",
+            "board": {
+                "orientations": [
+                    "90",
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0
+                ]
+            },
+            "valid": false
+        },
+        {
+            "name": "missing tile",
+            "board": {
+                "orientations": [
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0
+                ]
+            },
+            "valid": false
+        }
+    ]
+}

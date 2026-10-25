@@ -89,5 +89,55 @@ try {
     rmdir($tmp);
 }
 
+// Game definitions, boards, states and actions from the conformance fixtures.
+$fixtures = glob($root . '/conformance/mode-*.json');
+if ($fixtures === false || $fixtures === []) {
+    $report('conformance fixtures', ['none found; run composer conformance']);
+}
+/**
+ * @return list<mixed>
+ */
+function listAt(mixed $value, string $key): array
+{
+    $list = is_array($value) ? ($value[$key] ?? null) : null;
+
+    return is_array($list) && array_is_list($list) ? $list : [];
+}
+
+foreach ($fixtures === false ? [] : $fixtures as $file) {
+    $name = basename($file);
+    $json = (string) file_get_contents($file);
+    // Objects keep {} distinct from [] for the definition; arrays are easier to walk.
+    $objects = json_decode($json, false, 64, JSON_THROW_ON_ERROR);
+    $doc = json_decode($json, true, 64, JSON_THROW_ON_ERROR);
+    if (!$objects instanceof stdClass || !is_array($doc) || !is_array($doc['definition'] ?? null) || !is_string($doc['definition']['kind'] ?? null)) {
+        $report($name, ['not a mode fixture']);
+        continue;
+    }
+    $report("{$name} definition", $validator->validateObjects($objects->definition ?? null, 'game/v1/definition.schema.json'));
+    $errors = [];
+    $boards = [$doc['solved'] ?? null];
+    foreach (listAt($doc, 'scrambles') as $scramble) {
+        $boards[] = is_array($scramble) ? ($scramble['board'] ?? null) : null;
+    }
+    foreach (listAt($doc, 'cases') as $case) {
+        foreach (listAt($case, 'steps') as $step) {
+            if (is_array($step) && isset($step['board'])) {
+                $boards[] = $step['board'];
+            }
+        }
+    }
+    foreach ($boards as $board) {
+        array_push($errors, ...$validator->validate($board, 'game/v1/board.schema.json#/$defs/' . $doc['definition']['kind']));
+    }
+    foreach (listAt($doc, 'legalActions') as $action) {
+        array_push($errors, ...$validator->validate($action, 'game/v1/action.schema.json'));
+    }
+    $report("{$name} boards and actions", $errors);
+    $definition = ImagePuzzle\Game\GameDefinition::fromJson((string) json_encode($objects->definition ?? null));
+    $state = (new ImagePuzzle\Game\GameEngine())->start($definition);
+    $report("{$name} initial state", $validator->validate($state->toArray(), 'game/v1/state.schema.json'));
+}
+
 echo $failures === 0 ? "\nAll schema checks passed.\n" : "\n{$failures} schema check(s) failed.\n";
 exit($failures === 0 ? 0 : 1);
