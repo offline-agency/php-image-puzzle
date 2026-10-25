@@ -47,7 +47,7 @@ final readonly class ResourceLimits
     {
         if ($bytes > $this->maxInputBytes) {
             throw new ResourceLimitExceededException(
-                "{$label} is {$bytes} bytes; the configured limit is {$this->maxInputBytes} bytes."
+                "{$label} is {$bytes} bytes; the configured limit is {$this->maxInputBytes} bytes.",
             );
         }
     }
@@ -59,14 +59,14 @@ final readonly class ResourceLimits
         }
         if ($width > $this->maxWidth || $height > $this->maxHeight) {
             throw new ResourceLimitExceededException(
-                "{$label} is {$width}x{$height}; the configured maximum is {$this->maxWidth}x{$this->maxHeight}."
+                "{$label} is {$width}x{$height}; the configured maximum is {$this->maxWidth}x{$this->maxHeight}.",
             );
         }
         // Integer overflow is impossible here: both factors are bounded by maxWidth/maxHeight.
         $pixels = $width * $height;
         if ($pixels > $this->maxPixels) {
             throw new ResourceLimitExceededException(
-                "{$label} has {$pixels} pixels; the configured limit is {$this->maxPixels} pixels."
+                "{$label} has {$pixels} pixels; the configured limit is {$this->maxPixels} pixels.",
             );
         }
     }
@@ -75,7 +75,7 @@ final readonly class ResourceLimits
     {
         if ($rows > $this->maxPieces || $cols > $this->maxPieces || $rows * $cols > $this->maxPieces) {
             throw new ResourceLimitExceededException(
-                "A {$rows}x{$cols} grid exceeds the configured limit of {$this->maxPieces} pieces."
+                "A {$rows}x{$cols} grid exceeds the configured limit of {$this->maxPieces} pieces.",
             );
         }
     }
@@ -88,7 +88,7 @@ final readonly class ResourceLimits
     {
         if ($cells > $this->maxPieces) {
             throw new ResourceLimitExceededException(
-                "The board has {$cells} pieces, exceeding the configured limit of {$this->maxPieces} pieces."
+                "The board has {$cells} pieces, exceeding the configured limit of {$this->maxPieces} pieces.",
             );
         }
     }

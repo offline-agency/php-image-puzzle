@@ -266,7 +266,7 @@ test('outlines are deterministic and independent of piece order and subsets', fu
 })->with(styles());
 
 test('unequal last cells from a custom split stay a valid partition', function (): void {
-    $split = new class implements DimensionSplitStrategy {
+    $split = new class () implements DimensionSplitStrategy {
         public function split(int $totalSize, int $segmentCount): array
         {
             $first = intdiv($totalSize, $segmentCount) - 3;

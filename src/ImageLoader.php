@@ -136,7 +136,7 @@ final class ImageLoader implements ImageLoaderInterface
         $image = ErrorCapture::run($decoder, $warnings);
         if (!$image instanceof GdImage || $warnings !== []) {
             throw new UnsupportedImageTypeException(
-                "Failed to load image: {$path}" . ($warnings !== [] ? ' (' . $warnings[0] . ')' : '')
+                "Failed to load image: {$path}" . ($warnings !== [] ? ' (' . $warnings[0] . ')' : ''),
             );
         }
 

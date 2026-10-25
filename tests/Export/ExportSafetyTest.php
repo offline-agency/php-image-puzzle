@@ -7,8 +7,8 @@ use ImagePuzzle\Exception\ExportFailedException;
 use ImagePuzzle\ExportOptions;
 use ImagePuzzle\PuzzleGenerator;
 use ImagePuzzle\Tests\Support\Fixtures;
-use ImagePuzzle\Tests\Support\Workspace;
 use ImagePuzzle\Tests\Support\ManifestAssertions;
+use ImagePuzzle\Tests\Support\Workspace;
 
 /*
  * G10, G12, G13, G14: overwrite semantics, collisions, path confinement and

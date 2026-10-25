@@ -16,7 +16,6 @@ use ImagePuzzle\EdgeStyle\ResolverEdgeStyle;
 use ImagePuzzle\EdgeStyle\RoundedCornersStyle;
 use ImagePuzzle\EdgeStyle\SinusStyle;
 use ImagePuzzle\Exception\InvalidArgumentException;
-use ImagePuzzle\ExporterInterface;
 use ImagePuzzle\Geometry\BoundaryProfileProvider;
 use ImagePuzzle\Geometry\Grid;
 use ImagePuzzle\Geometry\PieceRenderer;

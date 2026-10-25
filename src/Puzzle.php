@@ -50,7 +50,7 @@ final class Puzzle
         // Rows of hexagonal and triangular boards hold different numbers of cells.
         if (!isset($this->pieces[$row][$col])) {
             throw new Exception\InvalidArgumentException(
-                "Invalid piece index: row={$row}, col={$col} (grid is {$this->rows}x{$this->cols})"
+                "Invalid piece index: row={$row}, col={$col} (grid is {$this->rows}x{$this->cols})",
             );
         }
 

@@ -11,8 +11,8 @@ use ImagePuzzle\ExportOptions;
 use ImagePuzzle\GeometryOptions;
 use ImagePuzzle\PuzzleGenerator;
 use ImagePuzzle\Tests\Support\Fixtures;
-use ImagePuzzle\Tests\Support\Workspace;
 use ImagePuzzle\Tests\Support\ManifestAssertions;
+use ImagePuzzle\Tests\Support\Workspace;
 
 /*
  * Real forked-process tests (G08, G09, G10, G11, sequential/parallel

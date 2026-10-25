@@ -143,7 +143,8 @@ test('withManifestFilename returns new instance with manifest filename changed',
 
 test('withOnPieceBeforeSave returns new instance with callback set', function (): void {
     $options = new ExportOptions();
-    $callback = function (): void {};
+    $callback = function (): void {
+    };
     $modified = $options->withOnPieceBeforeSave($callback);
     expect($modified->getOnPieceBeforeSave())->toBe($callback);
     expect($options->getOnPieceBeforeSave())->toBeNull();
@@ -160,7 +161,8 @@ function identityManifest(array $m): array
 
 test('withOnPieceAfterSave and withOnManifestBuild return new instance with callback set', function (): void {
     $options = new ExportOptions();
-    $afterSave = function (): void {};
+    $afterSave = function (): void {
+    };
     $manifestBuild = identityManifest(...);
     $modified = $options->withOnPieceAfterSave($afterSave)->withOnManifestBuild($manifestBuild);
     expect($modified->getOnPieceAfterSave())->toBe($afterSave);
