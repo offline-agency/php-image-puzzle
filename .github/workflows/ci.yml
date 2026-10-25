@@ -168,7 +168,7 @@ jobs:
       - run: docker compose run --rm minimal sh -c 'composer install --no-progress && vendor/bin/pest'
 
   js:
-    name: TypeScript engine (lint, types, tests, build)
+    name: TypeScript packages (lint, types, unit tests, build)
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -184,6 +184,44 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
+
+  browser:
+    name: Browser tests (Chromium, Firefox, WebKit, mobile emulation)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci --no-fund --no-audit
+      - run: npm run build
+      # Browser builds matching the locked @playwright/test version.
+      - run: npx playwright install --with-deps chromium firefox webkit
+      - run: npm run test:browser
+      - name: Upload the Playwright report on failure
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: playwright-report
+          path: packages/player/playwright-report
+          retention-days: 7
+
+  js-consumer:
+    name: Packed npm tarballs in a fresh consumer (types, SSR import)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci --no-fund --no-audit
+      - run: tools/js-consumer/run.sh
 
   conformance:
     name: PHP/TypeScript conformance fixtures are current
@@ -204,7 +242,7 @@ jobs:
   gate:
     name: CI gate
     if: always()
-    needs: [quality, tests, minimal-extensions, coverage, mutation, consumer, docker, js, conformance]
+    needs: [quality, tests, minimal-extensions, coverage, mutation, consumer, docker, js, browser, js-consumer, conformance]
     runs-on: ubuntu-24.04
     steps:
       - name: Every required job succeeded

@@ -18,3 +18,5 @@ docs/images/
 composer.json
 pint.json
 .phpunit.cache/
+test-results/
+playwright-report/

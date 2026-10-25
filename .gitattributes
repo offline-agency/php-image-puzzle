@@ -28,3 +28,4 @@
 /eslint.config.js export-ignore
 /.prettierrc.json export-ignore
 /.prettierignore export-ignore
+/examples/player export-ignore

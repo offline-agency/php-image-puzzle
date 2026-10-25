@@ -139,5 +139,19 @@ foreach ($fixtures === false ? [] : $fixtures as $file) {
     $report("{$name} initial state", $validator->validate($state->toArray(), 'game/v1/state.schema.json'));
 }
 
+// Example definitions played by the browser player (examples/player).
+$examples = glob($root . '/examples/player/assets/*.json');
+foreach ($examples === false ? [] : $examples as $file) {
+    $name = 'examples/player/assets/' . basename($file);
+    $json = (string) file_get_contents($file);
+    $report($name, $validator->validateObjects(json_decode($json, false, 64, JSON_THROW_ON_ERROR), 'game/v1/definition.schema.json'));
+    try {
+        ImagePuzzle\Game\GameDefinition::fromJson($json);
+        $report("{$name} (PHP)", []);
+    } catch (Throwable $e) {
+        $report("{$name} (PHP)", [$e->getMessage()]);
+    }
+}
+
 echo $failures === 0 ? "\nAll schema checks passed.\n" : "\n{$failures} schema check(s) failed.\n";
 exit($failures === 0 ? 0 : 1);

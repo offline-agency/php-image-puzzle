@@ -1,0 +1,101 @@
+{
+    "id": "gd1-92827b683c1949602a5beb8f73cb415b2d73516e88978b7d67b8b1e321b24e0d",
+    "$schema": "https://raw.githubusercontent.com/offline-agency/php-image-puzzle/HEAD/docs/schemas/game/v1/definition.schema.json",
+    "format": "image-puzzle/game-definition",
+    "version": 1,
+    "kind": "strips",
+    "generator": {
+        "algorithm": 1
+    },
+    "seed": 4,
+    "preset": {
+        "name": "easy",
+        "version": 1
+    },
+    "source": {
+        "width": 640,
+        "height": 480,
+        "sha256": "ddeb783c0a5e5bc2927c98903abcebdbaa01ccae446c8337c2278a8f3901b80d"
+    },
+    "media": {
+        "image": "picture.png"
+    },
+    "board": {
+        "rows": 4,
+        "cols": 1,
+        "crop": {
+            "x": 0,
+            "y": 0,
+            "width": 640,
+            "height": 480
+        }
+    },
+    "tiles": [
+        {
+            "id": "s0",
+            "home": 0,
+            "rect": {
+                "x": 0,
+                "y": 0,
+                "width": 640,
+                "height": 120
+            }
+        },
+        {
+            "id": "s1",
+            "home": 1,
+            "rect": {
+                "x": 0,
+                "y": 120,
+                "width": 640,
+                "height": 120
+            }
+        },
+        {
+            "id": "s2",
+            "home": 2,
+            "rect": {
+                "x": 0,
+                "y": 240,
+                "width": 640,
+                "height": 120
+            }
+        },
+        {
+            "id": "s3",
+            "home": 3,
+            "rect": {
+                "x": 0,
+                "y": 360,
+                "width": 640,
+                "height": 120
+            }
+        }
+    ],
+    "rules": {
+        "axis": "horizontal"
+    },
+    "actions": [
+        "move"
+    ],
+    "capabilities": {
+        "undo": true,
+        "redo": true,
+        "reset": true,
+        "shuffle": true,
+        "hint": true
+    },
+    "assistance": {
+        "preview": true,
+        "numbers": true,
+        "highlightCorrect": true
+    },
+    "initial": {
+        "order": [
+            "s0",
+            "s3",
+            "s2",
+            "s1"
+        ]
+    }
+}

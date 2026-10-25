@@ -6,7 +6,7 @@ tests/tmp/
 /node_modules/
 /packages/*/node_modules/
 /packages/*/dist/
-/test-results/
-/playwright-report/
+test-results/
+playwright-report/
 # The npm lockfile is committed (reproducible frozen installs).
 !/package-lock.json

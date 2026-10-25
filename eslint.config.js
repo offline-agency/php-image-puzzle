@@ -14,6 +14,8 @@ export default tseslint.config(
       'examples/**/assets/**',
       // Ambient declarations of web-platform globals for the DOM-free build.
       'packages/*/types/**',
+      // Declares the IIFE global against dist/; type-checked by tools/js-consumer.
+      'packages/*/global.d.ts',
     ],
   },
   js.configs.recommended,
@@ -22,7 +24,7 @@ export default tseslint.config(
     languageOptions: {
       parserOptions: {
         projectService: {
-          allowDefaultProject: ['*.js', '*.config.js', '*.config.ts'],
+          allowDefaultProject: ['*.js', '*.config.js', '*.config.ts', 'packages/*/e2e/*.mjs'],
         },
         tsconfigRootDir: import.meta.dirname,
       },
@@ -33,7 +35,7 @@ export default tseslint.config(
     },
   },
   {
-    files: ['**/*.js'],
+    files: ['**/*.js', '**/*.mjs'],
     ...tseslint.configs.disableTypeChecked,
   },
 );

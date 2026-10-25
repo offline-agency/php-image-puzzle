@@ -1,0 +1,238 @@
+{
+    "id": "gd1-7bf448f807be1575ddbe7a97f959f3353bad018e8f5ab8c3dc318c04631d0fe5",
+    "$schema": "https://raw.githubusercontent.com/offline-agency/php-image-puzzle/HEAD/docs/schemas/game/v1/definition.schema.json",
+    "format": "image-puzzle/game-definition",
+    "version": 1,
+    "kind": "rotation",
+    "generator": {
+        "algorithm": 1
+    },
+    "seed": 3,
+    "preset": {
+        "name": "medium",
+        "version": 1
+    },
+    "source": {
+        "width": 640,
+        "height": 480,
+        "sha256": "ddeb783c0a5e5bc2927c98903abcebdbaa01ccae446c8337c2278a8f3901b80d"
+    },
+    "media": {
+        "image": "picture.png"
+    },
+    "board": {
+        "rows": 4,
+        "cols": 4,
+        "crop": {
+            "x": 80,
+            "y": 0,
+            "width": 480,
+            "height": 480
+        }
+    },
+    "tiles": [
+        {
+            "id": "t0",
+            "home": 0,
+            "rect": {
+                "x": 80,
+                "y": 0,
+                "width": 120,
+                "height": 120
+            }
+        },
+        {
+            "id": "t1",
+            "home": 1,
+            "rect": {
+                "x": 200,
+                "y": 0,
+                "width": 120,
+                "height": 120
+            }
+        },
+        {
+            "id": "t2",
+            "home": 2,
+            "rect": {
+                "x": 320,
+                "y": 0,
+                "width": 120,
+                "height": 120
+            }
+        },
+        {
+            "id": "t3",
+            "home": 3,
+            "rect": {
+                "x": 440,
+                "y": 0,
+                "width": 120,
+                "height": 120
+            }
+        },
+        {
+            "id": "t4",
+            "home": 4,
+            "rect": {
+                "x": 80,
+                "y": 120,
+                "width": 120,
+                "height": 120
+            }
+        },
+        {
+            "id": "t5",
+            "home": 5,
+            "rect": {
+                "x": 200,
+                "y": 120,
+                "width": 120,
+                "height": 120
+            }
+        },
+        {
+            "id": "t6",
+            "home": 6,
+            "rect": {
+                "x": 320,
+                "y": 120,
+                "width": 120,
+                "height": 120
+            }
+        },
+        {
+            "id": "t7",
+            "home": 7,
+            "rect": {
+                "x": 440,
+                "y": 120,
+                "width": 120,
+                "height": 120
+            }
+        },
+        {
+            "id": "t8",
+            "home": 8,
+            "rect": {
+                "x": 80,
+                "y": 240,
+                "width": 120,
+                "height": 120
+            }
+        },
+        {
+            "id": "t9",
+            "home": 9,
+            "rect": {
+                "x": 200,
+                "y": 240,
+                "width": 120,
+                "height": 120
+            }
+        },
+        {
+            "id": "t10",
+            "home": 10,
+            "rect": {
+                "x": 320,
+                "y": 240,
+                "width": 120,
+                "height": 120
+            }
+        },
+        {
+            "id": "t11",
+            "home": 11,
+            "rect": {
+                "x": 440,
+                "y": 240,
+                "width": 120,
+                "height": 120
+            }
+        },
+        {
+            "id": "t12",
+            "home": 12,
+            "rect": {
+                "x": 80,
+                "y": 360,
+                "width": 120,
+                "height": 120
+            }
+        },
+        {
+            "id": "t13",
+            "home": 13,
+            "rect": {
+                "x": 200,
+                "y": 360,
+                "width": 120,
+                "height": 120
+            }
+        },
+        {
+            "id": "t14",
+            "home": 14,
+            "rect": {
+                "x": 320,
+                "y": 360,
+                "width": 120,
+                "height": 120
+            }
+        },
+        {
+            "id": "t15",
+            "home": 15,
+            "rect": {
+                "x": 440,
+                "y": 360,
+                "width": 120,
+                "height": 120
+            }
+        }
+    ],
+    "rules": {
+        "orientations": [
+            0,
+            90,
+            180,
+            270
+        ]
+    },
+    "actions": [
+        "rotate"
+    ],
+    "capabilities": {
+        "undo": true,
+        "redo": true,
+        "reset": true,
+        "shuffle": true,
+        "hint": true
+    },
+    "assistance": {
+        "preview": true,
+        "numbers": false,
+        "highlightCorrect": false
+    },
+    "initial": {
+        "orientations": [
+            90,
+            180,
+            270,
+            270,
+            180,
+            90,
+            180,
+            0,
+            270,
+            270,
+            270,
+            90,
+            270,
+            90,
+            180,
+            270
+        ]
+    }
+}

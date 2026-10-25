@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Image puzzle — plain JavaScript player</title>
+    <style>
+      body { font-family: system-ui, sans-serif; margin: 0 auto; padding: 1rem; max-width: 56rem; }
+      .bar { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; margin-block: 0.75rem; }
+      button, select { font: inherit; min-height: 2.5rem; }
+      #log { max-height: 12rem; overflow: auto; background: #f4f6f8; padding: 0.5rem; font-size: 0.8rem; }
+    </style>
+  </head>
+  <body>
+    <h1>Plain JavaScript player</h1>
+    <p>
+      No framework, no bundler: one <code>&lt;script&gt;</code> exposing the global <code>ImagePuzzle</code>.
+      Serve the repository root over HTTP (for example <code>php -S 127.0.0.1:8000</code>) because the definitions are
+      loaded with <code>fetch()</code>; <code>file://</code> pages cannot fetch them.
+    </p>
+    <div class="bar">
+      <label>Mode
+        <select id="mode">
+          <option value="sliding">Sliding</option>
+          <option value="swap">Swap</option>
+          <option value="rotation">Rotation</option>
+          <option value="strips">Strips</option>
+          <option value="jigsaw">Jigsaw</option>
+          <option value="jigsaw-hex">Jigsaw (hexagonal)</option>
+        </select>
+      </label>
+      <label>Language
+        <select id="locale">
+          <option value="en">English</option>
+          <option value="it">Italiano</option>
+        </select>
+      </label>
+      <button type="button" id="save">Save</button>
+      <button type="button" id="restore">Restore</button>
+      <button type="button" id="destroy">Destroy</button>
+    </div>
+    <div id="puzzle"></div>
+    <h2>Events</h2>
+    <pre id="log" aria-live="off"></pre>
+
+    <script src="../../packages/player/dist/image-puzzle-player.iife.js"></script>
+    <script>
+      const { createPlayer } = window.ImagePuzzle;
+      const container = document.getElementById('puzzle');
+      const log = document.getElementById('log');
+      const mode = document.getElementById('mode');
+      const locale = document.getElementById('locale');
+      let saved = null;
+      let player = null;
+
+      function mount() {
+        player = createPlayer(container, { src: `assets/${mode.value}.json`, locale: locale.value, persist: true });
+        window.puzzlePlayer = player; // for experimenting in the console
+        for (const type of ['ready', 'move', 'progress', 'complete', 'error']) {
+          player.subscribe(type, (detail) => {
+            const line = document.createElement('div');
+            line.textContent = `${type} ${JSON.stringify(detail.progress ?? detail.code ?? detail.moves ?? detail.definitionId ?? '')}`;
+            log.prepend(line);
+          });
+        }
+      }
+
+      mount();
+      // Changing the puzzle aborts any load still in flight.
+      mode.addEventListener('change', () => player?.load(`assets/${mode.value}.json`).catch(() => {}));
+      locale.addEventListener('change', () => player?.setLocale(locale.value));
+      document.getElementById('save').addEventListener('click', () => {
+        saved = player?.exportState() ?? null;
+      });
+      document.getElementById('restore').addEventListener('click', () => {
+        if (saved !== null) {
+          try {
+            player?.importState(saved);
+          } catch (error) {
+            // Incompatible state (another puzzle): the current game is unchanged.
+            console.warn(error.message);
+          }
+        }
+      });
+      document.getElementById('destroy').addEventListener('click', (event) => {
+        if (player === null) {
+          mount();
+          event.target.textContent = 'Destroy';
+        } else {
+          player.destroy();
+          player = null;
+          event.target.textContent = 'Create';
+        }
+      });
+    </script>
+  </body>
+</html>
