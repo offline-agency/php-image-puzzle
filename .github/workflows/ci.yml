@@ -160,6 +160,21 @@ jobs:
           tools: composer:v2
       - run: tools/consumer/run.sh --prefer-lowest
 
+  codeigniter:
+    name: CodeIgniter 4 recipe in a fresh application
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
+        with:
+          php-version: '8.4'
+          extensions: gd, intl, mbstring, curl
+          coverage: none
+          tools: composer:v2
+      - run: tools/codeigniter/run.sh
+
   docker:
     name: Docker images build and run the suite
     runs-on: ubuntu-24.04
@@ -335,7 +350,7 @@ jobs:
   gate:
     name: CI gate
     if: always()
-    needs: [quality, tests, minimal-extensions, coverage, mutation, consumer, docker, js, browser, js-consumer, conformance, integrations, integrations-browser]
+    needs: [quality, tests, minimal-extensions, coverage, mutation, consumer, codeigniter, docker, js, browser, js-consumer, conformance, integrations, integrations-browser]
     runs-on: ubuntu-24.04
     steps:
       - name: Every required job succeeded
