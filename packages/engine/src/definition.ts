@@ -1,6 +1,7 @@
 import { canonicalJson, sha256Hex } from './canonical.js';
 import * as doc from './doc.js';
 import { InvalidDocumentError } from './errors.js';
+import { parseMedia, validateMedia } from './media.js';
 import { MAX_SEED } from './prng.js';
 import { parseRect } from './rect.js';
 import { rulesFor } from './rules/index.js';
@@ -86,8 +87,7 @@ export function parseDefinition(data: unknown): GameDefinition {
   if (sha !== null && (typeof sha !== 'string' || !/^[0-9a-f]{64}$/.test(sha))) {
     throw new InvalidDocumentError('definition.source.sha256 must be null or 64 lowercase hex digits.');
   }
-  const media = doc.object(root['media'], 'definition.media');
-  doc.keys(media, ['image'], 'definition.media');
+  const media = parseMedia(root['media']);
   const board = doc.object(root['board'], 'definition.board');
   doc.keys(board, ['rows', 'cols', 'crop'], 'definition.board');
   const tiles = doc.list(root['tiles'], 'definition.tiles', MAX_TILES).map((value, i) => parseTile(value, `definition.tiles[${i}]`));
@@ -104,7 +104,7 @@ export function parseDefinition(data: unknown): GameDefinition {
       height: doc.int(source, 'height', 'definition.source', 1, 1 << 20),
       sha256: sha,
     },
-    media: { image: doc.string(media, 'image', 'definition.media') },
+    media,
     rows: doc.int(board, 'rows', 'definition.board', 1, 1024),
     cols: doc.int(board, 'cols', 'definition.board', 1, 1024),
     crop: parseRect(board['crop'], 'definition.board.crop'),
@@ -207,6 +207,7 @@ function validateCommon(definition: DefinitionCore): void {
     }
     seen.add(tile.id);
   }
+  validateMedia(definition.media, definition.kind, definition.source.width, definition.tiles);
 }
 
 function deepFreeze<T>(value: T): T {

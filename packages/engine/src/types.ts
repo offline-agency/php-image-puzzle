@@ -32,6 +32,29 @@ export interface Assistance {
   readonly highlightCorrect: boolean;
 }
 
+/** A smaller set of jigsaw tile images (definition.media.resolutions). */
+export interface PieceResolution {
+  readonly name: string;
+  /** Width of the whole source at this resolution: the scale is width / source.width. */
+  readonly width: number;
+  readonly directory: string;
+}
+
+/** Spritesheet of every jigsaw tile image (definition.media.atlas). */
+export interface PieceAtlas {
+  readonly image: string;
+  readonly width: number;
+  readonly height: number;
+  /** Rendered box of each tile in atlas pixels, by tile ID in tile order. */
+  readonly frames: { readonly [id: string]: Rect };
+}
+
+export interface Media {
+  readonly image: string;
+  readonly resolutions?: readonly PieceResolution[];
+  readonly atlas?: PieceAtlas;
+}
+
 /** A validated, immutable game definition (docs/schemas/game/v1/definition.schema.json). */
 export interface GameDefinition {
   readonly id: string;
@@ -39,7 +62,7 @@ export interface GameDefinition {
   readonly seed: number;
   readonly preset: { readonly name: string; readonly version: number };
   readonly source: { readonly width: number; readonly height: number; readonly sha256: string | null };
-  readonly media: { readonly image: string };
+  readonly media: Media;
   readonly rows: number;
   readonly cols: number;
   readonly crop: Rect;

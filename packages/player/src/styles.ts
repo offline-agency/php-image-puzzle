@@ -71,6 +71,7 @@ button:focus-visible { outline: 3px solid var(--ipp-focus); outline-offset: 2px;
 .piece { position: absolute; padding: 0; margin: 0; border: 0; background: none; pointer-events: none; transition: left var(--ipp-duration) ease, top var(--ipp-duration) ease; }
 .piece:focus-visible { outline: none; }
 .piece img { display: block; width: 100%; height: 100%; pointer-events: none; -webkit-user-drag: none; }
+.piece .piece-image { display: block; width: 100%; height: 100%; pointer-events: none; }
 .piece svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
 .piece .outline { fill: transparent; stroke: none; pointer-events: all; cursor: grab; touch-action: none; vector-effect: non-scaling-stroke; }
 .piece:focus-visible .outline { stroke: var(--ipp-focus); stroke-width: 3; }

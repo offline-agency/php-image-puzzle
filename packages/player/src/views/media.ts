@@ -20,13 +20,13 @@ export interface PendingImage {
 }
 
 /** Loads an image once; cancel() detaches the handlers and releases the request. */
-export function loadImage(url: string, onLoad: () => void, onError: () => void): PendingImage {
+export function loadImage(url: string, onLoad: (image: HTMLImageElement) => void, onError: () => void): PendingImage {
   const image = new Image();
   let done = false;
   image.onload = () => {
     if (!done) {
       done = true;
-      onLoad();
+      onLoad(image);
     }
   };
   image.onerror = () => {

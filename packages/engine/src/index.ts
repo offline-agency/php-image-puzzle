@@ -31,6 +31,7 @@ export { allowedOrientations } from './rules/rotation.js';
 export { stripAxis } from './rules/strips.js';
 export { playArea, renderedRect, snapDistance, trayRect } from './rules/jigsaw.js';
 export { cellRect, cellSize } from './rules/grid.js';
+export { MAX_ATLAS_SIZE, MAX_RESOLUTIONS, parseMedia, resolutionImage, resolutionLength, validateMedia } from './media.js';
 export { autoPersist, browserStorage, clearState, restoreState, saveState, storageKey } from './persistence.js';
 export type { AutoPersistOptions, PersistResult, RestoreResult, StateStorage } from './persistence.js';
 export { canonicalJson, sha256Hex } from './canonical.js';
@@ -59,6 +60,9 @@ export type {
   GameStateDocument,
   JigsawBoard,
   JigsawPiece,
+  Media,
+  PieceAtlas,
+  PieceResolution,
   Rect,
   RotationBoard,
   SlidingBoard,

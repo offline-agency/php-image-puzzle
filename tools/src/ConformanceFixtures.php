@@ -8,13 +8,18 @@ use ImagePuzzle\Config\PuzzleConfig;
 use ImagePuzzle\Exception\IllegalActionException;
 use ImagePuzzle\Exception\InvalidDefinitionException;
 use ImagePuzzle\Game\BuildConfiguration;
+use ImagePuzzle\Game\Doc;
 use ImagePuzzle\Game\GameDefinition;
 use ImagePuzzle\Game\GameFactory;
 use ImagePuzzle\Game\GameKind;
 use ImagePuzzle\Game\Modes;
+use ImagePuzzle\Game\PieceAtlas;
+use ImagePuzzle\Game\PieceImages;
+use ImagePuzzle\Game\PieceResolution;
 use ImagePuzzle\Game\Presets;
 use ImagePuzzle\Game\Prng;
 use ImagePuzzle\Game\SourceImage;
+use ImagePuzzle\Geometry\Bounds;
 use ImagePuzzle\GeometryOptions;
 use ImagePuzzle\PuzzleGenerator;
 
@@ -51,8 +56,73 @@ final class ConformanceFixtures
         foreach ($definitions as $name => $definition) {
             $files["mode-{$name}.json"] = self::mode($name, $definition);
         }
+        $files['media.json'] = self::media($definitions['jigsaw'], $definitions['swap']);
 
         return $files;
+    }
+
+    /**
+     * Definitions with alternative piece images (definition.media) and the
+     * PHP verdict: the TypeScript parser accepts and rejects the same ones.
+     *
+     * @return array<string, mixed>
+     */
+    private static function media(GameDefinition $jigsaw, GameDefinition $swap): array
+    {
+        $frames = [];
+        foreach ($jigsaw->tiles as $i => $tile) {
+            $frames[$tile->id] = new Bounds(2 + 60 * $i, 2, 50, 60);
+        }
+        $atlas = new PieceAtlas('atlas.png', 2 + 60 * count($frames), 64, $frames);
+        $resolutions = [new PieceResolution('thumbnail', 30, 'pieces-thumbnail'), new PieceResolution('mobile', 60, 'pieces-mobile')];
+        $valid = [
+            'resolutions' => $jigsaw->withPieceImages(new PieceImages($resolutions)),
+            'atlas' => $jigsaw->withPieceImages(new PieceImages([], $atlas)),
+            'both' => $jigsaw->withPieceImages(new PieceImages($resolutions, $atlas)),
+        ];
+        $cases = [];
+        foreach ($valid as $name => $definition) {
+            $cases[] = ['name' => $name, 'document' => $definition->toArray()];
+        }
+        $both = $valid['both']->toArray();
+        $media = Doc::object($both['media'], 'media');
+        $resolution = ['name' => 'tiny', 'width' => 10, 'directory' => 'pieces-tiny'];
+        $mutations = [
+            'empty resolutions' => [...$media, 'resolutions' => []],
+            'unknown media field' => [...$media, 'video' => 'clip.mp4'],
+            'resolution as wide as the source' => [...$media, 'resolutions' => [[...$resolution, 'width' => 120]]],
+            'resolution in the tile image directory' => [...$media, 'resolutions' => [[...$resolution, 'directory' => 'pieces']]],
+            'repeated resolution name' => [...$media, 'resolutions' => [$resolution, [...$resolution, 'directory' => 'other']]],
+            'invalid resolution name' => [...$media, 'resolutions' => [[...$resolution, 'name' => 'Tiny']]],
+            'unsafe resolution directory' => [...$media, 'resolutions' => [[...$resolution, 'directory' => '../up']]],
+            'zero resolution width' => [...$media, 'resolutions' => [[...$resolution, 'width' => 0]]],
+            'extra resolution field' => [...$media, 'resolutions' => [[...$resolution, 'scale' => 0.5]]],
+            'too many resolutions' => [...$media, 'resolutions' => array_map(static fn (int $i): array => ['name' => "r{$i}", 'width' => 10 + $i, 'directory' => "r{$i}"], range(1, 5))],
+            'unsafe atlas image' => [...$media, 'atlas' => [...$atlas->toArray(), 'image' => '/etc/atlas.png']],
+            'atlas too large' => [...$media, 'atlas' => [...$atlas->toArray(), 'width' => 20000]],
+            'frame outside the atlas' => [...$media, 'atlas' => [...$atlas->toArray(), 'height' => 40]],
+            'missing frame' => [...$media, 'atlas' => [...$atlas->toArray(), 'frames' => array_slice($atlas->toArray()['frames'], 1)]],
+            'frames out of tile order' => [...$media, 'atlas' => [...$atlas->toArray(), 'frames' => array_reverse($atlas->toArray()['frames'])]],
+            'invalid frame id' => [...$media, 'atlas' => [...$atlas->toArray(), 'frames' => ['Bad' => ['x' => 0, 'y' => 0, 'width' => 1, 'height' => 1]]]],
+        ];
+        foreach ($mutations as $name => $value) {
+            $cases[] = ['name' => $name, 'document' => [...$both, 'media' => $value]];
+        }
+        $cases[] = ['name' => 'atlas on a grid mode', 'document' => [...$swap->toArray(), 'media' => ['image' => $swap->image, 'atlas' => ['image' => 'atlas.png', 'width' => 10, 'height' => 10, 'frames' => ['a' => ['x' => 0, 'y' => 0, 'width' => 1, 'height' => 1]]]]]];
+        foreach ($cases as &$case) {
+            // Validated as a JSON reader sees the document.
+            $decoded = json_decode(json_encode($case['document'], JSON_THROW_ON_ERROR), true, 64, JSON_THROW_ON_ERROR);
+            try {
+                $case['valid'] = true;
+                $case['id'] = GameDefinition::fromArray($decoded)->id;
+            } catch (InvalidDefinitionException $e) {
+                $case['valid'] = false;
+                $case['error'] = $e->getMessage();
+            }
+        }
+        unset($case);
+
+        return ['cases' => $cases];
     }
 
     /**

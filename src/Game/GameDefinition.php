@@ -54,6 +54,7 @@ final readonly class GameDefinition
         public array $rules,
         public array $assistance,
         public array $initial,
+        public PieceImages $pieceImages = new PieceImages(),
     ) {
     }
 
@@ -137,7 +138,7 @@ final readonly class GameDefinition
             throw new InvalidDefinitionException('definition.source.sha256 must be null or 64 lowercase hex digits.');
         }
         $media = Doc::object($doc['media'] ?? null, 'definition.media');
-        Doc::keys($media, ['image'], 'definition.media');
+        Doc::keys($media, ['image', 'resolutions', 'atlas'], 'definition.media');
         $board = Doc::object($doc['board'] ?? null, 'definition.board');
         Doc::keys($board, ['rows', 'cols', 'crop'], 'definition.board');
         $tiles = [];
@@ -169,6 +170,7 @@ final readonly class GameDefinition
                 'highlightCorrect' => Doc::bool($assistance, 'highlightCorrect', 'definition.assistance'),
             ],
             [],
+            PieceImages::fromMedia($media),
         );
         $definition->validateCommon();
         $mode = Modes::rules($kind);
@@ -183,7 +185,7 @@ final readonly class GameDefinition
         if ($mode->isComplete($definition, $initial)) {
             throw new InvalidDefinitionException('definition.initial is already solved.');
         }
-        $complete = new self($definition->id, $kind, $definition->seed, $definition->preset, $definition->presetVersion, $definition->sourceWidth, $definition->sourceHeight, $sha, $definition->image, $definition->rows, $definition->cols, $definition->crop, $tiles, $rules, $definition->assistance, $initial);
+        $complete = new self($definition->id, $kind, $definition->seed, $definition->preset, $definition->presetVersion, $definition->sourceWidth, $definition->sourceHeight, $sha, $definition->image, $definition->rows, $definition->cols, $definition->crop, $tiles, $rules, $definition->assistance, $initial, $definition->pieceImages);
         $expected = $complete->computeId();
         if (!hash_equals($expected, $definition->id)) {
             throw new InvalidDefinitionException("definition.id does not match its content (expected {$expected}).");
@@ -206,6 +208,18 @@ final readonly class GameDefinition
         }
 
         return null;
+    }
+
+    /**
+     * The same game with other alternative piece images (a new ID: the
+     * definition references different files).
+     */
+    public function withPieceImages(PieceImages $pieceImages): self
+    {
+        $definition = new self('', $this->kind, $this->seed, $this->preset, $this->presetVersion, $this->sourceWidth, $this->sourceHeight, $this->sourceSha256, $this->image, $this->rows, $this->cols, $this->crop, $this->tiles, $this->rules, $this->assistance, $this->initial, $pieceImages);
+        $definition->validateCommon();
+
+        return $definition->withId();
     }
 
     /**
@@ -239,7 +253,7 @@ final readonly class GameDefinition
             'seed' => $this->seed,
             'preset' => ['name' => $this->preset, 'version' => $this->presetVersion],
             'source' => ['width' => $this->sourceWidth, 'height' => $this->sourceHeight, 'sha256' => $this->sourceSha256],
-            'media' => ['image' => $this->image],
+            'media' => ['image' => $this->image] + $this->pieceImages->toArray(),
             'board' => ['rows' => $this->rows, 'cols' => $this->cols, 'crop' => $this->crop->toArray()],
             'tiles' => array_map(static fn (Tile $tile): array => $tile->toArray(), $this->tiles),
             'rules' => $this->rules === [] ? new \stdClass() : $this->rules,
@@ -260,7 +274,7 @@ final readonly class GameDefinition
 
     private function withId(): self
     {
-        return new self($this->computeId(), $this->kind, $this->seed, $this->preset, $this->presetVersion, $this->sourceWidth, $this->sourceHeight, $this->sourceSha256, $this->image, $this->rows, $this->cols, $this->crop, $this->tiles, $this->rules, $this->assistance, $this->initial);
+        return new self($this->computeId(), $this->kind, $this->seed, $this->preset, $this->presetVersion, $this->sourceWidth, $this->sourceHeight, $this->sourceSha256, $this->image, $this->rows, $this->cols, $this->crop, $this->tiles, $this->rules, $this->assistance, $this->initial, $this->pieceImages);
     }
 
     private function validateCommon(): void
@@ -288,5 +302,6 @@ final readonly class GameDefinition
             }
             $seen[$tile->id] = true;
         }
+        $this->pieceImages->validate($this->kind, $this->sourceWidth, $this->tiles);
     }
 }

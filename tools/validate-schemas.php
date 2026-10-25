@@ -140,9 +140,9 @@ foreach ($fixtures === false ? [] : $fixtures as $file) {
 }
 
 // Example definitions played by the browser player (examples/player).
-$examples = glob($root . '/examples/player/assets/*.json');
-foreach ($examples === false ? [] : $examples as $file) {
-    $name = 'examples/player/assets/' . basename($file);
+$examples = array_merge(glob($root . '/examples/player/assets/*.json') ?: [], glob($root . '/examples/player/assets/*/definition.json') ?: []);
+foreach ($examples as $file) {
+    $name = substr($file, strlen($root) + 1);
     $json = (string) file_get_contents($file);
     $report($name, $validator->validateObjects(json_decode($json, false, 64, JSON_THROW_ON_ERROR), 'game/v1/definition.schema.json'));
     try {

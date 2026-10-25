@@ -7,6 +7,9 @@ namespace ImagePuzzle\Game;
 use ImagePuzzle\Config\PuzzleConfig;
 use ImagePuzzle\Exception\ExportFailedException;
 use ImagePuzzle\Exception\InvalidArgumentException;
+use ImagePuzzle\Export\ImageEncoder;
+use ImagePuzzle\Export\PieceImageSets;
+use ImagePuzzle\ExportOptions;
 use ImagePuzzle\Geometry\Bounds;
 use ImagePuzzle\ImageLoader;
 use ImagePuzzle\PuzzleGenerator;
@@ -41,37 +44,44 @@ final class DefinitionBuilder
     /**
      * @param array<string, mixed> $custom parameters for the "custom" preset (see docs/GAME_MODES.md)
      */
-    public function build(string $sourcePath, string $outputDir, GameKind $kind, string $preset = 'medium', array $custom = [], int $seed = 0): BuildResult
+    public function build(string $sourcePath, string $outputDir, GameKind $kind, string $preset = 'medium', array $custom = [], int $seed = 0, AssetOptions $assets = new AssetOptions()): BuildResult
     {
-        return $this->run($sourcePath, $outputDir, $kind, $preset, $custom, $seed, null);
+        return $this->run($sourcePath, $outputDir, $kind, $preset, $custom, $seed, null, $assets);
     }
 
     /**
      * Builds from a saved, versioned configuration, cropping the upright
      * source to its crop rectangle first.
      */
-    public function buildConfigured(string $sourcePath, string $outputDir, BuildConfiguration $config): BuildResult
+    public function buildConfigured(string $sourcePath, string $outputDir, BuildConfiguration $config, AssetOptions $assets = new AssetOptions()): BuildResult
     {
-        return $this->run($sourcePath, $outputDir, $config->kind, $config->preset, $config->custom, $config->seed, $config->crop);
+        return $this->run($sourcePath, $outputDir, $config->kind, $config->preset, $config->custom, $config->seed, $config->crop, $assets);
     }
 
     /**
      * @param array<string, mixed> $custom
      */
-    private function run(string $sourcePath, string $outputDir, GameKind $kind, string $preset, array $custom, int $seed, ?Bounds $crop): BuildResult
+    private function run(string $sourcePath, string $outputDir, GameKind $kind, string $preset, array $custom, int $seed, ?Bounds $crop, AssetOptions $assets): BuildResult
     {
         if (!in_array($kind, Modes::available(), true)) {
             throw new InvalidArgumentException("The {$kind->value} mode cannot be built yet.");
         }
+        if ($kind !== GameKind::Jigsaw && $assets->hasPieceImages()) {
+            throw new InvalidArgumentException('Piece resolutions and atlases are only available for jigsaw puzzles.');
+        }
+        $assets->assertSupported();
         $info = (new ImageLoader($this->limits))->inspect($sourcePath);
         $created = $this->prepare($outputDir);
         try {
             $image = $crop === null
                 ? $this->writeSource($sourcePath, $outputDir, $info->type, $info->orientation)
                 : $this->writeCropped($sourcePath, $outputDir, $crop);
+            if ($kind !== GameKind::Jigsaw && $assets->format !== null) {
+                $image = $this->reencode($outputDir, $image, $assets);
+            }
             $source = SourceImage::fromFile($outputDir . '/' . $image, new ImageLoader($this->limits));
             $definition = $kind === GameKind::Jigsaw
-                ? $this->jigsaw($outputDir, $image, $source, $preset, $custom, $seed)
+                ? $this->jigsaw($outputDir, $image, $source, $preset, $custom, $seed, $assets)
                 : $this->factory->create($kind, $source, $image, $preset, $custom, $seed);
             $this->writeAtomically($outputDir . '/' . self::DEFINITION_FILE, $definition->toJson() . "\n");
         } catch (\Throwable $e) {
@@ -85,7 +95,7 @@ final class DefinitionBuilder
     /**
      * @param array<string, mixed> $custom
      */
-    private function jigsaw(string $outputDir, string $image, SourceImage $source, string $preset, array $custom, int $seed): GameDefinition
+    private function jigsaw(string $outputDir, string $image, SourceImage $source, string $preset, array $custom, int $seed, AssetOptions $assets): GameDefinition
     {
         if ($preset === 'custom') {
             $unknown = array_diff(array_keys($custom), self::JIGSAW_KEYS);
@@ -119,7 +129,7 @@ final class DefinitionBuilder
             $rows,
             $cols,
             $config->edgeStyle(),
-            $config->exportOptions(),
+            $encoding = $assets->exportOptions($config->exportOptions()),
             $this->limits,
             $config->geometryOptions(),
         );
@@ -132,7 +142,26 @@ final class DefinitionBuilder
             $manifestArray[(string) $key] = $value;
         }
 
-        return $this->factory->jigsawFromManifest($manifestArray, $image, $preset, $seed, $source->sha256, 'pieces/', $snap);
+        $definition = $this->factory->jigsawFromManifest($manifestArray, $image, $preset, $seed, $source->sha256, 'pieces/', $snap);
+        if (!$assets->hasPieceImages()) {
+            return $definition;
+        }
+
+        return $definition->withPieceImages((new PieceImageSets($this->limits))->write($outputDir, $definition, $assets, $encoding));
+    }
+
+    /** Replaces the board image of a grid mode with its re-encoding in the requested format. */
+    private function reencode(string $outputDir, string $image, AssetOptions $assets): string
+    {
+        $encoding = $assets->exportOptions(new ExportOptions());
+        $name = 'board.' . pathinfo($encoding->resolvePieceFilename(0, 0), PATHINFO_EXTENSION);
+        $gd = (new ImageLoader($this->limits))->loadFromFile($outputDir . '/' . $image);
+        ImageEncoder::write($gd, $outputDir . '/' . $name, $encoding);
+        if (!ErrorCapture::run(static fn (): bool => unlink($outputDir . '/' . $image))) {
+            throw new ExportFailedException("Cannot replace {$image}.");
+        }
+
+        return $name;
     }
 
     /**

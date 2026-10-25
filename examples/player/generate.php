@@ -5,7 +5,10 @@ declare(strict_types=1);
 
 /**
  * Regenerates the offline player example assets in examples/player/assets:
- * a synthetic picture, one game definition per mode and the jigsaw pieces.
+ * a synthetic picture, one game definition per mode and the jigsaw pieces,
+ * plus three DefinitionBuilder jigsaw builds of the same puzzle: default PNG
+ * pieces (jigsaw-png/), WebP pieces in three resolutions (jigsaw-responsive/)
+ * and PNG pieces with an atlas (jigsaw-atlas/).
  *
  * Usage: php examples/player/generate.php
  */
@@ -18,6 +21,8 @@ if (!is_file($autoload)) {
 require $autoload;
 
 use ImagePuzzle\Config\PuzzleConfig;
+use ImagePuzzle\Game\AssetOptions;
+use ImagePuzzle\Game\DefinitionBuilder;
 use ImagePuzzle\Game\GameFactory;
 use ImagePuzzle\Game\GameKind;
 use ImagePuzzle\Game\SourceImage;
@@ -96,4 +101,23 @@ foreach (['rect' => 'jigsaw', 'hex' => 'jigsaw-hex'] as $topology => $name) {
 foreach ($definitions as $name => $definition) {
     file_put_contents($assets . '/' . $name . '.json', $definition->toJson() . "\n");
     echo "{$name}: {$definition->id}\n";
+}
+
+$builds = [
+    'jigsaw-png' => new AssetOptions(),
+    'jigsaw-responsive' => new AssetOptions('webp', null, ['thumbnail' => 160, 'mobile' => 320]),
+    'jigsaw-atlas' => new AssetOptions(atlas: AssetOptions::ATLAS_FULL),
+];
+foreach ($builds as $name => $options) {
+    $out = $assets . '/' . $name;
+    if (is_dir($out)) {
+        $files = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($out, FilesystemIterator::SKIP_DOTS), RecursiveIteratorIterator::CHILD_FIRST);
+        foreach ($files as $file) {
+            if ($file instanceof SplFileInfo) {
+                $file->isDir() ? rmdir($file->getPathname()) : unlink($file->getPathname());
+            }
+        }
+    }
+    $result = (new DefinitionBuilder())->build($picture, $out, GameKind::Jigsaw, 'custom', ['rows' => 3, 'cols' => 4, 'snap' => 24], 5, $options);
+    echo "{$name}: {$result->definition->id}\n";
 }

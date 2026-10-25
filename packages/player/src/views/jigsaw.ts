@@ -1,24 +1,37 @@
-import { playArea, renderedRect } from '@offline-agency/image-puzzle-engine';
+import { playArea, renderedRect, resolutionImage, resolutionLength } from '@offline-agency/image-puzzle-engine';
 import type { Action, Board, JigsawPiece, Rect, Tile } from '@offline-agency/image-puzzle-engine';
 import { el, pct } from '../dom.js';
 import { format } from '../messages.js';
-import { backgroundFor } from './media.js';
+import { backgroundFor, loadImage } from './media.js';
+import type { PendingImage } from './media.js';
 import type { ModeView, ViewContext } from './types.js';
 
 const SVG = 'http://www.w3.org/2000/svg';
 const DRAG_THRESHOLD = 4;
+/**
+ * Responsive pieces ask for 1.5 times their displayed density: a set drawn
+ * at nearly its own size is resampled with a coarse filter by some engines
+ * (WebKit), which widens the anti-aliased seams between placed pieces.
+ */
+const DENSITY_MARGIN = 1.5;
 
 interface PieceView {
   readonly tile: Tile;
   readonly rendered: Rect;
   readonly button: HTMLButtonElement;
-  readonly image: HTMLImageElement;
+  /** An <img>, or a canvas holding the piece's frame of the atlas. */
+  readonly image: HTMLElement;
 }
 
 /**
  * Jigsaw view on the definition's world plane (source pixels). Pieces are the
  * PHP-exported images; their PHP-generated outline is the hit area and the
  * focus ring, so non-rectangular pieces are grabbed by their real shape.
+ *
+ * Alternative images never change the geometry: with media.atlas every piece
+ * shows its frame of one spritesheet; with media.resolutions each piece image
+ * gets a srcset and sizes from its displayed width, so the browser picks the
+ * set for the current size, zoom and pixel density.
  */
 export function createJigsawView(ctx: ViewContext): ModeView {
   const { doc, definition } = ctx;
@@ -65,6 +78,27 @@ export function createJigsawView(ctx: ViewContext): ModeView {
 
   let pending = 0;
   let failed = false;
+  const atlas = definition.media.atlas;
+  const resolutions = definition.media.resolutions ?? [];
+  let atlasLoad: PendingImage | null = null;
+  const atlasUrl = atlas === undefined ? null : ctx.asset(atlas.image);
+  const frames: { readonly canvas: HTMLCanvasElement; readonly frame: Rect }[] = [];
+  if (atlasUrl !== null) {
+    pending++;
+    atlasLoad = loadImage(
+      atlasUrl,
+      (sheet) => {
+        drawFrames(sheet);
+        onImageLoad();
+      },
+      () => {
+        onImageError(atlasUrl);
+      },
+    );
+  }
+  /** Responsive images waiting for their first measured size (see `sizes`). */
+  const responsive: { readonly image: HTMLImageElement; readonly rendered: Rect; readonly srcset: string; readonly url: string }[] = [];
+
   const pieces: PieceView[] = definition.tiles.map((tile) => {
     const rendered = renderedRect(tile);
     const path = typeof tile.attributes['path'] === 'string' ? tile.attributes['path'] : null;
@@ -77,18 +111,8 @@ export function createJigsawView(ctx: ViewContext): ModeView {
 
     const button = el(doc, 'button', { type: 'button', class: 'piece', part: 'piece', 'data-piece': tile.id });
     Object.assign(button.style, { width: pct((rendered.width / area.width) * 100), height: pct((rendered.height / area.height) * 100) });
-    const url = ctx.asset(String(tile.attributes['image']));
-    const image = el(doc, 'img', { alt: '', draggable: 'false', decoding: 'async' });
-    pending++;
-    image.addEventListener('load', onImageLoad, { once: true });
-    image.addEventListener(
-      'error',
-      () => {
-        onImageError(url);
-      },
-      { once: true },
-    );
-    image.src = url;
+    const frame = atlas?.frames[tile.id];
+    const image = frame === undefined ? pieceImage(tile, rendered) : atlasFrame(frame);
     const svg = doc.createElementNS(SVG, 'svg');
     svg.setAttribute('viewBox', `${rendered.x} ${rendered.y} ${rendered.width} ${rendered.height}`);
     svg.setAttribute('preserveAspectRatio', 'none');
@@ -102,6 +126,75 @@ export function createJigsawView(ctx: ViewContext): ModeView {
     return { tile, rendered, button, image };
   });
   const byId = new Map(pieces.map((piece) => [piece.tile.id, piece]));
+
+  /**
+   * A canvas holding the piece's frame of the atlas, filled once the atlas has
+   * loaded. The browser then scales it like a separate piece image: CSS
+   * backgrounds, SVG viewports and clipping boxes all lose part of the
+   * anti-aliased edge at the piece box and widen the seams between pieces.
+   */
+  function atlasFrame(frame: Rect): HTMLCanvasElement {
+    const canvas = el(doc, 'canvas', { class: 'piece-image', width: String(frame.width), height: String(frame.height) });
+    frames.push({ canvas, frame });
+    return canvas;
+  }
+
+  function drawFrames(sheet: HTMLImageElement): void {
+    for (const { canvas, frame } of frames) {
+      canvas.getContext('2d')?.drawImage(sheet, frame.x, frame.y, frame.width, frame.height, 0, 0, frame.width, frame.height);
+    }
+  }
+
+  function pieceImage(tile: Tile, rendered: Rect): HTMLImageElement {
+    const path = String(tile.attributes['image']);
+    const url = ctx.asset(path);
+    const image = el(doc, 'img', { alt: '', draggable: 'false', decoding: 'async' });
+    pending++;
+    image.addEventListener('load', onImageLoad, { once: true });
+    image.addEventListener(
+      'error',
+      () => {
+        onImageError(url);
+      },
+      { once: true },
+    );
+    if (resolutions.length === 0) {
+      image.src = url;
+      return image;
+    }
+    const candidates = resolutions.map(
+      (resolution) =>
+        `${ctx.asset(resolutionImage(resolution, path))} ${resolutionLength(resolution, rendered.width, definition.source.width)}w`,
+    );
+    responsive.push({ image, rendered, srcset: [...candidates, `${url} ${rendered.width}w`].join(', '), url });
+    return image;
+  }
+
+  /**
+   * The displayed width of each responsive piece in CSS pixels, times
+   * DENSITY_MARGIN. Sources are assigned on the first measurement, so the
+   * first request already matches the layout; without ResizeObserver a
+   * viewport-relative estimate is used.
+   */
+  function sizes(stageWidth: number | null): void {
+    for (const { image, rendered, srcset, url } of responsive) {
+      const fraction = (rendered.width / area.width) * DENSITY_MARGIN;
+      image.sizes = stageWidth === null ? `${(fraction * 100).toFixed(3)}vw` : `${Math.max(1, Math.ceil(fraction * stageWidth))}px`;
+      if (image.srcset === '') {
+        image.srcset = srcset;
+        image.src = url;
+      }
+    }
+  }
+  const observer =
+    responsive.length > 0 && typeof ResizeObserver === 'function'
+      ? new ResizeObserver((entries) => {
+          const width = entries[0]?.contentRect.width ?? 0;
+          if (width > 0) sizes(width);
+        })
+      : null;
+  if (observer === null) sizes(null);
+  else observer.observe(stage);
 
   function onImageLoad(): void {
     pending--;
@@ -327,6 +420,8 @@ export function createJigsawView(ctx: ViewContext): ModeView {
       stage.removeEventListener('pointermove', onPointerMove);
       stage.removeEventListener('pointerup', onPointerEnd);
       stage.removeEventListener('pointercancel', onPointerEnd);
+      observer?.disconnect();
+      atlasLoad?.cancel();
       for (const piece of pieces) piece.image.removeAttribute('src');
       element.remove();
     },

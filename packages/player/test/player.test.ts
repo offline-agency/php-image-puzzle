@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createPlayer } from '../src/index.js';
 import type { Player, PlayerEventType } from '../src/index.js';
-import { definitionDocument, fakeFetch, key, manualClock, memoryStorage, settle } from './support.js';
+import { definitionDocument, fakeFetch, key, manualClock, mediaDocument, memoryStorage, settle } from './support.js';
 
 const players: Player[] = [];
 function mount(options: Parameters<typeof createPlayer>[1] = {}): { player: Player; container: HTMLElement; shadow: ShadowRoot } {
@@ -315,5 +315,43 @@ describe('createPlayer', () => {
     await player.load(definitionDocument('swap'));
     expect(control(shadow, 'start').textContent).toBe('<img src=x onerror=alert(1)>');
     expect(shadow.querySelector('img')).toBeNull();
+  });
+});
+
+describe('alternative piece images', () => {
+  it('gives responsive pieces a srcset of every set plus the full-resolution image', async () => {
+    const { player, shadow } = mount({ baseUrl: 'https://cdn.example/puzzle/' });
+    await player.load(mediaDocument('resolutions'));
+    const images = [...shadow.querySelectorAll<HTMLImageElement>('.piece img')];
+    expect(images).toHaveLength(player.engine.definition?.tiles.length ?? -1);
+    const first = images[0];
+    const tile = player.engine.definition?.tiles[0];
+    if (first === undefined || tile === undefined) throw new Error('no piece');
+    const file = String(tile.attributes['image']).split('/').pop() ?? '';
+    const rendered = tile.attributes['rendered'] as { width: number };
+    expect(first.getAttribute('srcset')).toBe(
+      [
+        `https://cdn.example/puzzle/pieces-thumbnail/${file} ${String(Math.max(1, Math.round((rendered.width * 30) / 120)))}w`,
+        `https://cdn.example/puzzle/pieces-mobile/${file} ${String(Math.max(1, Math.round((rendered.width * 60) / 120)))}w`,
+        `https://cdn.example/puzzle/${String(tile.attributes['image'])} ${String(rendered.width)}w`,
+      ].join(', '),
+    );
+    // Without ResizeObserver (jsdom) the size is estimated from the viewport.
+    expect(first.getAttribute('sizes')).toMatch(/^\d+\.\d{3}vw$/);
+    expect(first.getAttribute('src')).toBe(`https://cdn.example/puzzle/${String(tile.attributes['image'])}`);
+  });
+
+  it('draws atlas pieces into one canvas per frame and loads the atlas once', async () => {
+    const { player, shadow } = mount();
+    await player.load(mediaDocument('atlas'));
+    const definition = player.engine.definition;
+    const canvases = [...shadow.querySelectorAll<HTMLCanvasElement>('.piece canvas.piece-image')];
+    expect(shadow.querySelectorAll('.piece img')).toHaveLength(0);
+    expect(canvases).toHaveLength(definition?.tiles.length ?? -1);
+    const frames = definition?.media.atlas?.frames ?? {};
+    canvases.forEach((canvas, i) => {
+      const id = definition?.tiles[i]?.id ?? '';
+      expect([canvas.width, canvas.height]).toEqual([frames[id]?.width, frames[id]?.height]);
+    });
   });
 });

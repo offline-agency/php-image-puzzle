@@ -3,7 +3,9 @@ import type { Page } from '@playwright/test';
 import type { Player } from '../src/index.js';
 
 export const MODES = ['sliding', 'swap', 'rotation', 'strips', 'jigsaw', 'jigsaw-hex'] as const;
-export type Mode = (typeof MODES)[number];
+/** PHP builds with alternative piece images (examples/player/assets/<name>/definition.json). */
+export const ASSET_BUILDS = ['jigsaw-responsive/definition', 'jigsaw-atlas/definition'] as const;
+export type Mode = (typeof MODES)[number] | (typeof ASSET_BUILDS)[number];
 
 declare global {
   interface Window {
@@ -11,10 +13,19 @@ declare global {
   }
 }
 
-/** Opens the plain-JS example on a mode and waits until the board and its images are ready. */
-export async function openPlain(page: Page, mode: Mode = 'sliding'): Promise<void> {
+/**
+ * Opens the plain-JS example on a mode and waits until the board and its
+ * images are ready. `css` is added to the page head before any script runs.
+ */
+export async function openPlain(page: Page, mode: Mode = 'sliding', css?: string): Promise<void> {
   const errors: string[] = [];
   page.on('pageerror', (error) => errors.push(error.message));
+  if (css !== undefined) {
+    await page.route('**/examples/player/index.html', async (route) => {
+      const response = await route.fetch();
+      await route.fulfill({ response, body: (await response.text()).replace('</head>', `<style>${css}</style></head>`) });
+    });
+  }
   await page.goto('examples/player/index.html');
   await waitReady(page, 'sliding');
   if (mode !== 'sliding') {

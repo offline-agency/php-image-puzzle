@@ -11,6 +11,16 @@ export function definitionDocument(name: string): Record<string, unknown> {
   return fixture.definition;
 }
 
+/** A PHP-generated definition with alternative piece images (conformance/media.json). */
+export function mediaDocument(name: 'resolutions' | 'atlas' | 'both'): Record<string, unknown> {
+  const fixture = JSON.parse(readFileSync(`${conformance}media.json`, 'utf8')) as {
+    cases: { name: string; document: Record<string, unknown> }[];
+  };
+  const found = fixture.cases.find((c) => c.name === name);
+  if (found === undefined) throw new Error(`No media case ${name}.`);
+  return found.document;
+}
+
 export function manualClock(start = 1000): { now: () => number; advance: (ms: number) => void } {
   let time = start;
   return {

@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { MODES, drag, moves, openPlain, waitReady } from './support.js';
+import { ASSET_BUILDS, MODES, drag, moves, openPlain, waitReady } from './support.js';
 
 const board = '.image-puzzle-player .board';
 
@@ -114,7 +114,7 @@ test.describe('plain JavaScript player (examples/player/index.html)', () => {
     expect(after.indexOf(String(order[0]))).toBe(2);
   });
 
-  for (const mode of ['jigsaw', 'jigsaw-hex'] as const) {
+  for (const mode of ['jigsaw', 'jigsaw-hex', ...ASSET_BUILDS] as const) {
     test(`${mode}: drag a piece by its outline onto its slot`, async ({ page, isMobile }) => {
       test.skip(isMobile, 'Playwright cannot synthesise touch drags; touch dragging is in the manual matrix');
       await openPlain(page, mode);
