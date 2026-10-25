@@ -82,6 +82,9 @@ final readonly class ReleaseMetadata
         if ($text === null || !str_contains($text, self::MARKER)) {
             return null;
         }
+        // Only the last record counts: it is written after the notes, so text
+        // from contributors in front of it can never supply the fields.
+        $text = substr($text, (int) strrpos($text, self::MARKER));
         $fields = [];
         foreach (explode("\n", str_replace(["\r\n", "\r"], "\n", $text)) as $line) {
             if (preg_match('/^([a-z-]+): (.*)$/', $line, $m) === 1 && !isset($fields[$m[1]])) {
@@ -108,7 +111,7 @@ final readonly class ReleaseMetadata
 
     private function record(): string
     {
-        $reason = (string) preg_replace('/[\r\n]+/', ' ', $this->reason);
+        $reason = str_replace(self::MARKER, 'image-puzzle-release 1', (string) preg_replace('/[\r\n\x{2028}\x{2029}]+/u', ' ', $this->reason));
 
         return implode("\n", [
             self::MARKER,

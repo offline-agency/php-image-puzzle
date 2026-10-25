@@ -54,6 +54,11 @@ final class GitRepository
         return $this->git('rev-parse', $ref);
     }
 
+    public function message(string $sha): string
+    {
+        return $this->git('log', '-1', '--format=%B', $sha);
+    }
+
     public function isAncestor(string $ancestor, string $descendant): bool
     {
         return $this->run(['merge-base', '--is-ancestor', $ancestor, $descendant])[0] === 0;

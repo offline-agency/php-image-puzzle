@@ -70,6 +70,14 @@ final readonly class ArtifactSet
         if ($this->version !== $version) {
             throw new PolicyViolation("artifacts were built for {$this->version}, not {$version}");
         }
+        $names = array_column($this->files, 'name');
+        $missing = array_diff(self::requiredNames($version), $names);
+        if ($missing !== []) {
+            throw new PolicyViolation('artifacts are incomplete, missing: ' . implode(', ', $missing));
+        }
+        if (in_array('SHA256SUMS', $names, true)) {
+            throw new PolicyViolation('artifacts must not contain SHA256SUMS; the publisher writes it');
+        }
         foreach ($this->files as $file) {
             $path = $this->path($file['name']);
             if (!is_file($path)) {
@@ -79,6 +87,24 @@ final readonly class ArtifactSet
                 throw new PolicyViolation("artifact {$file['name']} does not match its checksum");
             }
         }
+    }
+
+    /**
+     * Every file a release must attach (see ArtifactBuilder).
+     *
+     * @return list<string>
+     */
+    public static function requiredNames(string $version): array
+    {
+        $names = ["image-puzzle-player-{$version}.iife.js", "image-puzzle-player-{$version}.bundle.js"];
+        foreach (ArtifactBuilder::WORKSPACES as $workspace) {
+            $names[] = "offline-agency-image-puzzle-{$workspace}-{$version}.tgz";
+        }
+        foreach (ArtifactBuilder::INTEGRATIONS as $integration) {
+            $names[] = "image-puzzle-{$integration}-{$version}.zip";
+        }
+
+        return $names;
     }
 
     public function path(string $name): string

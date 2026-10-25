@@ -7,7 +7,8 @@ namespace ImagePuzzle\Release\GitHub;
 /**
  * The GitHub operations the release process needs. HttpGitHub talks to the
  * REST API; the scenario tests use a fake backed by a temporary Git
- * repository. Only createAnnotatedTag, createRelease and uploadAsset write.
+ * repository. Only createAnnotatedTag, createRelease, uploadAsset and
+ * deleteAsset write.
  */
 interface GitHub
 {
@@ -28,6 +29,9 @@ interface GitHub
      */
     public function pullRequestsForCommit(string $sha): array;
 
+    /** Full message of one commit. */
+    public function commitMessage(string $sha): string;
+
     public function branchHead(string $branch): string;
 
     /** Whether $ancestor is $descendant or one of its ancestors. */
@@ -47,7 +51,7 @@ interface GitHub
     public function jobConclusion(int $runId, string $jobName): ?string;
 
     /**
-     * @return list<Tag> every tag of the repository
+     * @return list<Tag> every tag named like a release (X.Y.Z), with its commit and message
      */
     public function tags(): array;
 
@@ -58,4 +62,7 @@ interface GitHub
     public function createRelease(string $tag, string $name, string $body): Release;
 
     public function uploadAsset(Release $release, string $name, string $path): void;
+
+    /** Removes an unfinished or mismatching asset before it is uploaded again. */
+    public function deleteAsset(Release $release, ReleaseAsset $asset): void;
 }

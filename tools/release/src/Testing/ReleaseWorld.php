@@ -61,8 +61,9 @@ final class ReleaseWorld
      * @param list<string>      $labels
      * @param list<string>      $commits commit messages of the pull request
      * @param list<ChangedFile> $files
+     * @param string|null       $squashMessage the message as edited when squashing
      */
-    public function merge(int $number, string $title, string $strategy = 'squash', array $labels = [], string $body = '', array $commits = [], string $base = 'master', bool $fork = false, array $files = []): string
+    public function merge(int $number, string $title, string $strategy = 'squash', array $labels = [], string $body = '', array $commits = [], string $base = 'master', bool $fork = false, array $files = [], ?string $squashMessage = null): string
     {
         $git = $this->github->git;
         $commits = $commits === [] ? [$title] : $commits;
@@ -85,7 +86,7 @@ final class ReleaseWorld
             $accepted = $git->head();
         } else {
             $git->git('merge', '--quiet', '--squash', "pr-{$number}");
-            $git->git('commit', '--quiet', '-m', "{$title} (#{$number})");
+            $git->git('commit', '--quiet', '-m', $squashMessage ?? "{$title} (#{$number})");
             $accepted = $git->head();
             $mapped = [$accepted];
         }
@@ -161,7 +162,8 @@ final class ReleaseWorld
         mkdir($dir, 0o700);
         $this->temp[] = $dir;
         $files = [];
-        foreach (["image-puzzle-player-{$version}.iife.js" => "player {$version}", "offline-agency-image-puzzle-player-{$version}.tgz" => "tarball {$version}"] as $name => $contents) {
+        foreach (ArtifactSet::requiredNames($version) as $name) {
+            $contents = "{$name} built from " . ($builtFrom ?? $sha);
             file_put_contents("{$dir}/{$name}", $contents);
             $files[] = ['name' => $name, 'sha256' => hash('sha256', $contents), 'size' => strlen($contents)];
         }

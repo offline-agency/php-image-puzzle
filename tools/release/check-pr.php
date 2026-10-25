@@ -32,7 +32,9 @@ try {
     $number = is_int($data['number'] ?? null) ? $data['number'] : throw new PolicyViolation('no pull request number');
     $pr = new PullRequest($number, 'open', false, null, '', $policy->repository, '', is_string($data['title'] ?? null) ? $data['title'] : '', is_string($data['body'] ?? null) ? $data['body'] : '', $labels);
     $github = Cli::github($policy);
-    $classification = (new Classifier())->classify($pr, $github->pullRequestCommitMessages($number), $github->pullRequestFiles($number));
+    $messages = $github->pullRequestCommitMessages($number);
+    $files = $github->pullRequestFiles($number);
+    $classification = (new Classifier())->classify($pr, $messages, $files, count($messages) >= 250 || count($files) >= 3000);
 
     $message = "Release classification: {$classification->bump->value} ({$classification->reason}).";
     echo $message, "\n";

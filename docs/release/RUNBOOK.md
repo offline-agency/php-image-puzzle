@@ -62,15 +62,21 @@ All three only start a reconciliation. The event data is never trusted:
 3. **validate**: if no such run exists, the workflow calls `ci.yml` through
    `workflow_call` with the exact SHA instead of waiving the gate. This is
    rare: CI concurrency groups are per commit, so a later merge never
-   cancels the run of an earlier one.
+   cancels the run of an earlier one. Validation is read-only, so a dry run
+   validates too.
 4. **artifacts** (read-only) checks out the accepted commit separately from
    the tooling, installs dependencies, builds the player and runs
    `tools/release/build-artifacts.php` and `tools/release/smoke-artifacts.sh`.
 5. **publish** is the only job with `contents: write`. It installs and runs
-   nothing from the package. It plans again from live data, refuses to
-   continue if anything changed, verifies every artifact checksum against
-   the manifest, creates the annotated tag at the accepted SHA, creates the
-   GitHub Release, and uploads the assets with `SHA256SUMS` last.
+   nothing from the package. A release that is already complete for the
+   planned pull request, commit and version is left alone, so re-running a
+   successful run writes nothing. Otherwise it plans again from live data,
+   refuses to continue if anything changed, verifies every artifact
+   checksum against the manifest, creates the annotated tag at the accepted
+   SHA, creates the GitHub Release, and uploads the assets. Unfinished or
+   mismatching assets (size or GitHub's SHA-256 digest) are replaced;
+   `SHA256SUMS` is removed first and uploaded last. An uploaded asset that
+   is not part of the build stops the run and is left in place.
 6. **continue** dispatches the workflow for the next pull request if one is
    already validated (`workflow_dispatch` is the one event a `GITHUB_TOKEN`
    may start).
@@ -125,7 +131,13 @@ produce at least a patch release. There is no skip label.
   decides whether they break users (`release:major`) or not.
 - The **Release policy** workflow (`.github/workflows/release-policy.yml`)
   runs these checks on every pull request event, so contradictions fail
-  before the merge. The planner runs them again at release time.
+  before the merge. The planner runs them again at release time, with the
+  labels, title and body as they are then: editing them after the merge
+  changes the next plan, and the edit is visible in the pull request's
+  history. The bump also counts the accepted commit's own message (an
+  edited squash message) and commits pushed without a pull request.
+- A pull request with 250 or more commits or 3000 or more changed files
+  can exceed what the API lists; it needs an explicit label.
 
 **Pre-1.0 rule.** If the lineage had no stable tag, the first release
 would be `0.1.0`. Below `1.0.0`, a breaking change bumps the minor version
@@ -280,8 +292,9 @@ state.
 | A commit that can never pass | Review it, then add it to `excluded` in `.github/release-policy.json` (`pullRequest`, full `sha`, `reason`) through a pull request. Its changes ship with the next release, which lists the commit. Only failed commits can be excluded. |
 | No CI run exists for the accepted commit | The workflow runs CI for that SHA itself (`validate` job). |
 | Missed or dropped events, a full queue | `gh workflow run release-on-merge.yml --ref master -f pr_number=<any merged PR> -f dry_run=false` reconciles everything pending, oldest first. |
-| Tag created, release creation failed | Re-run the workflow, or dispatch for the same pull request. The existing tag is checked (commit and metadata), and the release is created for it. |
-| Release exists, assets incomplete | Same. Missing assets are uploaded; `SHA256SUMS` is uploaded last, so its absence marks an incomplete release. |
+| Tag created, release creation failed | Re-run the workflow, or dispatch for the same pull request. The existing tag is checked (commit and metadata), the accepted commit must still pass validation, and the release is created for it with the same version. |
+| Release exists, assets incomplete | Same. Missing assets are uploaded, unfinished (`starter`) or mismatching ones are replaced; `SHA256SUMS` is uploaded last, so its absence marks an incomplete release. |
+| An extra asset on a release | The run stops without touching it. Remove the asset by hand if it does not belong there, then re-run. |
 | A tag at another commit or with other metadata | The run fails and touches nothing. Find out who created the tag. Never delete or move a published tag to "fix" automation. |
 | A higher stable tag outside the history | The run fails. Remove a tag that was never published, or decide on the version line by hand. |
 | Packagist does not list the version | The GitHub Release stays. Check the Packagist hook (below), then re-run **Verify the Composer distribution** or run the command from the plan summary. |
@@ -375,5 +388,10 @@ and skipped checks, the validation identity, three quick merges with
 reversed CI completion, duplicate events, a release API failure after the
 tag, tag conflicts, bootstrap, queue overflow, Packagist delays,
 malicious text, wrong or partially uploaded artifacts, direct pushes,
-exclusions, pull requests before the anchor, a stray higher tag, and a dry
-run with zero writes.
+exclusions, pull requests before the anchor, a stray higher tag, a dry
+run with zero writes, a publisher re-run after success, mismatching and
+unexpected assets, line breaks and Markdown in contributor text, breaking
+changes in an edited squash message or a direct commit, a pull request
+association GitHub has not indexed yet, the API cost of a plan as the
+history grows, and a push validation still running when the run validated
+the commit itself.

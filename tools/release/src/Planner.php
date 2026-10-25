@@ -67,52 +67,130 @@ final class Planner
         $tags = $this->github->tags();
         $head = $this->github->branchHead($this->policy->branch);
         $this->checkAnchor($tags, $head);
-        [$points, $trailing] = $this->releasePoints($head);
+        $released = $this->releasedByPullRequest($tags);
+        $latest = $this->latestRelease($released, $head);
         $base['branchHead'] = $head;
-        $base['unreleasedDirectCommits'] = $trailing;
 
         if ($requested !== null && isset($this->policy->excluded[$requested->number])) {
             return new Plan(Plan::IGNORED, "#{$requested->number} is excluded by the release policy: {$this->policy->excluded[$requested->number]['reason']}", $base);
         }
-        if ($requested !== null && !$this->contains($points, $requested->number)) {
-            if ($requested->mergeCommitSha !== null && $this->github->isAncestor($requested->mergeCommitSha, $this->policy->anchorCommit)) {
-                return new Plan(Plan::IGNORED, "#{$requested->number} was merged before the activation anchor {$this->policy->anchorTag}", $base);
-            }
 
-            throw new PolicyViolation("#{$requested->number} is merged but its accepted commit is not in the history of {$this->policy->branch} after the anchor");
-        }
-
-        $released = $this->releasedByPullRequest($tags);
-        $requestedReleased = false;
-        foreach ($points as $point) {
-            $pr = $point['pr'];
-            $entry = $released[$pr->number] ?? null;
-            if ($entry === null) {
-                // A later requested pull request waits for this one; an earlier one is released already.
-                $waitingFor = $requested !== null && !$requestedReleased && $requested->number !== $pr->number ? $requested : null;
-
-                return $this->planNext($point, $waitingFor, $tags, $toolingSha, $base);
-            }
-            $requestedReleased = $requestedReleased || $pr->number === $requested?->number;
-            [$tag, $metadata] = $entry;
-            if ($metadata->acceptedSha !== $point['sha'] || $tag->commit !== $point['sha']) {
-                throw new PolicyViolation("tag {$tag->name} records #{$pr->number} at {$metadata->acceptedSha}, but the pull request was accepted as {$point['sha']}");
-            }
+        // Releases are created in branch order, so everything up to the
+        // newest release in the history of the head is released; only that
+        // one can still be incomplete. The walk starts after it, which keeps
+        // the API cost of a plan independent of the age of the anchor.
+        if ($latest !== null) {
+            [$tag, $metadata] = $latest;
             $published = $this->github->releaseByTag($tag->name);
-            // SHA256SUMS is uploaded last, so without it the assets are incomplete.
-            if ($published === null || !in_array('SHA256SUMS', $published->assets, true)) {
-                $notes = Notes::build($this->policy, $metadata, $pr, $this->github->pullRequestCommitMessages($pr->number), $point['direct']);
-                $missing = $published === null ? 'its GitHub Release does not' : 'its release assets are incomplete';
+            if ($published === null || !$published->complete()) {
+                return $this->planResume($tag, $metadata, $published === null, $tags, $base);
+            }
+        }
+        $from = $latest === null ? $this->policy->anchorCommit : $latest[0]->commit;
+        $base['releasedUpTo'] = $latest === null ? $this->policy->anchorTag : $latest[0]->name;
+        [$points, $trailing] = $this->releasePoints($from, $head);
+        $base['unreleasedDirectCommits'] = $trailing;
 
-                return new Plan(Plan::PUBLISH, "tag {$tag->name} exists for #{$pr->number} but {$missing}: complete the same release", [...$base, 'pullRequest' => $pr->number, 'acceptedSha' => $point['sha']], $metadata, $notes, true);
+        // A requested pull request that is released already only means
+        // there is nothing of its own to do; the next one, if any, goes on.
+        $done = null;
+        if ($requested !== null && !$this->contains($points, $requested->number)) {
+            $accepted = (string) $requested->mergeCommitSha;
+            if (isset($released[$requested->number])) {
+                $done = "#{$requested->number} is already released as {$released[$requested->number][1]->version}";
+            } elseif ($this->github->isAncestor($accepted, $this->policy->anchorCommit)) {
+                return new Plan(Plan::IGNORED, "#{$requested->number} was merged before the activation anchor {$this->policy->anchorTag}", $base);
+            } elseif ($latest !== null && $this->github->isAncestor($accepted, $from)) {
+                $done = "#{$requested->number} has no release of its own; its changes shipped in {$latest[0]->name} or earlier";
+            } else {
+                throw new PolicyViolation("#{$requested->number} is merged but its accepted commit is not in the history of {$this->policy->branch} after the anchor");
             }
         }
 
-        $last = $points === [] ? null : $released[$points[array_key_last($points)]['pr']->number][1];
+        foreach ($points as $point) {
+            $entry = $released[$point['pr']->number] ?? null;
+            if ($entry !== null) {
+                throw new PolicyViolation("tag {$entry[0]->name} releases #{$point['pr']->number}, which comes after the newest release {$base['releasedUpTo']} in the history of {$this->policy->branch}");
+            }
+            // A later requested pull request waits for this one.
+            $waitingFor = $requested !== null && $done === null && $requested->number !== $point['pr']->number ? $requested : null;
 
-        return new Plan(Plan::NOOP, $requested !== null && isset($released[$requested->number])
-            ? "#{$requested->number} is already released as {$released[$requested->number][1]->version}"
-            : 'every pull request merged after the anchor is released', [...$base, 'latest' => $last === null ? $this->policy->anchorTag : (string) $last->version]);
+            return $this->planNext($point, $waitingFor, $tags, $toolingSha, $base);
+        }
+
+        return new Plan(Plan::NOOP, $done ?? 'every pull request merged after the anchor is released', [...$base, 'latest' => $base['releasedUpTo']]);
+    }
+
+    /**
+     * The release with the highest version whose tag is in the history of
+     * the head. Its tag must sit on the commit its metadata records.
+     *
+     * @param array<int, array{0: Tag, 1: ReleaseMetadata}> $released
+     *
+     * @return array{0: Tag, 1: ReleaseMetadata}|null
+     */
+    private function latestRelease(array $released, string $head): ?array
+    {
+        $ordered = array_values($released);
+        usort($ordered, static fn (array $a, array $b): int => $b[1]->version->compare($a[1]->version));
+        foreach ($ordered as [$tag, $metadata]) {
+            if ($metadata->acceptedSha !== $tag->commit) {
+                throw new PolicyViolation("tag {$tag->name} sits on {$tag->commit}, but its metadata records #{$metadata->pullRequest} at {$metadata->acceptedSha}");
+            }
+            if ($this->github->isAncestor($tag->commit, $head)) {
+                return [$tag, $metadata];
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Completes a release whose tag exists: the same version, once the
+     * accepted commit is validated (a tag alone proves nothing).
+     *
+     * @param list<Tag>            $tags
+     * @param array<string, mixed> $base
+     */
+    private function planResume(Tag $tag, ReleaseMetadata $metadata, bool $noRelease, array $tags, array $base): Plan
+    {
+        $pr = $this->pullRequest($metadata->pullRequest);
+        if ($pr === null || $this->ineligible($pr) !== null || $pr->mergeCommitSha !== $metadata->acceptedSha) {
+            throw new PolicyViolation("tag {$tag->name} records #{$metadata->pullRequest} at {$metadata->acceptedSha}, which is not that pull request's accepted commit");
+        }
+        $sha = $metadata->acceptedSha;
+        $previous = $metadata->predecessor === null ? $this->policy->anchorCommit : $this->tagCommit($tags, (string) $metadata->predecessor);
+        $direct = [];
+        foreach ($this->github->commitsBetween($previous, $sha) as $commit) {
+            if ($commit !== $sha && $this->github->pullRequestsForCommit($commit) === []) {
+                $direct[] = $commit;
+            }
+        }
+        $notes = Notes::build($this->policy, $metadata, $pr, $this->github->pullRequestCommitMessages($pr->number), $direct);
+        $validation = $this->validation($sha);
+        $details = [...$base, 'pullRequest' => $pr->number, 'acceptedSha' => $sha, 'validation' => $validation->toArray($this->policy)];
+        $what = "tag {$tag->name} exists for #{$pr->number} but " . ($noRelease ? 'its GitHub Release does not' : 'its release assets are incomplete');
+
+        return match ($validation->status) {
+            Validation::GREEN => new Plan(Plan::PUBLISH, "{$what}: complete the same release", $details, $metadata, $notes, true),
+            Validation::PENDING => new Plan(Plan::WAIT, "{$what}; validation of {$sha} is still running", $details, $metadata, $notes, true),
+            Validation::MISSING => new Plan(Plan::NEEDS_VALIDATION, "{$what}; validate {$sha} before completing it", $details, $metadata, $notes, true),
+            default => new Plan(Plan::BLOCKED, "{$what}, and validation of {$sha} did not pass ({$validation->detail}); the release is not completed", $details, $metadata, $notes, true),
+        };
+    }
+
+    /**
+     * @param list<Tag> $tags
+     */
+    private function tagCommit(array $tags, string $name): string
+    {
+        foreach ($tags as $tag) {
+            if ($tag->name === $name) {
+                return $tag->commit;
+            }
+        }
+
+        throw new PolicyViolation("predecessor tag {$name} does not exist");
     }
 
     /**
@@ -129,7 +207,12 @@ final class Planner
             $details['waiting'] = ['pullRequest' => $waiting->number, 'releasedAfter' => $pr->number];
         }
         $messages = $this->github->pullRequestCommitMessages($pr->number);
-        $classification = $this->classifier->classify($pr, $messages, $this->github->pullRequestFiles($pr->number));
+        // The accepted commit carries an edited squash message, and commits
+        // pushed without a pull request ship in this release too: both count
+        // for the bump.
+        $extra = array_map($this->github->commitMessage(...), [$sha, ...$point['direct']]);
+        $files = $this->github->pullRequestFiles($pr->number);
+        $classification = $this->classifier->classify($pr, [...$messages, ...$extra], $files, count($messages) >= 250 || count($files) >= 3000);
         $predecessor = $this->predecessor($tags, $sha);
         $version = ($predecessor ?? Version::initial())->bump($classification->bump, $classification->explicitMajor);
         $metadata = new ReleaseMetadata($pr->number, $sha, $version, $predecessor, $classification->bump, $classification->reason, $toolingSha);
@@ -187,15 +270,15 @@ final class Planner
     }
 
     /**
-     * The merged pull requests after the anchor, in branch history order,
-     * each with its accepted commit and the commits pushed without a pull
-     * request since the previous one.
+     * The merged pull requests after $from, in branch history order, each
+     * with its accepted commit and the commits pushed without a pull request
+     * since the previous one.
      *
      * @return array{0: list<array{pr: PullRequest, sha: string, direct: list<string>}>, 1: list<string>}
      */
-    private function releasePoints(string $head): array
+    private function releasePoints(string $from, string $head): array
     {
-        $commits = $this->github->commitsBetween($this->policy->anchorCommit, $head);
+        $commits = $this->github->commitsBetween($from, $head);
         $position = array_flip($commits);
         $points = [];
         $direct = [];
@@ -206,6 +289,9 @@ final class Planner
                 if ($pr !== null && $this->ineligible($pr) === null) {
                     $merged[$pr->number] = $pr;
                 }
+            }
+            if ($merged === []) {
+                $merged = $this->referencedPullRequest($commit);
             }
             if (count($merged) > 1) {
                 throw new PolicyViolation("commit {$commit} belongs to several merged pull requests (" . implode(', ', array_map(static fn (int $n): string => "#{$n}", array_keys($merged))) . '); resolve the mapping by hand');
@@ -250,6 +336,25 @@ final class Planner
     }
 
     /**
+     * The commit-to-pull-request association can lag right after a merge.
+     * A squash ("Title (#12)") or merge ("Merge pull request #12 from …")
+     * commit names its pull request; it counts when that pull request
+     * reports exactly this commit as accepted.
+     *
+     * @return array<int, PullRequest>
+     */
+    private function referencedPullRequest(string $commit): array
+    {
+        $subject = strtok($this->github->commitMessage($commit), "\n");
+        if ($subject === false || preg_match('/(?:\(#(\d{1,9})\)\s*$|^Merge pull request #(\d{1,9}) )/', $subject, $m) !== 1) {
+            return [];
+        }
+        $pr = $this->pullRequest((int) ($m[1] !== '' ? $m[1] : $m[2]));
+
+        return $pr !== null && $this->ineligible($pr) === null && $pr->mergeCommitSha === $commit ? [$pr->number => $pr] : [];
+    }
+
+    /**
      * Release tags this process created, by pull request.
      *
      * @param list<Tag> $tags
@@ -284,8 +389,7 @@ final class Planner
      */
     private function predecessor(array $tags, string $sha): ?Version
     {
-        $lineage = null;
-        $outside = [];
+        $stable = [];
         foreach ($tags as $tag) {
             $version = Version::parse($tag->name);
             if ($version === null) {
@@ -294,19 +398,20 @@ final class Planner
             if ($tag->commit === $sha) {
                 throw new PolicyViolation("tag {$tag->name} already points at {$sha} without being this pull request's release");
             }
-            if ($this->github->isAncestor($tag->commit, $sha)) {
-                $lineage = $lineage === null || $version->compare($lineage) > 0 ? $version : $lineage;
-            } else {
-                $outside[] = [$tag, $version];
-            }
+            $stable[] = [$tag, $version];
         }
-        foreach ($outside as [$tag, $version]) {
-            if ($lineage === null || $version->compare($lineage) > 0) {
-                throw new PolicyViolation("stable tag {$tag->name} at {$tag->commit} is higher than the release history of {$sha}; resolve it before releasing");
-            }
+        if ($stable === []) {
+            return null;
+        }
+        // Only the highest stable tag matters: it is the predecessor when it
+        // is in the history of $sha, and a conflict otherwise.
+        usort($stable, static fn (array $a, array $b): int => $b[1]->compare($a[1]));
+        [$tag, $version] = $stable[0];
+        if (!$this->github->isAncestor($tag->commit, $sha)) {
+            throw new PolicyViolation("stable tag {$tag->name} at {$tag->commit} is higher than the release history of {$sha}; resolve it before releasing");
         }
 
-        return $lineage;
+        return $version;
     }
 
     private function validation(string $sha): Validation

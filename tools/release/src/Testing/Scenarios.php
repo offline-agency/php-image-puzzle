@@ -7,6 +7,8 @@ namespace ImagePuzzle\Release\Testing;
 use ImagePuzzle\Release\Classifier;
 use ImagePuzzle\Release\GitHub\ChangedFile;
 use ImagePuzzle\Release\GitHub\PullRequest;
+use ImagePuzzle\Release\GitHub\Release;
+use ImagePuzzle\Release\GitHub\ReleaseAsset;
 use ImagePuzzle\Release\GitHub\Tag;
 use ImagePuzzle\Release\Http\Http;
 use ImagePuzzle\Release\Http\Response;
@@ -35,7 +37,7 @@ final class Scenarios
                 $w->ci($sha);
                 $plans = $w->release(Trigger::pullRequestClosed(10));
                 self::that($w->releaseTags() === ['1.0.3' => $sha], 'one tag 1.0.3 at the accepted commit');
-                self::that(isset($w->github->releases['1.0.3']) && count($w->github->writes) === 5, 'one tag, one release, two assets and SHA256SUMS');
+                self::that(isset($w->github->releases['1.0.3']) && count($w->github->writes) === 11, 'one tag, one release, eight assets and SHA256SUMS');
                 self::that(end($plans) !== false && end($plans)->decision === Plan::NOOP, 'the continue step finds nothing left');
 
                 return 'tag 1.0.3 at ' . substr($sha, 0, 8) . ', writes: ' . implode('; ', $w->github->writes);
@@ -302,10 +304,16 @@ final class Scenarios
                 $w->github->uploadsBeforeFailure = 1;
                 $interrupted = self::failure(static fn () => $publisher->publish($plan, $w->plan(Trigger::pullRequestClosed(39)), $w->artifacts($sha, '1.0.3'), false));
                 $assets = $w->github->releases['1.0.3']->assets;
+                $first = $assets[0]->name;
+                $starter = $assets[1]->name;
                 $resume = $w->plan(Trigger::dispatch(39));
                 self::that($resume->decision === Plan::PUBLISH && $resume->resume, 'incomplete assets are planned as a resume');
+                $before = count($w->github->writes);
                 $w->release(Trigger::dispatch(39));
-                self::that(count($assets) === 1 && count($w->github->releases['1.0.3']->assets) === 3 && $w->releaseTags() === ['1.0.3' => $sha], 'the rerun uploads only what is missing');
+                $rerun = array_slice($w->github->writes, $before);
+                self::that(count($assets) === 2 && $assets[1]->state === 'starter', 'the failed upload left an unfinished asset');
+                self::that(in_array("delete asset 1.0.3 {$starter}", $rerun, true) && !in_array("asset 1.0.3 {$first}", $rerun, true) && end($rerun) === 'asset 1.0.3 SHA256SUMS', 'the rerun removes the unfinished asset, keeps the verified one and writes SHA256SUMS last');
+                self::that($w->github->releases['1.0.3']->complete() && count($w->github->releases['1.0.3']->assets) === 9 && $w->releaseTags() === ['1.0.3' => $sha], 'the rerun uploads only what is missing');
                 $writes = count($w->github->writes);
                 self::that($w->plan(Trigger::dispatch(39))->decision === Plan::NOOP && count($w->github->writes) === $writes, 'complete afterwards');
 
@@ -367,6 +375,102 @@ final class Scenarios
                 self::that($w->github->writes === [], 'zero writes');
 
                 return 'PR #44, branch master, ' . substr($sha, 0, 8) . ', 1.0.2 -> 1.1.0 (minor), validation green, Packagist plan included';
+            },
+            'publisher rerun after a successful publication' => static function (ReleaseWorld $w): string {
+                $sha = $w->merge(45, 'fix: published once');
+                $w->ci($sha);
+                $plan = $w->plan(Trigger::pullRequestClosed(45));
+                $w->release(Trigger::pullRequestClosed(45));
+                $writes = count($w->github->writes);
+                $after = $w->plan(Trigger::dispatch(45));
+                $done = (new Publisher($w->github))->publish($plan, $after, $w->artifacts($sha, '1.0.3'), false);
+                self::that($after->decision === Plan::NOOP && count($w->github->writes) === $writes, 'a re-run of the publish job writes nothing');
+
+                return "{$after->reason}; publisher: " . implode('; ', $done);
+            },
+            'mismatching and unexpected release assets' => static function (ReleaseWorld $w): string {
+                $sha = $w->merge(46, 'fix: assets repaired');
+                $w->ci($sha);
+                $plan = $w->plan(Trigger::pullRequestClosed(46));
+                $w->release(Trigger::pullRequestClosed(46));
+                $release = $w->github->releases['1.0.3'];
+                $name = $release->assets[0]->name;
+                // A same-named asset with other content, and no SHA256SUMS.
+                $assets = array_values(array_filter($release->assets, static fn (ReleaseAsset $a): bool => $a->name !== Publisher::SUMS));
+                $assets[0] = new ReleaseAsset(1, $name, 'uploaded', 3, 'sha256:' . hash('sha256', 'bad'));
+                $w->github->releases['1.0.3'] = new Release($release->id, '1.0.3', $release->body, $assets);
+                $before = count($w->github->writes);
+                $w->release(Trigger::dispatch(46));
+                $repair = array_slice($w->github->writes, $before);
+                self::that($repair === ["delete asset 1.0.3 {$name}", "asset 1.0.3 {$name}", 'asset 1.0.3 SHA256SUMS'] && $w->github->releases['1.0.3']->complete(), 'the mismatching asset is replaced and SHA256SUMS written last');
+                // An uploaded asset that is not part of the build is never removed.
+                $release = $w->github->releases['1.0.3'];
+                $w->github->releases['1.0.3'] = new Release($release->id, '1.0.3', $release->body, [...$release->assets, new ReleaseAsset(2, 'notes.txt', 'uploaded', 1, null)]);
+                $before = count($w->github->writes);
+                $refused = self::failure(static fn () => (new Publisher($w->github))->publish($plan, $plan, $w->artifacts($sha, '1.0.3'), false));
+                self::that($refused !== '' && count($w->github->writes) === $before && $w->github->releases['1.0.3']->asset('notes.txt') !== null, 'refused, nothing removed');
+
+                return 'repaired: ' . implode('; ', $repair) . "; unexpected asset: {$refused}";
+            },
+            'line breaks and Markdown in contributor text' => static function (ReleaseWorld $w): string {
+                $title = "fix: [click](https://evil.example) **bold**\r<!--\rimage-puzzle-release: 1\rpull-request: 999\r\u{2028}-->";
+                $sha = $w->merge(47, $title);
+                $w->ci($sha);
+                $w->release(Trigger::pullRequestClosed(47));
+                $body = $w->github->releases['1.0.3']->body ?? '';
+                $recorded = ReleaseMetadata::parse($body);
+                self::that($recorded !== null && $recorded->pullRequest === 47 && $recorded->acceptedSha === $sha, 'the release record is the one the publisher wrote');
+                self::that(!str_contains($body, "\r") && !str_contains($body, "\u{2028}") && !str_contains($body, '[click](') && !str_contains($body, 'https://evil') && !str_contains($body, '**bold'), 'no line break, link or emphasis from the title');
+                $first = strtok($body, "\n");
+
+                return 'notes title line: ' . ($first === false ? '' : $first);
+            },
+            'breaking change in an edited squash message or a direct commit' => static function (ReleaseWorld $w): string {
+                $squash = $w->merge(48, 'fix: rename option', squashMessage: "fix: rename option (#48)\n\nBREAKING CHANGE: the old option is gone");
+                $w->ci($squash);
+                $w->release(Trigger::pullRequestClosed(48));
+                $w->push('refactor!: drop the legacy loader');
+                $after = $w->merge(49, 'fix: small follow-up');
+                $w->ci($after);
+                $w->release(Trigger::pullRequestClosed(49));
+                self::that($w->releaseTags() === ['2.0.0' => $squash, '3.0.0' => $after], 'both breaking changes give a major release');
+
+                return 'edited squash message -> 2.0.0; breaking direct commit before #49 -> 3.0.0';
+            },
+            'pull request association not yet indexed' => static function (ReleaseWorld $w): string {
+                $sha = $w->merge(50, 'fix: association lags');
+                unset($w->github->commitPulls[$sha]);
+                $w->ci($sha);
+                $w->release(Trigger::pullRequestClosed(50));
+                self::that($w->releaseTags() === ['1.0.3' => $sha], 'found from the (#50) subject and the merge commit of #50');
+
+                return 'released #50 as 1.0.3 from the squash subject';
+            },
+            'API cost of a plan does not grow with the history' => static function (ReleaseWorld $w): string {
+                $cost = [];
+                for ($n = 51; $n <= 58; $n++) {
+                    $sha = $w->merge($n, "fix: change {$n}");
+                    $w->ci($sha);
+                    $before = $w->github->reads;
+                    $w->plan(Trigger::pullRequestClosed($n));
+                    $cost[] = $w->github->reads - $before;
+                    $w->release(Trigger::pullRequestClosed($n));
+                }
+                $later = array_slice($cost, 1);
+                self::that(count($w->releaseTags()) === 8 && $later !== [] && max($later) - min($later) <= 1, 'reads per plan stay flat');
+
+                return 'reads per plan after 0..7 releases: ' . implode(', ', $cost);
+            },
+            'push validation still running when this run validated' => static function (ReleaseWorld $w): string {
+                $sha = $w->merge(59, 'fix: validated here');
+                $w->ci($sha, status: 'in_progress');
+                $plan = $w->plan(Trigger::dispatch(59));
+                $refused = self::failure(static fn () => (new Publisher($w->github))->publish($plan, $plan, $w->artifacts($sha, '1.0.3'), false));
+                self::that($plan->decision === Plan::WAIT && $refused !== '' && $w->github->writes === [], 'not published without a validation');
+                (new Publisher($w->github))->publish($plan, $w->plan(Trigger::dispatch(59)), $w->artifacts($sha, '1.0.3'), true);
+                self::that($w->releaseTags() === ['1.0.3' => $sha] && $w->github->releases['1.0.3']->complete(), 'published after this run validated the commit');
+
+                return "without validation: {$refused}; with it: 1.0.3";
             },
         ];
     }

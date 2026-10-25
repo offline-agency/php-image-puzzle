@@ -47,8 +47,15 @@ try {
 
     // The next pull request, for the continue job: published right away when
     // validated; a pending one is picked up by its CI completion instead.
-    $after = $planner->plan(Trigger::dispatch($release->pullRequest), $tooling);
-    $next = in_array($after->decision, [Plan::PUBLISH, Plan::NEEDS_VALIDATION], true) ? $after->release?->pullRequest : null;
+    // The release above is done either way, so a failure here only means
+    // the next pull request waits for its own event or a dispatch.
+    $next = null;
+    try {
+        $after = $planner->plan(Trigger::dispatch($release->pullRequest), $tooling);
+        $next = in_array($after->decision, [Plan::PUBLISH, Plan::NEEDS_VALIDATION], true) ? $after->release?->pullRequest : null;
+    } catch (RuntimeException $e) {
+        fwrite(STDERR, "planning the next pull request failed: {$e->getMessage()}\n");
+    }
     Cli::outputs(['version' => (string) $release->version, 'next_pr' => $next]);
     Cli::summary("### Published {$release->version}\n\n- " . implode("\n- ", array_map(Notes::text(...), $done)) . ($next === null ? '' : "\n\nNext: #{$next}"));
 } catch (PolicyViolation|JsonException|RuntimeException $e) {

@@ -8,8 +8,10 @@ use ImagePuzzle\Release\GitHub\ChangedFile;
 use ImagePuzzle\Release\GitHub\GitHub;
 use ImagePuzzle\Release\GitHub\PullRequest;
 use ImagePuzzle\Release\GitHub\Release;
+use ImagePuzzle\Release\GitHub\ReleaseAsset;
 use ImagePuzzle\Release\GitHub\Tag;
 use ImagePuzzle\Release\GitHub\WorkflowRun;
+use ImagePuzzle\Release\Version;
 
 /**
  * Deterministic GitHub for the release scenarios: commits and ancestry come
@@ -48,8 +50,14 @@ final class FakeGitHub implements GitHub
 
     public int $failCreateRelease = 0;
 
-    /** Uploads allowed before the next upload fails (-1: never fail). */
+    /**
+     * Uploads allowed before the next upload fails (-1: never fail). Like
+     * GitHub, a failed upload leaves the asset behind in the "starter" state.
+     */
     public int $uploadsBeforeFailure = -1;
+
+    /** Requests served, to compare the API cost of plans. */
+    public int $reads = 0;
 
     private int $nextId = 1000;
 
@@ -59,52 +67,69 @@ final class FakeGitHub implements GitHub
 
     public function pullRequest(int $number): ?PullRequest
     {
+        $this->reads++;
         return $this->pullRequests[$number] ?? null;
     }
 
     public function pullRequestCommitMessages(int $number): array
     {
+        $this->reads++;
         return $this->commitMessages[$number] ?? [];
     }
 
     public function pullRequestFiles(int $number): array
     {
+        $this->reads++;
         return $this->files[$number] ?? [];
     }
 
     public function pullRequestsForCommit(string $sha): array
     {
+        $this->reads++;
         return $this->commitPulls[$sha] ?? [];
+    }
+
+    public function commitMessage(string $sha): string
+    {
+        $this->reads++;
+
+        return $this->git->message($sha);
     }
 
     public function branchHead(string $branch): string
     {
+        $this->reads++;
         return $this->git->revParse($branch);
     }
 
     public function isAncestor(string $ancestor, string $descendant): bool
     {
+        $this->reads++;
         return $this->git->isAncestor($ancestor, $descendant);
     }
 
     public function commitsBetween(string $base, string $head): array
     {
+        $this->reads++;
         return $this->git->revList($base, $head);
     }
 
     public function workflowRuns(string $workflowPath, string $sha): array
     {
+        $this->reads++;
         return $this->runs[$sha] ?? [];
     }
 
     public function jobConclusion(int $runId, string $jobName): ?string
     {
+        $this->reads++;
         return $jobName === 'CI gate' ? ($this->jobs[$runId] ?? null) : null;
     }
 
     public function tags(): array
     {
-        return array_values($this->tags);
+        $this->reads++;
+        return array_values(array_filter($this->tags, static fn (Tag $tag): bool => Version::parse($tag->name) !== null));
     }
 
     public function createAnnotatedTag(string $name, string $sha, string $message): void
@@ -118,6 +143,7 @@ final class FakeGitHub implements GitHub
 
     public function releaseByTag(string $tag): ?Release
     {
+        $this->reads++;
         return $this->releases[$tag] ?? null;
     }
 
@@ -137,18 +163,35 @@ final class FakeGitHub implements GitHub
 
     public function uploadAsset(Release $release, string $name, string $path): void
     {
+        $current = $this->releases[$release->tagName];
+        if ($current->asset($name) !== null || !is_file($path)) {
+            throw new \RuntimeException("cannot upload {$name}: an asset with that name exists");
+        }
+        $size = (int) filesize($path);
         if ($this->uploadsBeforeFailure === 0) {
             $this->uploadsBeforeFailure = -1;
+            $this->setAssets($current, [...$current->assets, new ReleaseAsset($this->nextId++, $name, 'starter', 0)]);
             throw new \RuntimeException("uploading {$name} failed with HTTP 500");
         }
         if ($this->uploadsBeforeFailure > 0) {
             $this->uploadsBeforeFailure--;
         }
-        $current = $this->releases[$release->tagName];
-        if (in_array($name, $current->assets, true) || !is_file($path)) {
-            throw new \RuntimeException("cannot upload {$name}");
-        }
         $this->writes[] = "asset {$release->tagName} {$name}";
-        $this->releases[$release->tagName] = new Release($current->id, $current->tagName, $current->body, [...$current->assets, $name]);
+        $this->setAssets($current, [...$current->assets, new ReleaseAsset($this->nextId++, $name, 'uploaded', $size, 'sha256:' . hash_file('sha256', $path))]);
+    }
+
+    public function deleteAsset(Release $release, ReleaseAsset $asset): void
+    {
+        $current = $this->releases[$release->tagName];
+        $this->writes[] = "delete asset {$release->tagName} {$asset->name}";
+        $this->setAssets($current, array_values(array_filter($current->assets, static fn (ReleaseAsset $a): bool => $a->id !== $asset->id)));
+    }
+
+    /**
+     * @param list<ReleaseAsset> $assets
+     */
+    private function setAssets(Release $release, array $assets): void
+    {
+        $this->releases[$release->tagName] = new Release($release->id, $release->tagName, $release->body, $assets);
     }
 }

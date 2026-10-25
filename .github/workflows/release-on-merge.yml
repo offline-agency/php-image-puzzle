@@ -92,7 +92,8 @@ jobs:
   validate:
     name: Validate the accepted commit
     needs: plan
-    if: needs.plan.outputs.decision == 'needs-validation' && !(github.event_name == 'workflow_dispatch' && inputs.dry_run)
+    # Read-only, so a dry run validates too.
+    if: needs.plan.outputs.decision == 'needs-validation'
     permissions:
       contents: read
     uses: ./.github/workflows/ci.yml
@@ -103,7 +104,7 @@ jobs:
     name: Build artifacts (read-only)
     needs: [plan, validate]
     if: >-
-      always() && needs.plan.result == 'success'
+      !cancelled() && needs.plan.result == 'success'
       && !(github.event_name == 'workflow_dispatch' && inputs.dry_run)
       && (needs.plan.outputs.decision == 'publish'
         || (needs.plan.outputs.decision == 'needs-validation' && needs.validate.result == 'success'))
@@ -157,12 +158,16 @@ jobs:
   publish:
     name: Tag and publish
     needs: [plan, validate, artifacts]
-    if: always() && needs.artifacts.result == 'success'
+    if: ${{ !cancelled() && needs.artifacts.result == 'success' }}
     runs-on: ubuntu-24.04
     # The only job that can write: no dependency installation, no package
-    # scripts, only the trusted tooling and the verified artifacts.
+    # scripts, only the trusted tooling and the verified artifacts. The read
+    # scopes let it plan again from live data before writing.
     permissions:
       contents: write
+      pull-requests: read
+      actions: read
+      checks: read
     outputs:
       version: ${{ steps.publish.outputs.version }}
       next_pr: ${{ steps.publish.outputs.next_pr }}
@@ -199,7 +204,7 @@ jobs:
   continue:
     name: Continue with the next pull request
     needs: publish
-    if: needs.publish.outputs.next_pr != ''
+    if: ${{ !cancelled() && needs.publish.result == 'success' && needs.publish.outputs.next_pr != '' }}
     runs-on: ubuntu-24.04
     # workflow_dispatch is the one event a GITHUB_TOKEN may start; tags
     # created with that token start no other workflow.
@@ -218,7 +223,7 @@ jobs:
   verify-distribution:
     name: Verify the Composer distribution
     needs: [plan, publish]
-    if: needs.publish.result == 'success'
+    if: ${{ !cancelled() && needs.publish.result == 'success' }}
     runs-on: ubuntu-24.04
     permissions:
       contents: read

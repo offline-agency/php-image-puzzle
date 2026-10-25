@@ -33,7 +33,7 @@ final class Classifier
      * @param list<string>      $commitMessages
      * @param list<ChangedFile> $files
      */
-    public function classify(PullRequest $pr, array $commitMessages, array $files): Classification
+    public function classify(PullRequest $pr, array $commitMessages, array $files, bool $truncated = false): Classification
     {
         $labels = array_values(array_filter($pr->labels, static fn (string $label): bool => str_starts_with(strtolower($label), 'release:')));
         $known = array_values(array_intersect(array_map('strtolower', $labels), array_keys(self::LABELS)));
@@ -49,6 +49,9 @@ final class Classifier
         $sensitive = $this->sensitiveChanges($files);
 
         if ($label === null) {
+            if ($truncated) {
+                throw new PolicyViolation('the pull request has more commits or files than the API lists (250 commits, 3000 files); add a release label');
+            }
             if ($sensitive !== []) {
                 throw new PolicyViolation('these changes need a release label (release:major if they break users): ' . implode('; ', $sensitive));
             }
@@ -117,8 +120,9 @@ final class Classifier
     {
         $found = [];
         foreach ($files as $file) {
-            if ($file->path === 'composer.json' && preg_match('/^[-+]\s*"(php|ext-[a-z0-9_]+)"\s*:/m', $file->patch) === 1) {
-                $found[] = 'composer.json changes the php or extension requirements';
+            // The API omits the patch of large diffs: then assume the worst.
+            if ($file->path === 'composer.json' && ($file->patch === '' || preg_match('/^[-+]\s*"(php|ext-[a-z0-9_]+)"\s*:/m', $file->patch) === 1)) {
+                $found[] = 'composer.json may change the php or extension requirements';
             }
             if (str_starts_with($file->path, 'docs/schemas/') && $file->status !== 'added') {
                 $found[] = "{$file->path} ({$file->status}) is a published schema";

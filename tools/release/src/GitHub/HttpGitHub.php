@@ -6,6 +6,7 @@ namespace ImagePuzzle\Release\GitHub;
 
 use ImagePuzzle\Release\Http\Http;
 use ImagePuzzle\Release\Http\Response;
+use ImagePuzzle\Release\Version;
 
 /**
  * GitHub REST API client for one repository, authenticated with the
@@ -88,6 +89,13 @@ final class HttpGitHub implements GitHub
         return $numbers;
     }
 
+    public function commitMessage(string $sha): string
+    {
+        $data = $this->call('GET', "/repos/{$this->repository}/commits/" . self::sha($sha))?->json() ?? [];
+
+        return self::string(self::map($data, 'commit'), 'message');
+    }
+
     public function branchHead(string $branch): string
     {
         $data = $this->call('GET', "/repos/{$this->repository}/branches/" . rawurlencode($branch))?->json() ?? [];
@@ -105,9 +113,14 @@ final class HttpGitHub implements GitHub
         return in_array($data['status'] ?? null, ['ahead', 'identical'], true);
     }
 
+    /**
+     * The compare API lists commits by date. They are sorted here so that
+     * every commit comes after its parents, whatever the commit dates say.
+     */
     public function commitsBetween(string $base, string $head): array
     {
-        $commits = [];
+        /** @var array<string, list<string>> $parents */
+        $parents = [];
         for ($page = 1; $page <= 100; $page++) {
             $data = $this->call('GET', "/repos/{$this->repository}/compare/" . self::sha($base) . '...' . self::sha($head) . "?per_page=100&page={$page}")?->json() ?? [];
             if (!in_array($data['status'] ?? null, ['ahead', 'identical'], true)) {
@@ -116,11 +129,17 @@ final class HttpGitHub implements GitHub
             $list = is_array($data['commits'] ?? null) ? $data['commits'] : [];
             foreach ($list as $commit) {
                 if (is_array($commit)) {
-                    $commits[] = self::sha(self::string($commit, 'sha'));
+                    $shas = [];
+                    foreach (is_array($commit['parents'] ?? null) ? $commit['parents'] : [] as $parent) {
+                        if (is_array($parent)) {
+                            $shas[] = self::sha(self::string($parent, 'sha'));
+                        }
+                    }
+                    $parents[self::sha(self::string($commit, 'sha'))] = $shas;
                 }
             }
-            if (count($list) < 100 || count($commits) >= self::int($data, 'total_commits')) {
-                return $commits;
+            if (count($list) < 100 || count($parents) >= self::int($data, 'total_commits')) {
+                return self::parentsFirst($parents);
             }
         }
 
@@ -130,11 +149,7 @@ final class HttpGitHub implements GitHub
     public function workflowRuns(string $workflowPath, string $sha): array
     {
         $runs = [];
-        $data = $this->call('GET', "/repos/{$this->repository}/actions/workflows/" . rawurlencode(basename($workflowPath)) . '/runs?per_page=100&head_sha=' . self::sha($sha))?->json() ?? [];
-        foreach (is_array($data['workflow_runs'] ?? null) ? $data['workflow_runs'] : [] as $run) {
-            if (!is_array($run)) {
-                continue;
-            }
+        foreach ($this->all("/repos/{$this->repository}/actions/workflows/" . rawurlencode(basename($workflowPath)) . '/runs?per_page=100&head_sha=' . self::sha($sha), 'workflow_runs') as $run) {
             $runs[] = new WorkflowRun(
                 self::int($run, 'id'),
                 is_int($run['run_attempt'] ?? null) ? $run['run_attempt'] : 1,
@@ -167,6 +182,10 @@ final class HttpGitHub implements GitHub
         $tags = [];
         foreach ($this->all("/repos/{$this->repository}/git/matching-refs/tags?per_page=100") as $ref) {
             $name = substr(self::string($ref, 'ref'), strlen('refs/tags/'));
+            if (Version::parse($name) === null) {
+                // Not a release tag: no need to fetch its tag object.
+                continue;
+            }
             $object = self::map($ref, 'object');
             $type = self::string($object, 'type');
             $sha = self::string($object, 'sha');
@@ -218,6 +237,45 @@ final class HttpGitHub implements GitHub
         }
     }
 
+    public function deleteAsset(Release $release, ReleaseAsset $asset): void
+    {
+        $this->call('DELETE', "/repos/{$this->repository}/releases/assets/{$asset->id}");
+    }
+
+    /**
+     * @param array<string, list<string>> $parents commit => parents, in API order
+     *
+     * @return list<string>
+     */
+    private static function parentsFirst(array $parents): array
+    {
+        $sorted = [];
+        $done = [];
+        foreach (array_keys($parents) as $start) {
+            $stack = [[$start, false]];
+            while ($stack !== []) {
+                [$sha, $expanded] = array_pop($stack);
+                if (isset($done[$sha])) {
+                    continue;
+                }
+                if ($expanded) {
+                    $done[$sha] = true;
+                    $sorted[] = $sha;
+                    continue;
+                }
+                $stack[] = [$sha, true];
+                foreach (array_reverse($parents[$sha] ?? []) as $parent) {
+                    // Parents outside the range (the base side) are not listed.
+                    if (isset($parents[$parent]) && !isset($done[$parent])) {
+                        $stack[] = [$parent, false];
+                    }
+                }
+            }
+        }
+
+        return $sorted;
+    }
+
     /**
      * @param array<string, mixed>|null $body
      */
@@ -249,7 +307,10 @@ final class HttpGitHub implements GitHub
     {
         $items = [];
         $url = self::API . $path;
-        for ($page = 0; $page < 100 && $url !== null; $page++) {
+        for ($page = 0; $url !== null; $page++) {
+            if ($page === 100) {
+                throw new \RuntimeException("GitHub API GET {$path} has more than 100 pages; refusing to work on a truncated list");
+            }
             $response = $this->http->request('GET', $url, $this->headers());
             if ($response->status !== 200) {
                 throw new \RuntimeException("GitHub API GET {$path} returned HTTP {$response->status}");
@@ -286,7 +347,7 @@ final class HttpGitHub implements GitHub
         $assets = [];
         foreach (is_array($data['assets'] ?? null) ? $data['assets'] : [] as $asset) {
             if (is_array($asset) && is_string($asset['name'] ?? null)) {
-                $assets[] = $asset['name'];
+                $assets[] = new ReleaseAsset(self::int($asset, 'id'), $asset['name'], self::string($asset, 'state'), self::int($asset, 'size'), is_string($asset['digest'] ?? null) ? $asset['digest'] : null);
             }
         }
 

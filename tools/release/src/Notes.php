@@ -74,13 +74,18 @@ final class Notes
         return implode("\n", $lines) . "\n";
     }
 
-    /** Escapes contributor text for a Markdown release body. */
+    /**
+     * Escapes contributor text for one line of a Markdown release body:
+     * no line breaks (CR and the Unicode separators included), no HTML, no
+     * Markdown links, images or emphasis, no autolinks and no mentions.
+     */
     public static function text(string $text): string
     {
-        $text = (string) preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/u', '', $text);
+        $text = (string) preg_replace('/[\x00-\x1F\x7F\x{2028}\x{2029}]/u', ' ', $text);
+        $text = (string) preg_replace('/([\\\\`*_\[\]()!#|~])/', '\\\\$1', $text);
         $text = htmlspecialchars($text, ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML5, 'UTF-8');
 
-        return str_replace('@', '&#64;', $text);
+        return str_replace(['@', '://', 'www.'], ['&#64;', ':&#47;&#47;', 'www&#46;'], $text);
     }
 
     private static function migrationSection(string $body): string
