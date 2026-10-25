@@ -1,0 +1,100 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/offline-agency/php-image-puzzle/HEAD/docs/schemas/game/v1/events.schema.json",
+  "title": "Player events",
+  "description": "Semantic events emitted by the engine and re-dispatched by every adapter (as CustomEvent detail, Vue emits, React callbacks or Livewire events). Order for an accepted action: move, state-change (reason action), progress, then complete when the board became solved. load: state-change (load), progress, ready. undo/redo/reset/shuffle/import/hint/start/pause: state-change, progress. error fires when a load or import is rejected; rejected actions are returned to the caller instead.",
+  "type": "object",
+  "required": ["type", "detail"],
+  "properties": {
+    "type": { "enum": ["ready", "move", "state-change", "progress", "complete", "error"] },
+    "detail": { "type": "object" }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "type": { "const": "ready" } } },
+      "then": { "properties": { "detail": { "$ref": "#/$defs/ready" } } }
+    },
+    {
+      "if": { "properties": { "type": { "const": "move" } } },
+      "then": { "properties": { "detail": { "$ref": "#/$defs/move" } } }
+    },
+    {
+      "if": { "properties": { "type": { "const": "state-change" } } },
+      "then": { "properties": { "detail": { "$ref": "#/$defs/stateChange" } } }
+    },
+    {
+      "if": { "properties": { "type": { "const": "progress" } } },
+      "then": { "properties": { "detail": { "$ref": "#/$defs/progress" } } }
+    },
+    {
+      "if": { "properties": { "type": { "const": "complete" } } },
+      "then": { "properties": { "detail": { "$ref": "#/$defs/complete" } } }
+    },
+    {
+      "if": { "properties": { "type": { "const": "error" } } },
+      "then": { "properties": { "detail": { "$ref": "#/$defs/error" } } }
+    }
+  ],
+  "$defs": {
+    "definitionId": { "type": "string", "pattern": "^gd1-[0-9a-f]{64}$" },
+    "ready": {
+      "type": "object",
+      "required": ["definitionId", "kind", "state"],
+      "properties": {
+        "definitionId": { "$ref": "#/$defs/definitionId" },
+        "kind": { "type": "string" },
+        "state": { "$ref": "state.schema.json" }
+      },
+      "additionalProperties": false
+    },
+    "move": {
+      "type": "object",
+      "required": ["action", "state"],
+      "properties": {
+        "action": { "$ref": "action.schema.json" },
+        "state": { "$ref": "state.schema.json" }
+      },
+      "additionalProperties": false
+    },
+    "stateChange": {
+      "type": "object",
+      "required": ["reason", "status", "state"],
+      "properties": {
+        "reason": { "enum": ["load", "import", "action", "undo", "redo", "reset", "shuffle", "hint", "start", "pause"] },
+        "status": { "enum": ["idle", "running", "paused", "complete"] },
+        "state": { "$ref": "state.schema.json" }
+      },
+      "additionalProperties": false
+    },
+    "progress": {
+      "type": "object",
+      "required": ["progress", "moves", "elapsedMs"],
+      "properties": {
+        "progress": { "type": "number", "minimum": 0, "maximum": 1 },
+        "moves": { "type": "integer", "minimum": 0 },
+        "elapsedMs": { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": false
+    },
+    "complete": {
+      "type": "object",
+      "required": ["definitionId", "moves", "elapsedMs", "hintsUsed"],
+      "properties": {
+        "definitionId": { "$ref": "#/$defs/definitionId" },
+        "moves": { "type": "integer", "minimum": 0 },
+        "elapsedMs": { "type": "integer", "minimum": 0 },
+        "hintsUsed": { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": false
+    },
+    "error": {
+      "type": "object",
+      "required": ["code", "message"],
+      "properties": {
+        "code": { "enum": ["invalid", "illegal", "unsupported", "destroyed", "load", "storage"] },
+        "message": { "type": "string" }
+      },
+      "additionalProperties": false
+    }
+  }
+}

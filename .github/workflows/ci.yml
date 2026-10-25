@@ -167,10 +167,44 @@ jobs:
       - run: docker compose run --rm php84 sh -c 'composer install --no-progress && vendor/bin/pest'
       - run: docker compose run --rm minimal sh -c 'composer install --no-progress && vendor/bin/pest'
 
+  js:
+    name: TypeScript engine (lint, types, tests, build)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci --no-fund --no-audit
+      - run: npx eslint .
+      - run: npx prettier --check .
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+
+  conformance:
+    name: PHP/TypeScript conformance fixtures are current
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
+        with:
+          php-version: '8.5'
+          extensions: gd
+          coverage: none
+          tools: composer:v2
+      - run: composer install --no-progress --prefer-dist
+      - run: php tools/conformance.php --check
+
   gate:
     name: CI gate
     if: always()
-    needs: [quality, tests, minimal-extensions, coverage, mutation, consumer, docker]
+    needs: [quality, tests, minimal-extensions, coverage, mutation, consumer, docker, js, conformance]
     runs-on: ubuntu-24.04
     steps:
       - name: Every required job succeeded
