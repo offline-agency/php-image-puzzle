@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/offline-agency/php-image-puzzle/HEAD/docs/schemas/v2/puzzle-config.schema.json",
+  "title": "Puzzle config",
+  "description": "Versioned, reproducible generation config (PuzzleConfig). Identical configs and sources produce identical geometry and assets.",
+  "type": "object",
+  "required": ["configVersion", "rows", "cols", "edge"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "configVersion": { "const": 2 },
+    "input": { "type": "string", "minLength": 1, "description": "Source image path (may be supplied on the command line instead)." },
+    "rows": { "type": "integer", "minimum": 1 },
+    "cols": { "type": "integer", "minimum": 1 },
+    "edge": { "$ref": "edge.schema.json" },
+    "geometry": {
+      "type": "object",
+      "properties": {
+        "seed": { "type": "integer", "minimum": 0, "maximum": 2147483647, "default": 1 },
+        "samples": { "type": "integer", "minimum": 1, "maximum": 16, "default": 4, "description": "Antialiasing sub-samples per axis; 1 = exact mode." },
+        "topology": { "enum": ["rect", "hex", "triangle"], "default": "rect" }
+      },
+      "additionalProperties": false
+    },
+    "output": {
+      "type": "object",
+      "properties": {
+        "directory": { "type": "string", "minLength": 1 },
+        "manifestFilename": { "type": "string", "pattern": "^[^/\\\\\\u0000-\\u001f]+\\.json$" },
+        "filenamePattern": { "type": "string", "pattern": "^[^/\\\\\\u0000-\\u001f]+$" },
+        "format": { "enum": ["png", "jpeg", "webp"] },
+        "quality": { "type": "integer", "minimum": 0, "maximum": 100, "description": "PNG: compression 0..9; JPEG/WebP: quality 0..100." },
+        "overwrite": { "type": "boolean" },
+        "publishMode": { "enum": ["in_place", "generation"] },
+        "includePaths": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

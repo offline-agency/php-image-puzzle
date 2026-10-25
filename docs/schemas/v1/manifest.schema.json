@@ -1,0 +1,48 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://raw.githubusercontent.com/offline-agency/php-image-puzzle/HEAD/docs/schemas/v1/manifest.schema.json",
+    "title": "Puzzle manifest",
+    "description": "Exported puzzle manifest (piece list and metadata). Legacy 1.x schema, kept for reading old manifests and configs.",
+    "type": "object",
+    "required": [
+        "source",
+        "rows",
+        "cols",
+        "sourceWidth",
+        "sourceHeight",
+        "pieces"
+    ],
+    "properties": {
+        "source": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "description": "Source image basename or null."
+        },
+        "rows": {
+            "type": "integer",
+            "minimum": 1
+        },
+        "cols": {
+            "type": "integer",
+            "minimum": 1
+        },
+        "sourceWidth": {
+            "type": "integer",
+            "minimum": 1
+        },
+        "sourceHeight": {
+            "type": "integer",
+            "minimum": 1
+        },
+        "pieces": {
+            "type": "array",
+            "items": {
+                "$ref": "piece.schema.json"
+            },
+            "description": "One entry per piece."
+        }
+    },
+    "additionalProperties": false
+}

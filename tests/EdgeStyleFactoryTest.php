@@ -72,19 +72,30 @@ test('fromArray rounded_corners with options.radius uses that value', function (
     expect($result)->toBeInstanceOf(\GdImage::class);
 });
 
-test('fromArray rounded_corners with options.radius as string casts to int', function (): void {
-    $style = EdgeStyleFactory::fromArray([
+test('fromArray rejects a string radius instead of casting it', function (): void {
+    expect(fn () => EdgeStyleFactory::fromArray([
         'edge' => [
             'type' => 'rounded_corners',
             'options' => ['radius' => '3'],
         ],
-    ]);
-    expect($style)->toBeInstanceOf(RoundedCornersStyle::class);
+    ]))->toThrow(InvalidArgumentException::class, 'edge.options.radius must be an integer');
 });
 
-test('fromArray with options as non-array uses empty options', function (): void {
-    $style = EdgeStyleFactory::fromArray(['edge' => ['type' => 'jigsaw', 'options' => 'not-array']]);
-    expect($style)->toBeInstanceOf(JigsawStyle::class);
+test('fromArray rejects malformed or unsupported options and keys', function (array $edge, string $message): void {
+    expect(fn () => EdgeStyleFactory::fromArray(['edge' => $edge]))->toThrow(InvalidArgumentException::class, $message);
+})->with([
+    'non-array options' => [['type' => 'jigsaw', 'options' => 'not-array'], 'must be an object'],
+    'options on jigsaw' => [['type' => 'jigsaw', 'options' => ['radius' => 2]], 'not supported for edge type'],
+    'unknown option' => [['type' => 'rounded_corners', 'options' => ['size' => 2]], 'unsupported keys: size'],
+    'unknown key' => [['type' => 'line', 'colour' => 'red'], 'unsupported keys: colour'],
+    'sides on non composite' => [['type' => 'line', 'top' => ['type' => 'line']], 'unsupported keys: top'],
+    'side options' => [['type' => 'composite', 'top' => ['type' => 'line', 'options' => []]], 'unsupported keys: options'],
+]);
+
+test('normalize returns a reproducible representation', function (): void {
+    expect(EdgeStyleFactory::normalize(['type' => 'rounded_corners']))->toBe(['type' => 'rounded_corners', 'options' => ['radius' => 4]]);
+    expect(EdgeStyleFactory::normalize(['type' => 'composite', 'left' => ['type' => 'sinus'], 'right' => ['type' => 'sinus']]))
+        ->toBe(['type' => 'composite', 'top' => ['type' => 'no_edge'], 'right' => ['type' => 'sinus'], 'bottom' => ['type' => 'no_edge'], 'left' => ['type' => 'sinus']]);
 });
 
 test('fromArray missing edge throws', function (): void {

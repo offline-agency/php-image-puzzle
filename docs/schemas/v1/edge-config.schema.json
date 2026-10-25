@@ -1,0 +1,96 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://raw.githubusercontent.com/offline-agency/php-image-puzzle/HEAD/docs/schemas/v1/edge-config.schema.json",
+    "title": "Edge config",
+    "description": "Configuration for puzzle piece edge style and shape. Legacy 1.x schema, kept for reading old manifests and configs.",
+    "type": "object",
+    "required": [
+        "edge"
+    ],
+    "properties": {
+        "edge": {
+            "type": "object",
+            "required": [
+                "type"
+            ],
+            "properties": {
+                "type": {
+                    "type": "string",
+                    "enum": [
+                        "no_edge",
+                        "line",
+                        "jigsaw",
+                        "arc",
+                        "half_circle",
+                        "sinus",
+                        "rounded_corners",
+                        "composite"
+                    ],
+                    "description": "Built-in edge style, or composite for per-side styles (top, right, bottom, left)."
+                },
+                "top": {
+                    "type": "object",
+                    "description": "Edge style for top side (used when type is composite).",
+                    "properties": {
+                        "type": {
+                            "type": "string"
+                        },
+                        "options": {
+                            "type": "object"
+                        }
+                    }
+                },
+                "right": {
+                    "type": "object",
+                    "description": "Edge style for right side (used when type is composite).",
+                    "properties": {
+                        "type": {
+                            "type": "string"
+                        },
+                        "options": {
+                            "type": "object"
+                        }
+                    }
+                },
+                "bottom": {
+                    "type": "object",
+                    "description": "Edge style for bottom side (used when type is composite).",
+                    "properties": {
+                        "type": {
+                            "type": "string"
+                        },
+                        "options": {
+                            "type": "object"
+                        }
+                    }
+                },
+                "left": {
+                    "type": "object",
+                    "description": "Edge style for left side (used when type is composite).",
+                    "properties": {
+                        "type": {
+                            "type": "string"
+                        },
+                        "options": {
+                            "type": "object"
+                        }
+                    }
+                },
+                "options": {
+                    "type": "object",
+                    "description": "Style-specific options. Only radius is used for rounded_corners.",
+                    "properties": {
+                        "radius": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "description": "Corner radius for rounded_corners (default 4)."
+                        }
+                    },
+                    "additionalProperties": true
+                }
+            },
+            "additionalProperties": false
+        }
+    },
+    "additionalProperties": false
+}

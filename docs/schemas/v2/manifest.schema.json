@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/offline-agency/php-image-puzzle/HEAD/docs/schemas/v2/manifest.schema.json",
+  "title": "Puzzle manifest v2",
+  "description": "Exported asset manifest. Extensions written by onManifestBuild live only under \"extensions\".",
+  "type": "object",
+  "required": ["manifestVersion", "source", "rows", "cols", "sourceWidth", "sourceHeight", "format", "geometry", "pieces", "extensions"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "manifestVersion": { "const": 2 },
+    "source": { "type": ["string", "null"], "description": "Source image basename or null." },
+    "rows": { "type": "integer", "minimum": 1 },
+    "cols": { "type": "integer", "minimum": 1 },
+    "sourceWidth": { "type": "integer", "minimum": 1 },
+    "sourceHeight": { "type": "integer", "minimum": 1 },
+    "format": { "enum": ["png", "jpeg", "webp"] },
+    "geometry": {
+      "type": "object",
+      "required": ["version", "topology", "style", "seed", "samples", "compositing"],
+      "properties": {
+        "version": { "const": 2 },
+        "topology": { "enum": ["rect", "hex", "triangle"] },
+        "style": { "enum": ["no_edge", "line", "jigsaw", "arc", "half_circle", "sinus", "rounded_corners", "composite", "resolver", "custom"] },
+        "seed": { "type": "integer", "minimum": 0 },
+        "samples": { "type": "integer", "minimum": 1, "maximum": 16 },
+        "compositing": { "enum": ["exact", "additive"], "description": "exact: every pixel owned by one piece; additive: summed piece opacities reproduce the source within n/2 alpha units." }
+      },
+      "additionalProperties": false
+    },
+    "pieces": {
+      "type": "array",
+      "items": { "$ref": "piece.schema.json" }
+    },
+    "extensions": {
+      "type": "object",
+      "description": "Free-form, namespaced extension data added by onManifestBuild hooks."
+    }
+  },
+  "additionalProperties": false
+}
