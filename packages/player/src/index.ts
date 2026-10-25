@@ -19,4 +19,4 @@ export { CONFIGURATOR_CHANGE_EVENT, CONFIGURATOR_TAG, defineImagePuzzleConfigura
 export type { ImagePuzzleConfiguratorElement } from './configurator-element.js';
 export { configuratorEn, configuratorIt, resolveConfiguratorMessages } from './configurator-messages.js';
 export type { ConfiguratorMessages } from './configurator-messages.js';
-export { themeTokens } from './theme.js';
+export { followThemeClass, themeTokens } from './theme.js';

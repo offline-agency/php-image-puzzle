@@ -24,6 +24,7 @@
         "laravel/pint": "^1.32.1",
         "orchestra/testbench": "^11.3",
         "pestphp/pest": "^5.3.3",
+        "phpstan/phpstan": "^2.3.2",
         "phpstan/phpstan-strict-rules": "^2.0"
     },
     "autoload": {

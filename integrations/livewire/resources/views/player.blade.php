@@ -9,6 +9,7 @@
         <image-puzzle-player
             src="{{ $definitionUrl }}"
             @if ($locale !== null) locale="{{ $locale }}" @endif
+            @if ($themeClass !== null) theme-class="{{ $themeClass }}" @endif
             @if (! $controls) no-controls @endif
         ></image-puzzle-player>
     </div>
@@ -35,11 +36,24 @@
         });
     }
 
+    // Livewire rejects a call that fails or is superseded by a newer request:
+    // retry, so a quick first move cannot replace the saved progress unseen.
+    async function savedState() {
+        for (let attempt = 1; ; attempt++) {
+            try {
+                return await $wire.savedState();
+            } catch {
+                if (attempt === 3 || !root.isConnected) return null;
+                await new Promise((resolve) => setTimeout(resolve, 200 * attempt));
+            }
+        }
+    }
+
     root.addEventListener('puzzle-ready', async (event) => {
         const player = event.target;
         if (player.dataset.restored === 'true') return;
         player.dataset.restored = 'true';
-        const saved = await $wire.savedState();
+        const saved = await savedState();
         if (saved === null || !player.isConnected) return;
         restoring = true;
         try {

@@ -73,6 +73,7 @@ database or a storage disk, bind your own
 <livewire:image-puzzle-player puzzle="autumn" />
 <livewire:image-puzzle-player puzzle="autumn" locale="it" :controls="false" />
 <livewire:image-puzzle-player puzzle="autumn" :read-only="true" />
+<livewire:image-puzzle-player puzzle="autumn" theme-class="dark" />
 ```
 
 | Property   | Meaning                                                   |
@@ -81,6 +82,7 @@ database or a storage disk, bind your own
 | `locale`   | Player UI language (`en`, `it`, falls back to `en`).      |
 | `controls` | Show the toolbar (new game, undo, redo, hint, ...).       |
 | `readOnly` | Play stays local; saves and resets are refused with 403.  |
+| `themeClass` | Follow a class-based dark mode on `<html>` (e.g. `dark`). |
 
 The element sits inside `wire:ignore`, so Livewire morphs never touch the
 game. Methods callable from the page:
@@ -106,14 +108,21 @@ or in another component: `#[On('image-puzzle-completed')]`.
 ## Authorization
 
 Every request (component mount and calls, definition, assets) checks the
-`image-puzzle.play` gate with the current user (or `null` for guests) and the
-puzzle key. The package defines a permissive default only when the
-application has not defined the ability:
+`image-puzzle.play` gate with the current user (or `null` for guests), the
+puzzle key and the puzzle's subject: the record a repository attached to the
+`StoredPuzzle` (`subject`), or `null` for configured puzzles. When the
+application has not defined the ability, the package default allows
+configured puzzles and requires the `view` policy ability on a subject.
+Define it to change that:
 
 ```php
-Gate::define('image-puzzle.play', fn (?User $user, string $puzzle): bool =>
-    $user?->can('view', Puzzle::whereKey($puzzle)->firstOrFail()) ?? false);
+Gate::define('image-puzzle.play', fn (?User $user, string $puzzle, ?object $subject = null): bool =>
+    $user !== null && ($subject === null || $user->can('view', $subject)));
 ```
+
+`Puzzles::authorized($key)` resolves and authorizes a key (throwing 404/403);
+`Puzzles::playable($key)` returns the `StoredPuzzle` or `null` without
+throwing, for pages that render a message instead.
 
 Unknown keys respond 404, denied keys 403. A grant revoked while the page is
 open is enforced on the next save. The asset route serves only files the
@@ -132,8 +141,9 @@ progress across devices:
 $this->app->bind(StateStore::class, DatabaseStateStore::class);
 ```
 
-A save is first restored into the browser game when it is ready, then every
-move is sent after `sync_debounce_ms` (default 2000 ms). Completion, hiding the
+A save is first restored into the browser game when it is ready (a failed or
+superseded restore request is retried twice before the fresh game is kept),
+then every move is sent after `sync_debounce_ms` (default 2000 ms). Completion, hiding the
 page and leaving it through `wire:navigate` send the pending state at once.
 
 ### What the server verifies — and what it cannot

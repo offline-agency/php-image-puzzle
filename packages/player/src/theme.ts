@@ -1,8 +1,8 @@
 /**
  * Theme tokens shared by the player and the configurator. Hosts override the
  * --ipp-* custom properties. The dark palette follows the operating system
- * unless the host sets theme="light"; theme="dark" forces it (frameworks with
- * a class-based dark mode, such as Filament, set the attribute).
+ * unless the host sets theme="light"; theme="dark" forces it. Frameworks with
+ * a class-based dark mode (Filament, Tailwind) use theme-class instead.
  */
 const dark = `
   --ipp-fg: #e6e9ee;
@@ -40,8 +40,34 @@ export const themeTokens: string = `
   --ipp-duration: 160ms;
   color-scheme: light;
 }
-:host([theme='dark']) {${dark}}
+:host([theme='dark']),
+:host([data-theme='dark']) {${dark}}
 @media (prefers-color-scheme: dark) {
-  :host(:not([theme='light'])) {${dark}}
+  :host(:not([theme='light']):not([data-theme='light'])) {${dark}}
 }
 `;
+
+/**
+ * Follows a class on <html> (theme-class="dark" for Filament and Tailwind's
+ * class strategy): sets data-theme on the host to "dark" or "light" and keeps
+ * it in sync. Returns the function that stops observing.
+ */
+export function followThemeClass(host: HTMLElement, className: string): () => void {
+  const root = host.ownerDocument.documentElement;
+  const apply = (): void => {
+    host.setAttribute('data-theme', root.classList.contains(className) ? 'dark' : 'light');
+  };
+  apply();
+  const view = host.ownerDocument.defaultView;
+  if (view === null || typeof view.MutationObserver === 'undefined') {
+    return () => {
+      host.removeAttribute('data-theme');
+    };
+  }
+  const observer = new view.MutationObserver(apply);
+  observer.observe(root, { attributes: true, attributeFilter: ['class'] });
+  return () => {
+    observer.disconnect();
+    host.removeAttribute('data-theme');
+  };
+}

@@ -42,13 +42,17 @@ final class PuzzlePlayer extends Component
 
     public bool $controls = true;
 
-    public function mount(string $puzzle, ?string $locale = null, bool $controls = true, bool $readOnly = false): void
+    /** Class on <html> that switches the player to its dark palette ("dark" for Filament and Tailwind). */
+    public ?string $themeClass = null;
+
+    public function mount(string $puzzle, ?string $locale = null, bool $controls = true, bool $readOnly = false, ?string $themeClass = null): void
     {
         $this->puzzle = $puzzle;
         $this->definitionId = $this->stored()->definition->id;
         $this->locale = $locale;
         $this->controls = $controls;
         $this->readOnly = $readOnly;
+        $this->themeClass = $themeClass;
     }
 
     /**

@@ -1,6 +1,7 @@
 import { BUILD_KINDS } from '@offline-agency/image-puzzle-engine';
 import type { BuildConfigDocument, BuildKind } from '@offline-agency/image-puzzle-engine';
 import { createConfigurator } from './configurator.js';
+import { followThemeClass } from './theme.js';
 import type { Configurator, ConfiguratorChange } from './configurator.js';
 
 export const CONFIGURATOR_TAG = 'image-puzzle-configurator';
@@ -26,9 +27,18 @@ export interface ImagePuzzleConfiguratorElement extends HTMLElement {
   locale: string | null;
   /** Reflects `name` (form field name). */
   name: string | null;
+  /** The form contents as a document, valid or not. */
+  readonly draft: Readonly<Record<string, unknown>>;
   readonly valid: boolean;
   readonly error: string | null;
   readonly configurator: Configurator;
+  /** Standard form-control API (ElementInternals); null/true where internals are unsupported. */
+  readonly form: HTMLFormElement | null;
+  readonly validity: ValidityState | null;
+  readonly validationMessage: string;
+  readonly willValidate: boolean;
+  checkValidity(): boolean;
+  reportValidity(): boolean;
   randomizeSeed(): void;
   resetCrop(): void;
 }
@@ -62,11 +72,12 @@ export function defineImagePuzzleConfigurator(tag: string = CONFIGURATOR_TAG): C
 
   class Element extends HTMLElement implements ImagePuzzleConfiguratorElement {
     static formAssociated = true;
-    static observedAttributes = ['src', 'value', 'kinds', 'disabled', 'locale'];
+    static observedAttributes = ['src', 'value', 'kinds', 'disabled', 'locale', 'theme-class'];
 
     readonly #configurator: Configurator;
     readonly #internals: ElementInternals | null;
     #initialValue: unknown = null;
+    #stopTheme: (() => void) | null = null;
 
     constructor() {
       super();
@@ -77,10 +88,20 @@ export function defineImagePuzzleConfigurator(tag: string = CONFIGURATOR_TAG): C
           this.#syncForm(change);
         },
       });
-      this.#syncForm({ value: this.#configurator.value, valid: this.#configurator.valid, error: this.#configurator.error });
+      this.#syncForm(this.#snapshot());
+    }
+
+    disconnectedCallback(): void {
+      queueMicrotask(() => {
+        if (this.isConnected) return;
+        this.#stopTheme?.();
+        this.#stopTheme = null;
+      });
     }
 
     connectedCallback(): void {
+      const themeClass = this.getAttribute('theme-class');
+      if (this.#stopTheme === null && themeClass !== null && themeClass !== '') this.#stopTheme = followThemeClass(this, themeClass);
       // Properties set before the element was upgraded shadow the accessors.
       for (const name of ['value', 'src', 'kinds', 'disabled', 'locale', 'name'] as const) {
         if (Object.prototype.hasOwnProperty.call(this, name)) {
@@ -110,8 +131,12 @@ export function defineImagePuzzleConfigurator(tag: string = CONFIGURATOR_TAG): C
         case 'locale':
           this.#configurator.setLocale(value ?? undefined);
           break;
+        case 'theme-class':
+          this.#stopTheme?.();
+          this.#stopTheme = value === null || value === '' ? null : followThemeClass(this, value);
+          break;
       }
-      this.#syncForm({ value: this.#configurator.value, valid: this.#configurator.valid, error: this.#configurator.error });
+      this.#syncForm(this.#snapshot());
     }
 
     get value(): BuildConfigDocument | null {
@@ -119,7 +144,7 @@ export function defineImagePuzzleConfigurator(tag: string = CONFIGURATOR_TAG): C
     }
     set value(value: unknown) {
       this.#setValue(value);
-      this.#syncForm({ value: this.#configurator.value, valid: this.#configurator.valid, error: this.#configurator.error });
+      this.#syncForm(this.#snapshot());
     }
 
     get src(): string | null {
@@ -161,6 +186,9 @@ export function defineImagePuzzleConfigurator(tag: string = CONFIGURATOR_TAG): C
       else this.setAttribute('name', value);
     }
 
+    get draft(): Readonly<Record<string, unknown>> {
+      return this.#configurator.draft;
+    }
     get valid(): boolean {
       return this.#configurator.valid;
     }
@@ -169,6 +197,25 @@ export function defineImagePuzzleConfigurator(tag: string = CONFIGURATOR_TAG): C
     }
     get configurator(): Configurator {
       return this.#configurator;
+    }
+
+    get form(): HTMLFormElement | null {
+      return this.#internals?.form ?? null;
+    }
+    get validity(): ValidityState | null {
+      return this.#internals?.validity ?? null;
+    }
+    get validationMessage(): string {
+      return this.#internals?.validationMessage ?? '';
+    }
+    get willValidate(): boolean {
+      return this.#internals?.willValidate ?? false;
+    }
+    checkValidity(): boolean {
+      return this.#internals?.checkValidity() ?? this.#configurator.valid;
+    }
+    reportValidity(): boolean {
+      return this.#internals?.reportValidity() ?? this.#configurator.valid;
     }
 
     randomizeSeed(): void {
@@ -181,11 +228,16 @@ export function defineImagePuzzleConfigurator(tag: string = CONFIGURATOR_TAG): C
     /** Form reset restores the `value` attribute. */
     formResetCallback(): void {
       this.#setValue(this.#initialValue);
-      this.#syncForm({ value: this.#configurator.value, valid: this.#configurator.valid, error: this.#configurator.error });
+      this.#syncForm(this.#snapshot());
     }
 
     formDisabledCallback(disabled: boolean): void {
       this.#configurator.setDisabled(disabled || this.hasAttribute('disabled'));
+    }
+
+    #snapshot(): ConfiguratorChange {
+      const c = this.#configurator;
+      return { value: c.value, draft: c.draft, valid: c.valid, error: c.error };
     }
 
     #setValue(value: unknown): void {

@@ -66,12 +66,13 @@ final class PuzzlePlayerTest extends TestCase
     public function test_renders_the_element_inside_wire_ignore_with_the_authorized_definition_url(): void
     {
         $definition = self::puzzle('swap')->definition;
-        Livewire::test(PuzzlePlayer::class, ['puzzle' => 'swap', 'locale' => 'it'])
+        Livewire::test(PuzzlePlayer::class, ['puzzle' => 'swap', 'locale' => 'it', 'themeClass' => 'dark'])
             ->assertSet('definitionId', $definition->id)
             ->assertSeeHtml('wire:ignore')
             ->assertSeeHtml('<image-puzzle-player')
             ->assertSeeHtml('src="' . route('image-puzzle.definition', ['puzzle' => 'swap']) . '"')
-            ->assertSeeHtml('locale="it"');
+            ->assertSeeHtml('locale="it"')
+            ->assertSeeHtml('theme-class="dark"');
     }
 
     public function test_unknown_puzzles_are_404_and_denied_puzzles_403(): void

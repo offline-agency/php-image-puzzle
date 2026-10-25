@@ -8,6 +8,7 @@ use Illuminate\Auth\GenericUser;
 use Illuminate\Contracts\Auth\Access\Gate;
 use ImagePuzzle\Livewire\Contracts\PuzzleRepository;
 use ImagePuzzle\Livewire\PuzzlePlayer;
+use ImagePuzzle\Livewire\Puzzles;
 use ImagePuzzle\Livewire\StoredPuzzle;
 use Livewire\Livewire;
 
@@ -54,6 +55,16 @@ final class SubjectAuthorizationTest extends TestCase
         $this->get('/image-puzzle/puzzles/mine/definition.json')->assertOk();
         $this->get('/image-puzzle/puzzles/theirs/definition.json')->assertForbidden();
         $this->get('/image-puzzle/puzzles/theirs/source.png')->assertForbidden();
+    }
+
+    public function test_playable_returns_null_instead_of_throwing(): void
+    {
+        $this->actingAs($this->user(1));
+        $puzzles = $this->app?->make(Puzzles::class);
+        self::assertNotNull($puzzles);
+        self::assertSame('mine', $puzzles->playable('mine')?->key);
+        self::assertNull($puzzles->playable('theirs'));
+        self::assertNull($puzzles->playable('missing'));
     }
 
     public function test_guests_are_denied_record_puzzles_by_default(): void

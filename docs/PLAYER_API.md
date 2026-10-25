@@ -201,8 +201,10 @@ Customise the player through:
   `--ipp-radius`, `--ipp-gap`, `--ipp-tray`, `--ipp-duration`.
 - Theme: a dark palette applies when the operating system prefers dark,
   unless the host element has `theme="light"`; `theme="dark"` forces it.
-  Frameworks with a class-based dark mode (for example Filament) set the
-  attribute. Both palettes pass the automated WCAG AA contrast checks.
+  For a class-based dark mode (Tailwind, Filament), `theme-class="dark"`
+  follows that class on `<html>` live and overrides the system preference
+  (the element sets `data-theme`). Both palettes pass the automated WCAG AA
+  contrast checks.
 - Parts: `root`, `toolbar`, `control`, `control-<name>`, `status`,
   `message`, `board`, `board-area`, `viewport`, `tile`, `piece`, `preview`.
 - `data-state` on the host (`empty`, `loading`, `error`, `ready`) and
@@ -233,6 +235,7 @@ throws.
 | `src` | attribute and property | Definition URL. Changing it loads the new puzzle |
 | `locale` | attribute and property | Updates labels live |
 | `persist`, `no-controls`, `motion` | attributes | Read when the player is created |
+| `theme`, `theme-class` | attributes | Palette: see Styling |
 | `definition` | property only | Definition object. **Wins over `src`**. Set it to `null` to fall back to `src`. Objects are never serialised into attributes |
 | `state` | property only | Saved state for the next load. Setting it reloads the current source with that state, then it is cleared |
 | `options` | property only | Other `PlayerOptions` (`messages`, `persist`, `fetch`, `clock`, …), read when the player is created |
@@ -282,11 +285,14 @@ the same definition, so a saved configuration can be regenerated later.
 | `disabled` | attribute and property | Read-only form; pointer and keyboard editing stop |
 | `locale` | attribute and property | `en`, `it` |
 | `name` | attribute and property | Form field name. The element is form-associated: it submits the JSON and an invalid configuration blocks submission. `form.reset()` restores the `value` attribute |
+| `theme`, `theme-class` | attributes | Palette, as for the player |
+| `draft` | read-only | The form contents as a document even while invalid (`custom` only with the custom preset, an empty number as `null`): send it when the server should report the errors |
 | `valid`, `error`, `configurator` | read-only | State and the underlying controller |
+| `form`, `validity`, `validationMessage`, `willValidate`, `checkValidity()`, `reportValidity()` | form-control API | As on native inputs (through `ElementInternals`) |
 | `randomizeSeed()`, `resetCrop()` | methods | |
 
 It dispatches `configurator-change` (`bubbles`, `composed`) with
-`{ value, valid, error }` after every edit. Programmatic changes (`value`,
+`{ value, draft, valid, error }` after every edit. Programmatic changes (`value`,
 `src`, `locale`, `disabled`) do not dispatch it; `kinds` does only when it
 removes the selected mode. `createConfigurator(target, options)` is
 the same controller without the element.

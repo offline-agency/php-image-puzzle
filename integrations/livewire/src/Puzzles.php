@@ -34,6 +34,14 @@ final readonly class Puzzles
         return $puzzle;
     }
 
+    /** The puzzle when it exists and the current user may play it; null otherwise (for hosts that render a fallback). */
+    public function playable(string $key): ?StoredPuzzle
+    {
+        $puzzle = $this->repository->find($key);
+
+        return $puzzle !== null && $this->gate->allows(ImagePuzzleServiceProvider::ABILITY, [$key, $puzzle->subject]) ? $puzzle : null;
+    }
+
     /** The bundled player script and a content hash for cache busting. */
     public static function scriptPath(): string
     {

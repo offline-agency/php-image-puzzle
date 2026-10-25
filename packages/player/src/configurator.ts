@@ -1,4 +1,6 @@
 import {
+  BUILD_CONFIG_FORMAT,
+  BUILD_CONFIG_VERSION,
   BUILD_KINDS,
   MAX_CROP,
   MAX_JIGSAW_SEED,
@@ -28,6 +30,8 @@ import { themeTokens } from './theme.js';
 export interface ConfiguratorChange {
   /** The configuration document, or null while the form is invalid. */
   readonly value: BuildConfigDocument | null;
+  /** What the form currently holds, valid or not (empty numbers are null), for servers that report their own errors. */
+  readonly draft: Readonly<Record<string, unknown>>;
   readonly valid: boolean;
   readonly error: string | null;
 }
@@ -50,6 +54,8 @@ export interface ConfiguratorOptions {
 export interface Configurator {
   readonly element: HTMLElement;
   readonly value: BuildConfigDocument | null;
+  /** The form contents as a document, valid or not. */
+  readonly draft: Readonly<Record<string, unknown>>;
   readonly valid: boolean;
   readonly error: string | null;
   /** Natural size of the loaded preview image, if any. */
@@ -147,7 +153,7 @@ button:disabled, input:disabled, select:disabled { opacity: 0.6; cursor: not-all
 .handle { fill: #fff; stroke: #1d232b; stroke-width: 1; vector-effect: non-scaling-stroke; }
 .handle[data-corner='nw'], .handle[data-corner='se'] { cursor: nwse-resize; }
 .handle[data-corner='ne'], .handle[data-corner='sw'] { cursor: nesw-resize; }
-:host([data-disabled]) .frame, :host([data-disabled]) .handle { cursor: default; }
+:host([disabled]) .frame, :host([disabled]) .handle, :host([data-disabled]) .frame, :host([data-disabled]) .handle { cursor: default; }
 .placeholder { margin: 0; padding: 2rem 1rem; border: 1px dashed var(--ipp-border); border-radius: var(--ipp-radius); color: var(--ipp-muted); text-align: center; }
 .sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 @media (forced-colors: active) {
@@ -595,10 +601,31 @@ export function createConfigurator(target: HTMLElement | ShadowRoot, options: Co
     syncInputs();
     drawPreview(result.config);
     if (emit) {
-      const change: ConfiguratorChange = { value: current, valid: current !== null, error };
+      const change: ConfiguratorChange = { value: current, draft: draftDocument(), valid: current !== null, error };
       options.onChange?.(change);
       host.dispatchEvent(new CustomEvent('configurator-change', { detail: change, bubbles: true, composed: true }));
     }
+  }
+
+  function draftDocument(): Record<string, unknown> {
+    const number = (value: unknown): unknown => (typeof value === 'number' && !Number.isFinite(value) ? null : value);
+    const custom: Record<string, unknown> = {};
+    if (draft.preset === 'custom') {
+      for (const field of FIELDS[draft.kind]) {
+        if (field.key in draft.custom) custom[field.key] = number(draft.custom[field.key]);
+      }
+    }
+    return {
+      format: BUILD_CONFIG_FORMAT,
+      version: BUILD_CONFIG_VERSION,
+      kind: draft.kind,
+      preset: draft.preset,
+      ...(draft.preset === 'custom' ? { custom } : {}),
+      seed: number(draft.seed),
+      ...(draft.crop !== null
+        ? { crop: { x: number(draft.crop.x), y: number(draft.crop.y), width: number(draft.crop.width), height: number(draft.crop.height) } }
+        : {}),
+    };
   }
 
   function applyValue(value: unknown): void {
@@ -767,6 +794,9 @@ export function createConfigurator(target: HTMLElement | ShadowRoot, options: Co
     get value() {
       return current;
     },
+    get draft() {
+      return draftDocument();
+    },
     get valid() {
       return current !== null;
     },
@@ -811,8 +841,8 @@ export function createConfigurator(target: HTMLElement | ShadowRoot, options: Co
     },
     setDisabled(next: boolean): void {
       disabled = next;
-      if (next) host.setAttribute('data-disabled', '');
-      else host.removeAttribute('data-disabled');
+      // The custom element reflects `disabled` itself; only a plain host gets a marker.
+      if (ownsHost) host.toggleAttribute('data-disabled', next);
       update(false);
     },
     setLocale(locale?: string, overrides?: Partial<ConfiguratorMessages>): void {
@@ -839,7 +869,7 @@ export function createConfigurator(target: HTMLElement | ShadowRoot, options: Co
     },
   };
 
-  if (options.disabled === true) host.setAttribute('data-disabled', '');
+  if (options.disabled === true && ownsHost) host.setAttribute('data-disabled', '');
   api.setValue(options.value ?? null);
   if (options.src !== undefined && options.src !== null) api.setSource(options.src);
   return api;

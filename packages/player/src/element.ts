@@ -1,6 +1,7 @@
 import { PuzzleError } from '@offline-agency/image-puzzle-engine';
 import type { Action, ActionResult, EngineSnapshot, GameStateDocument, PuzzleEngine } from '@offline-agency/image-puzzle-engine';
 import { createPlayer } from './player.js';
+import { followThemeClass } from './theme.js';
 import type { LoadOptions, Player, PlayerEventType, PlayerOptions } from './player.js';
 
 export const DEFAULT_TAG = 'image-puzzle-player';
@@ -72,7 +73,7 @@ export function defineImagePuzzlePlayer(tag: string = DEFAULT_TAG): CustomElemen
   }
 
   class Element extends HTMLElement implements ImagePuzzlePlayerElement {
-    static observedAttributes = ['src', 'locale'];
+    static observedAttributes = ['src', 'locale', 'theme-class'];
 
     #player: Player | null = null;
     #definition: unknown = null;
@@ -81,6 +82,12 @@ export function defineImagePuzzlePlayer(tag: string = DEFAULT_TAG): CustomElemen
     /** Source of the last automatic load: the definition object or the resolved src string. */
     #loaded: unknown = undefined;
     #scheduled = false;
+    #stopTheme: (() => void) | null = null;
+
+    #followTheme(className: string | null): void {
+      this.#stopTheme?.();
+      this.#stopTheme = className === null || className === '' ? null : followThemeClass(this, className);
+    }
 
     constructor() {
       super();
@@ -101,6 +108,7 @@ export function defineImagePuzzlePlayer(tag: string = DEFAULT_TAG): CustomElemen
       } else {
         this.#player.resume();
       }
+      if (this.#stopTheme === null) this.#followTheme(this.getAttribute('theme-class'));
       this.#schedule();
     }
 
@@ -108,7 +116,9 @@ export function defineImagePuzzlePlayer(tag: string = DEFAULT_TAG): CustomElemen
       // A DOM move disconnects and reconnects in the same task; only suspend
       // when the element is still detached afterwards.
       queueMicrotask(() => {
-        if (!this.isConnected) this.#player?.suspend();
+        if (this.isConnected) return;
+        this.#player?.suspend();
+        this.#followTheme(null);
       });
     }
 
@@ -116,6 +126,8 @@ export function defineImagePuzzlePlayer(tag: string = DEFAULT_TAG): CustomElemen
       if (oldValue === value) return;
       if (name === 'locale') {
         this.#player?.setLocale(value ?? undefined, this.#options.messages);
+      } else if (name === 'theme-class') {
+        this.#followTheme(value);
       } else {
         this.#schedule();
       }

@@ -73,6 +73,34 @@ test('leaving through wire:navigate flushes the pending save', async ({ page }) 
   await expect.poll(() => moves(restored)).toBe(2);
 });
 
+test('a failed restore request is retried instead of dropping the saved progress', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', (error) => errors.push(error.message));
+  await page.goto('/');
+  const swap = player(page, 'swap');
+  await ready(swap);
+  const saved = saveRequest(page);
+  await swap.evaluate((node: PlayerElement) => node.dispatchAction(node.engine.legalActions()[0]));
+  expect((await saved).ok()).toBe(true);
+
+  // Abort the first savedState() request after the reload, as a superseding request would.
+  let aborted = 0;
+  await page.route('**/update', async (route) => {
+    if (aborted === 0 && (route.request().postData() ?? '').includes('"savedState"')) {
+      aborted++;
+      await route.abort();
+      return;
+    }
+    await route.fallback();
+  });
+  await page.reload();
+  const restored = player(page, 'swap');
+  await ready(restored);
+  await expect.poll(() => moves(restored)).toBe(1);
+  expect(aborted).toBe(1);
+  expect(errors).toEqual([]);
+});
+
 test('a solved game is verified by the server before the page reports it', async ({ page }) => {
   await page.goto('/');
   const swap = player(page, 'swap');

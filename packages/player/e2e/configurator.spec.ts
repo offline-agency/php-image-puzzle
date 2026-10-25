@@ -120,9 +120,18 @@ test('the form submits the configuration and blocks invalid ones', async ({ page
   await element.locator('input[name=seed]').fill('-1');
   await expect(element.locator('.error')).toHaveText('Seed must be a whole number from 0 to 2147483647.');
   expect(await page.locator('#form').evaluate((form: HTMLFormElement) => form.checkValidity())).toBe(false);
+  expect(
+    await element.evaluate((node: ImagePuzzleConfiguratorElement) => ({
+      valid: node.checkValidity(),
+      message: node.validationMessage,
+      form: node.form?.id,
+      willValidate: node.willValidate,
+    })),
+  ).toEqual({ valid: false, message: 'Seed must be a whole number from 0 to 2147483647.', form: 'form', willValidate: true });
 
   await page.getByRole('button', { name: 'Revert' }).click();
   expect(await value(element)).toMatchObject({ seed: 7 });
+  expect(await element.evaluate((node: ImagePuzzleConfiguratorElement) => node.checkValidity())).toBe(true);
 });
 
 for (const colorScheme of ['light', 'dark'] as const) {

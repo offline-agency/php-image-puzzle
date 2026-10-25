@@ -71,7 +71,8 @@ describe('createConfigurator', () => {
     expect(query(shadow, HTMLInputElement, 'input[name=crop-width]').value).toBe('30');
 
     type(query(shadow, HTMLInputElement, 'input[name=count]'), '7');
-    expect(changes.at(-1)).toEqual({ value: { ...saved, custom: { count: 7, axis: 'vertical' } }, valid: true, error: null });
+    const edited = { ...saved, custom: { count: 7, axis: 'vertical' } };
+    expect(changes.at(-1)).toEqual({ value: edited, draft: edited, valid: true, error: null });
   });
 
   it('prefills custom parameters from the previous preset and validates their ranges', () => {
@@ -81,12 +82,18 @@ describe('createConfigurator', () => {
 
     const rows = query(shadow, HTMLInputElement, 'input[name=rows]');
     type(rows, '1');
-    expect(changes.at(-1)).toEqual({ value: null, valid: false, error: 'Rows must be a whole number from 2 to 16.' });
+    expect(changes.at(-1)).toEqual({
+      value: null,
+      draft: { format: FORMAT, version: 1, kind: 'sliding', preset: 'custom', custom: { rows: 1, cols: 4, scrambleMoves: 200 }, seed: 1 },
+      valid: false,
+      error: 'Rows must be a whole number from 2 to 16.',
+    });
     expect(rows.getAttribute('aria-invalid')).toBe('true');
     expect(query(shadow, HTMLElement, '.error').textContent).toBe('Rows must be a whole number from 2 to 16.');
 
     type(rows, '');
     expect(configurator.error).toBe('Rows is required.');
+    expect(configurator.draft).toMatchObject({ custom: { rows: null } });
     type(rows, '5');
     expect(configurator.valid).toBe(true);
     expect(rows.hasAttribute('aria-invalid')).toBe(false);
@@ -225,5 +232,26 @@ describe('<image-puzzle-configurator>', () => {
     document.body.append(element);
     defineImagePuzzleConfigurator('image-puzzle-configurator-late');
     expect((late as ImagePuzzleConfiguratorElement).value).toMatchObject({ kind: 'swap', preset: 'hard' });
+  });
+
+  it('follows a theme class on <html> and stops when it leaves the document', async () => {
+    const element = document.createElement(CONFIGURATOR_TAG);
+    element.setAttribute('theme-class', 'dark');
+    document.body.append(element);
+    expect(element.getAttribute('data-theme')).toBe('light');
+
+    document.documentElement.classList.add('dark');
+    await Promise.resolve();
+    expect(element.getAttribute('data-theme')).toBe('dark');
+
+    element.remove();
+    await Promise.resolve();
+    expect(element.hasAttribute('data-theme')).toBe(false);
+    document.documentElement.classList.remove('dark');
+    await Promise.resolve();
+    expect(element.hasAttribute('data-theme')).toBe(false);
+
+    document.body.append(element);
+    expect(element.getAttribute('data-theme')).toBe('light');
   });
 });
