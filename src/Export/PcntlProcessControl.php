@@ -16,7 +16,9 @@ final class PcntlProcessControl implements ProcessControl
 {
     public function isAvailable(): bool
     {
-        return PHP_SAPI === 'cli' && function_exists('pcntl_fork') && function_exists('pcntl_waitpid');
+        // posix_kill is required to terminate started workers when a later
+        // fork fails; without it parallel export falls back to sequential.
+        return PHP_SAPI === 'cli' && function_exists('pcntl_fork') && function_exists('pcntl_waitpid') && function_exists('posix_kill');
     }
 
     public function fork(): int

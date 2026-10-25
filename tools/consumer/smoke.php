@@ -33,4 +33,4 @@ if ($pieces !== 12) {
     fwrite(STDERR, "expected 12 pieces, got {$pieces}\n");
     exit(1);
 }
-echo "consumer smoke test passed (PHP " . PHP_VERSION . ", {$pieces} pieces)\n";
+echo 'consumer smoke test passed (PHP ' . PHP_VERSION . ", {$pieces} pieces)\n";

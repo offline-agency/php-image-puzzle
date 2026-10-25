@@ -20,9 +20,13 @@ use ImagePuzzle\Tests\Support\Workspace;
  * REQUIRE_PCNTL=1, where a missing pcntl extension is a failure, not a skip.
  */
 
-$pcntl = function_exists('pcntl_fork') && PHP_SAPI === 'cli';
-if (!$pcntl && getenv('REQUIRE_PCNTL') === '1') {
-    throw new RuntimeException('REQUIRE_PCNTL=1 but ext-pcntl is not available in the CLI.');
+function pcntlAvailable(): bool
+{
+    return function_exists('pcntl_fork') && function_exists('posix_kill') && PHP_SAPI === 'cli';
+}
+
+if (!pcntlAvailable() && getenv('REQUIRE_PCNTL') === '1') {
+    throw new RuntimeException('REQUIRE_PCNTL=1 but ext-pcntl/ext-posix are not available in the CLI.');
 }
 
 final class ForkFailsAfter implements ProcessControl
@@ -136,7 +140,7 @@ test('a throwing callback never returns into the caller in a child (PID sentinel
     expect(nonEmptyLines($sentinel))->toBe([(string) Workspace::$parent]);
     expect(file_exists(Workspace::$dir . '/out/manifest.json'))->toBeFalse();
     expect(noChildrenLeft())->toBeTrue();
-})->group('process');
+})->group('process')->skip(!pcntlAvailable(), 'ext-pcntl is not available (the sequential fallback is covered in tests/Export).');
 
 test('a worker killed by a signal fails the export and publishes no manifest', function (): void {
     $parent = Workspace::$parent;
@@ -148,7 +152,7 @@ test('a worker killed by a signal fails the export and publishes no manifest', f
     expect(file_exists(Workspace::$dir . '/out/manifest.json'))->toBeFalse();
     expect(Fixtures::glob(Workspace::$dir . '/out/*'))->toBe([]);
     expect(noChildrenLeft())->toBeTrue();
-})->group('process');
+})->group('process')->skip(!pcntlAvailable(), 'ext-pcntl is not available (the sequential fallback is covered in tests/Export).');
 
 test('a nonzero worker exit without envelope fails the export', function (): void {
     $parent = Workspace::$parent;
@@ -158,7 +162,7 @@ test('a nonzero worker exit without envelope fails the export', function (): voi
         }
     }), 2))->toThrow(ExportFailedException::class, 'exit code 3');
     expect(file_exists(Workspace::$dir . '/out/manifest.json'))->toBeFalse();
-})->group('process');
+})->group('process')->skip(!pcntlAvailable(), 'ext-pcntl is not available (the sequential fallback is covered in tests/Export).');
 
 test('invalid worker envelopes are failures', function (Closure $filter, string $message): void {
     $exporter = new Exporter(null, $filter);
@@ -195,7 +199,7 @@ test('invalid worker envelopes are failures', function (Closure $filter, string 
 
         return json_encode($e, JSON_THROW_ON_ERROR);
     }, 'malformed result envelope'],
-])->group('process');
+])->group('process')->skip(!pcntlAvailable(), 'ext-pcntl is not available (the sequential fallback is covered in tests/Export).');
 
 test('fork failure after one worker started terminates and reaps it with no orphan writes', function (): void {
     $out = Workspace::$dir . '/out';
@@ -208,7 +212,7 @@ test('fork failure after one worker started terminates and reaps it with no orph
     $after = ManifestAssertions::snapshot($out);
     usleep(500_000);
     expect(ManifestAssertions::snapshot($out))->toBe($after)->toBe([]);
-})->group('process');
+})->group('process')->skip(!pcntlAvailable(), 'ext-pcntl is not available (the sequential fallback is covered in tests/Export).');
 
 test('parallel output is byte-identical to sequential output', function (string $style): void {
     $edge = $style === 'jigsaw' ? new JigsawStyle() : null;
@@ -218,7 +222,7 @@ test('parallel output is byte-identical to sequential output', function (string 
     expect($par->getManifest())->toBe($seq->getManifest());
     expect(ManifestAssertions::snapshot(Workspace::$dir . '/par'))->toBe(ManifestAssertions::snapshot(Workspace::$dir . '/seq'));
     ManifestAssertions::assertConsistent($par->getManifestPath());
-})->with(['rect', 'jigsaw'])->group('process');
+})->with(['rect', 'jigsaw'])->group('process')->skip(!pcntlAvailable(), 'ext-pcntl is not available (the sequential fallback is covered in tests/Export).');
 
 test('parallel export honours overwrite=false exactly like sequential export', function (): void {
     $out = Workspace::$dir . '/out';
@@ -237,7 +241,7 @@ test('parallel export honours overwrite=false exactly like sequential export', f
     file_put_contents($piece, 'garbage');
     expect(fn () => (new Exporter())->exportParallel(Workspace::$source, $out, 2, 2, new ExportOptions(overwrite: false), 2))
         ->toThrow(ExportFailedException::class, 'Existing output cannot be used');
-})->group('process');
+})->group('process')->skip(!pcntlAvailable(), 'ext-pcntl is not available (the sequential fallback is covered in tests/Export).');
 
 test('repeated parallel jobs leave no zombies and no steadily growing memory', function (): void {
     $usage = [];
@@ -249,7 +253,7 @@ test('repeated parallel jobs leave no zombies and no steadily growing memory', f
     }
     // After warm-up, memory must not grow by more than 256 KiB across jobs.
     expect($usage[5] - $usage[1])->toBeLessThan(256 * 1024);
-})->group('process');
+})->group('process')->skip(!pcntlAvailable(), 'ext-pcntl is not available (the sequential fallback is covered in tests/Export).');
 
 test('worker count is capped by the aggregate memory budget', function (): void {
     $limits = new \ImagePuzzle\ResourceLimits(workerMemoryBudget: 96 * 72 * 5 * 2 * 2);
@@ -259,7 +263,7 @@ test('worker count is capped by the aggregate memory budget', function (): void 
     $result = (new Exporter())->exportParallel(Workspace::$source, Workspace::$dir . '/out', 2, 2, new ExportOptions(), 4, null, null, null, new \ImagePuzzle\ResourceLimits(workerMemoryBudget: 10));
     ManifestAssertions::assertConsistent($result->getManifestPath());
     expect($result->getWorkerMemory())->toBe([]);
-})->group('process');
+})->group('process')->skip(!pcntlAvailable(), 'ext-pcntl is not available (the sequential fallback is covered in tests/Export).');
 
 test('each worker reports its own memory usage', function (): void {
     $result = (new Exporter())->exportParallel(Workspace::$source, Workspace::$dir . '/out', 3, 4, new ExportOptions(), 3);
@@ -268,7 +272,7 @@ test('each worker reports its own memory usage', function (): void {
         expect($usage['peakMemory'])->toBeGreaterThan(0);
         expect($usage['maxRss'])->toBeGreaterThan(0);
     }
-})->group('process');
+})->group('process')->skip(!pcntlAvailable(), 'ext-pcntl is not available (the sequential fallback is covered in tests/Export).');
 
 test('callbacks: before hooks run in workers, after hooks in the parent', function (): void {
     $log = Workspace::$dir . '/hooks.log';
@@ -283,4 +287,4 @@ test('callbacks: before hooks run in workers, after hooks in the parent', functi
     ), 2);
     $lines = array_count_values(nonEmptyLines($log));
     expect($lines)->toBe(['before:child' => 4, 'after:parent' => 4]);
-})->group('process');
+})->group('process')->skip(!pcntlAvailable(), 'ext-pcntl is not available (the sequential fallback is covered in tests/Export).');

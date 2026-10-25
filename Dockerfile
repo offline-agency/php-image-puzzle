@@ -24,6 +24,8 @@ ARG UID=1000
 ARG GID=1000
 RUN groupadd --gid "${GID}" app && useradd --uid "${UID}" --gid "${GID}" --create-home app
 ENV COMPOSER_HOME=/home/app/.composer
+# Named vendor volumes inherit this ownership on first use.
+RUN mkdir -p /app/vendor && chown -R app:app /app
 WORKDIR /app
 USER app
 
