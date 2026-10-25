@@ -37,8 +37,11 @@ final class ShapeBuilder
     public function shape(LayoutCell $cell): PieceShape
     {
         $polygon = [];
+        $border = false;
         foreach ($cell->edges as [$key, $reversed]) {
-            $points = $this->edgeWorldPoints($this->layout->edge($key));
+            $edge = $this->layout->edge($key);
+            $border = $border || $edge->isExternal();
+            $points = $this->edgeWorldPoints($edge);
             if ($reversed) {
                 $points = array_reverse($points);
             }
@@ -56,6 +59,7 @@ final class ShapeBuilder
             $cell->logical,
             PieceShape::renderedBounds($polygon, $this->layout->width, $this->layout->height),
             $polygon,
+            $border,
         );
     }
 

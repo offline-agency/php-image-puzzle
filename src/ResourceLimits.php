@@ -81,6 +81,19 @@ final readonly class ResourceLimits
     }
 
     /**
+     * Check the actual number of cells of a layout (non-rectangular
+     * topologies have more cells than rows x cols).
+     */
+    public function assertCellCount(int $cells): void
+    {
+        if ($cells > $this->maxPieces) {
+            throw new ResourceLimitExceededException(
+                "The board has {$cells} pieces, exceeding the configured limit of {$this->maxPieces} pieces."
+            );
+        }
+    }
+
+    /**
      * Number of workers that fit the worker cap, the piece count and the
      * aggregate memory budget (each worker decodes the full source).
      */

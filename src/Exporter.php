@@ -121,12 +121,12 @@ final class Exporter implements ExporterInterface
         $info = $loader->inspect($sourcePath);
         $width = $info->width;
         $height = $info->height;
-        $capacity = $limits->workerCapacity($workers, $rows * $cols, $width, $height);
+        $layout = $generator->layout($width, $height, $rows, $cols);
+        $capacity = $limits->workerCapacity($workers, count($layout->cells), $width, $height);
         if ($capacity < 2 || !$this->process->isAvailable() || $info->orientationSwapsAxes()) {
             return $this->export($generator->generateFromFile($sourcePath, $rows, $cols), $directory, $options, $baseDirectory);
         }
 
-        $layout = $generator->layout($width, $height, $rows, $cols);
         $builder = new ShapeBuilder($layout, $generator->getEdgeStyle() instanceof Geometry\BoundaryProfileProvider ? $generator->getEdgeStyle() : new EdgeStyle\NoEdgeStyle(), $generator->getGeometryOptions()->seed);
         $shapes = [];
         foreach ($layout->cells as $cell) {

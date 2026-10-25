@@ -97,6 +97,7 @@ final class Piece
             $this->totalCols,
             $this->shape->rendered,
             $this->shape->id,
+            $this->shape->border,
         );
     }
 

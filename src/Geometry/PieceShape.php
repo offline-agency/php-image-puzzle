@@ -16,6 +16,7 @@ final readonly class PieceShape
 {
     /**
      * @param list<array{0: float, 1: float}> $polygon clockwise outline, not repeating the first point
+     * @param bool $border whether the cell touches the board perimeter
      */
     public function __construct(
         public string $id,
@@ -24,6 +25,7 @@ final readonly class PieceShape
         public Bounds $logical,
         public Bounds $rendered,
         public array $polygon,
+        public bool $border = false,
     ) {
     }
 

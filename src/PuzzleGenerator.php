@@ -24,6 +24,7 @@ use ImagePuzzle\Geometry\Rasterizer;
 use ImagePuzzle\Geometry\ShapeBuilder;
 use ImagePuzzle\Geometry\Topology\Layout;
 use ImagePuzzle\Geometry\Topology\LayoutCell;
+use ImagePuzzle\Geometry\Topology\RectangularTopology;
 use ImagePuzzle\SplitStrategy\DimensionSplitStrategy;
 
 /**
@@ -111,9 +112,13 @@ final class PuzzleGenerator
     {
         $this->preflight($rows, $cols);
         $this->limits->assertDimensions($width, $height, 'Source image');
-        Grid::assertGrid($width, $height, $rows, $cols);
+        if ($this->geometry->topology instanceof RectangularTopology) {
+            Grid::assertGrid($width, $height, $rows, $cols);
+        }
+        $layout = $this->geometry->topology->layout($width, $height, $rows, $cols, $this->splitStrategy);
+        $this->limits->assertCellCount(count($layout->cells));
 
-        return $this->geometry->topology->layout($width, $height, $rows, $cols, $this->splitStrategy);
+        return $layout;
     }
 
     /**
@@ -128,12 +133,19 @@ final class PuzzleGenerator
     {
         $this->preflight($rows, $cols);
         $layout = $this->layout(imagesx($image), imagesy($image), $rows, $cols);
-        $indices = self::validateIndices($pieceIndices, $rows, $cols);
+        // Non-rectangular rows hold a varying number of cells: bounds are
+        // checked against the layout itself.
+        $indices = self::validateIndices($pieceIndices, $rows, $layout->topology === 'rect' ? $cols : PHP_INT_MAX);
+        $cells = [];
+        foreach ($indices as [$row, $col]) {
+            $cells[] = $layout->cells[LayoutCell::idFor($row, $col)]
+                ?? throw new InvalidArgumentException("Invalid piece index: row={$row}, col={$col} is not a cell of this {$layout->topology} board.");
+        }
         $builder = $this->shapeBuilder($layout);
         $renderer = $this->renderer();
         $pieces = [];
-        foreach ($indices as [$row, $col]) {
-            $pieces[] = $this->piece($layout->cellAt($row, $col), $builder, $image, $layout, $rows, $cols, $renderer);
+        foreach ($cells as $cell) {
+            $pieces[] = $this->piece($cell, $builder, $image, $layout, $rows, $cols, $renderer);
         }
 
         return $pieces;
@@ -216,12 +228,9 @@ final class PuzzleGenerator
         $builder = $this->shapeBuilder($layout);
         $renderer = $this->renderer();
 
-        $pieces = [];
-        for ($row = 0; $row < $rows; $row++) {
-            $pieces[$row] = [];
-            for ($col = 0; $col < $cols; $col++) {
-                $pieces[$row][] = $this->piece($layout->cellAt($row, $col), $builder, $image, $layout, $rows, $cols, $renderer);
-            }
+        $pieces = array_fill(0, $rows, []);
+        foreach ($layout->cells as $cell) {
+            $pieces[$cell->row][$cell->col] = $this->piece($cell, $builder, $image, $layout, $rows, $cols, $renderer);
         }
 
         return new Puzzle($rows, $cols, $width, $height, $pieces, $sourceBasename, $this->exporter, [

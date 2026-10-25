@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace ImagePuzzle;
 
-use ImagePuzzle\ExporterInterface;
-
 /**
  * Generated puzzle: grid metadata plus lazily rendered pieces.
  */
@@ -49,7 +47,8 @@ final class Puzzle
 
     public function getPiece(int $row, int $col): Piece
     {
-        if ($row < 0 || $row >= $this->rows || $col < 0 || $col >= $this->cols || !isset($this->pieces[$row][$col])) {
+        // Rows of hexagonal and triangular boards hold different numbers of cells.
+        if (!isset($this->pieces[$row][$col])) {
             throw new Exception\InvalidArgumentException(
                 "Invalid piece index: row={$row}, col={$col} (grid is {$this->rows}x{$this->cols})"
             );

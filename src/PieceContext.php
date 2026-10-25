@@ -28,6 +28,7 @@ final class PieceContext
         private readonly int $totalCols,
         ?Bounds $rendered = null,
         private readonly ?string $id = null,
+        private readonly ?bool $border = null,
     ) {
         $this->rendered = $rendered ?? new Bounds($x, $y, $width, $height);
     }
@@ -92,8 +93,17 @@ final class PieceContext
         return $this->id ?? "r{$this->row}c{$this->col}";
     }
 
+    /**
+     * Whether the piece touches the board perimeter. Pieces built by the
+     * generator know this from their layout (any topology); hand-built
+     * contexts fall back to the rectangular row/column rule.
+     */
     public function isBorder(): bool
     {
+        if ($this->border !== null) {
+            return $this->border;
+        }
+
         return $this->row === 0 || $this->col === 0 || $this->row === $this->totalRows - 1 || $this->col === $this->totalCols - 1;
     }
 }
