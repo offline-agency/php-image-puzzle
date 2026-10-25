@@ -30,3 +30,7 @@
 /.prettierignore export-ignore
 /examples/player export-ignore
 /integrations export-ignore
+/docs/images export-ignore
+/AGENTS.md export-ignore
+/CONTRIBUTING.md export-ignore
+/llms.txt export-ignore

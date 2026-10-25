@@ -1,17 +1,21 @@
 {
     "name": "offline-agency/image-puzzle",
-    "description": "Generate real interlocking jigsaw and image-puzzle assets with GD: deterministic geometry, PNG/JPEG/WebP pieces, versioned JSON manifests and game definitions.",
+    "description": "Turn images into playable puzzles with GD: interlocking jigsaw pieces on rectangular, hexagonal or triangular grids, eight game modes, versioned manifests and game definitions, server-side save validation, SVG/PDF/ZIP export and a browser player.",
     "type": "library",
     "license": "MIT",
     "keywords": [
         "puzzle",
         "jigsaw",
+        "jigsaw-puzzle",
         "image",
         "gd",
         "image-processing",
         "sliding-puzzle",
-        "tiles",
+        "nonogram",
+        "tangram",
+        "memory-game",
         "game",
+        "web-component",
         "manifest"
     ],
     "homepage": "https://github.com/offline-agency/php-image-puzzle",

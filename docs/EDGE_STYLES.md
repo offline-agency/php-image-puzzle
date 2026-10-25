@@ -17,7 +17,7 @@ $generator = new PuzzleGenerator($edgeStyle);
 
 Config must contain an `edge` object with `type` (one of: `no_edge`, `line`, `jigsaw`, `arc`, `half_circle`, `sinus`, `rounded_corners`, or `composite` for per-side styles) and optional `options` (e.g. `radius` for `rounded_corners`). From a file: `EdgeStyleFactory::fromFile('config/edge-config.json')` (JSON only). To use YAML or other formats, decode in your code and pass the array to `EdgeStyleFactory::fromArray($config)`.
 
-**JSON Schemas:** [edge-config.schema.json](schemas/edge-config.schema.json), [puzzle-config.schema.json](schemas/puzzle-config.schema.json), [piece.schema.json](schemas/piece.schema.json). See [EDGE_EXAMPLES.md](EDGE_EXAMPLES.md) for one example image per edge type.
+**JSON Schemas (version 2):** [edge-config.schema.json](schemas/v2/edge-config.schema.json), [puzzle-config.schema.json](schemas/v2/puzzle-config.schema.json), [piece.schema.json](schemas/v2/piece.schema.json). See [EDGE_EXAMPLES.md](EDGE_EXAMPLES.md) for one example image per edge type.
 
 ## EdgeStyleInterface
 

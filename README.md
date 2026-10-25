@@ -2,168 +2,138 @@
 
 [![CI](https://github.com/offline-agency/php-image-puzzle/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/offline-agency/php-image-puzzle/actions/workflows/ci.yml)
 [![codecov](https://codecov.io/gh/offline-agency/php-image-puzzle/graph/badge.svg)](https://codecov.io/gh/offline-agency/php-image-puzzle)
+[![Packagist version](https://img.shields.io/packagist/v/offline-agency/image-puzzle)](https://packagist.org/packages/offline-agency/image-puzzle)
 [![Downloads](https://img.shields.io/packagist/dt/offline-agency/image-puzzle)](https://packagist.org/packages/offline-agency/image-puzzle)
 [![PHP](https://img.shields.io/badge/PHP-8.4%20%7C%208.5-777BB4?logo=php)](https://www.php.net/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-Split images into a grid of puzzle pieces, optionally apply edge styles, and export each piece as PNG (or JPEG) plus a JSON manifest with metadata (rows/cols, piece dimensions, x/y offsets, filenames).
+![PHP Image Puzzle](https://banners.beyondco.de/PHP%20Image%20Puzzle.png?theme=dark&packageManager=composer+require&packageName=offline-agency%2Fimage-puzzle&pattern=architect&style=style_1&description=Playable+puzzles+from+any+image&md=1&showWatermark=0&fontSize=100px&images=https%3A%2F%2Fwww.php.net%2Fimages%2Flogos%2Fnew-php-logo.svg)
 
-**Requirements:** PHP 8.4 or 8.5, [ext-gd](https://www.php.net/manual/en/book.image.php).
+Turn an image into a playable puzzle on the server with PHP and GD: real
+interlocking jigsaw pieces (rectangular, hexagonal or triangular), sliding,
+swap, rotation and strip puzzles, memory, tangram and nonogram. The library
+writes the image assets and a versioned, reproducible game definition; one
+shared rules engine plays it in the browser (plain JavaScript, Web Component,
+React, Vue, Livewire or Filament) and validates saved games on the server.
 
-![Php Image Puzzle](https://banners.beyondco.de/PHP%20Image%20Puzzle.png?theme=dark&packageManager=composer+require&packageName=offline-agency%2Fphp-image-puzzle&pattern=architect&style=style_1&description=Create+puzzle+from+an+image&md=1&showWatermark=0&fontSize=100px&images=https%3A%2F%2Fwww.php.net%2Fimages%2Flogos%2Fnew-php-logo.svg)
+![Source, real pieces, exploded and reassembled](docs/images/showcase/overview.png)
 
+**Requirements:** PHP 8.4 or 8.5 with ext-gd. Optional: ext-pcntl (parallel
+work in the CLI), ext-zip (offline bundles), ext-exif (EXIF orientation).
 
-## Installation
+## Install
 
 ```bash
 composer require offline-agency/image-puzzle
 ```
 
-
 ## Quickstart
 
-**Recommended (three steps):**
+Build a playable jigsaw from a photo:
 
+<!-- snippet -->
 ```php
-<?php
+use ImagePuzzle\Game\DefinitionBuilder;
+use ImagePuzzle\Game\GameKind;
 
-require __DIR__ . '/vendor/autoload.php';
+$result = (new DefinitionBuilder())->build('photo.jpg', 'public/puzzles/photo', GameKind::Jigsaw, 'easy', seed: 42);
 
-use ImagePuzzle\PuzzleGenerator;
-use ImagePuzzle\EdgeStyle\RoundedCornersStyle;
-
-$generator = new PuzzleGenerator(new RoundedCornersStyle(4));
-$puzzle = $generator->generateFromFile('photo.jpg', 4, 6);
-$result = $puzzle->export('/path/to/output_dir');
-
-echo "Exported " . count($result->getFiles()) . " files.\n";
-echo "Manifest: " . $result->getManifestPath() . "\n";
+echo $result->definitionPath(), "\n"; // public/puzzles/photo/definition.json
 ```
 
-**One-shot (single call):**
+Or from the command line:
 
-```php
-$result = PuzzleGenerator::generateAndExport('photo.jpg', '/path/to/output_dir', 4, 6, new RoundedCornersStyle(4));
+<!-- snippet -->
+```bash
+vendor/bin/image-puzzle generate photo.jpg public/puzzles/swap --kind=swap --preset=medium
+vendor/bin/image-puzzle bundle public/puzzles/swap puzzle.zip   # plays offline, also from file://
 ```
 
-**Parallel export** (when `ext-pcntl` is loaded and PHP is CLI) for large grids:
+Play it in a page. The player script ships with the Composer package, so no
+npm build is needed:
 
-```php
-$exporter = new \ImagePuzzle\Exporter();
-$result = $exporter->exportParallel('photo.jpg', '/path/to/output_dir', 4, 6, new \ImagePuzzle\ExportOptions(), 4, new RoundedCornersStyle(4));
+```bash
+cp vendor/offline-agency/image-puzzle/resources/dist/image-puzzle-player.iife.js public/
 ```
 
-## Export and manifest
-
-Each piece is saved as an image file (PNG by default). A `manifest.json` is written in the same directory with:
-
-- `source` – basename of the source image
-- `rows`, `cols` – grid size
-- `sourceWidth`, `sourceHeight` – original dimensions
-- `pieces` – array of objects: `row`, `col`, `x`, `y`, `width`, `height`, `filename`
-
-Example manifest snippet:
-
-```json
-{
-    "source": "photo.jpg",
-    "rows": 4,
-    "cols": 6,
-    "sourceWidth": 1200,
-    "sourceHeight": 800,
-    "pieces": [
-        {
-            "row": 0,
-            "col": 0,
-            "x": 0,
-            "y": 0,
-            "width": 200,
-            "height": 200,
-            "filename": "piece_0_0.png"
-        }
-    ]
-}
+```html
+<script src="/image-puzzle-player.iife.js"></script>
+<image-puzzle-player src="/puzzles/photo/definition.json" persist></image-puzzle-player>
 ```
 
-## Splitting rule
+Pieces can be dragged, tapped or moved with the keyboard; progress is saved in
+the browser with `persist`. See the [tutorial](docs/TUTORIAL.md) for the whole
+flow, including server-side validation of saved games.
 
-When the image size is not evenly divisible by rows/cols, **remainder pixels are assigned to the last row and last column**. For example, a 100×50 image with 3 columns gives column widths 33, 33, 34; with 2 rows gives row heights 25, 25.
+## Game modes
+
+| Mode | Kind | Generated from the image |
+| --- | --- | --- |
+| Jigsaw | `jigsaw` | Interlocking pieces with shared, complementary edges; rectangular, hexagonal or triangular grids |
+| Sliding | `sliding` | Classic 15-puzzle style board with one gap, always solvable |
+| Swap | `swap` | Tiles swapped two at a time |
+| Rotation | `rotation` | Tiles rotated in place |
+| Strips | `strips` | Vertical strips reordered |
+| Memory | `memory` | Pairs of picture cards, optionally with text labels |
+| Tangram | `tangram` | The seven tangram pieces cut from a square crop, with known-solvable targets |
+| Nonogram | `nonogram` | Clues computed from the image pixels, with a bounded uniqueness check |
+
+Each mode has versioned `easy`, `medium` and `hard` presets plus validated
+custom parameters. Rules, actions and state are specified in
+[docs/GAME_MODES.md](docs/GAME_MODES.md).
+
+## Packages in this repository
+
+| Package | Location | Install |
+| --- | --- | --- |
+| `offline-agency/image-puzzle` (PHP core and CLI) | `/` | Packagist |
+| `offline-agency/image-puzzle-livewire` | `integrations/livewire` | Not on Packagist yet: [install from the repository](docs/LIVEWIRE.md#distribution) |
+| `offline-agency/image-puzzle-filament` | `integrations/filament` | Not on Packagist yet: [install from the repository](docs/FILAMENT.md) |
+| `@offline-agency/image-puzzle-engine`, `-player`, `-react`, `-vue` | `packages/*` | Not on npm yet; the player bundle ships in the PHP package (`resources/dist`) |
+
+Publication state is tracked in the [release runbook](docs/release/RUNBOOK.md).
 
 ## Documentation
 
-- [docs/USAGE.md](docs/USAGE.md) – Step-by-step usage
-- [docs/EXPORT.md](docs/EXPORT.md) – Image formats, piece images (WebP, resolution sets, atlases), SVG, printable PDF and offline ZIP bundles
-- [docs/CLI.md](docs/CLI.md) – The `image-puzzle` command: generate, validate, inspect, export and bundle puzzles
-- [docs/BATCH.md](docs/BATCH.md) – Batch builds (progress, cancellation, resume, concurrency), the asset cache, publishing to filesystems or S3-compatible storage, and the Laravel queue job
-- [docs/EDGE_STYLES.md](docs/EDGE_STYLES.md) – Edge styles and config-driven style (JSON schema, `EdgeStyleFactory`)
-- [docs/EDGE_EXAMPLES.md](docs/EDGE_EXAMPLES.md) – Example image for every edge type
-- [docs/SPLIT_STRATEGY.md](docs/SPLIT_STRATEGY.md) – Customizing grid split strategy
-- [docs/PLAYER_API.md](docs/PLAYER_API.md) – Browser engine, player, `<image-puzzle-player>` and `<image-puzzle-configurator>`
-- [docs/LIVEWIRE.md](docs/LIVEWIRE.md) – Livewire 4 player component
-- [docs/FILAMENT.md](docs/FILAMENT.md) – Filament 5 widget, configuration field and authoring flow
-- [packages/react](packages/react/README.md) and [packages/vue](packages/vue/README.md) – React 19 and Vue 3 components on the shared player
+| Guide | Covers |
+| --- | --- |
+| [TUTORIAL.md](docs/TUTORIAL.md) | From an uploaded photo to a playable, saved puzzle |
+| [GAME_MODES.md](docs/GAME_MODES.md) | Modes, presets, definitions, state documents, versions and legal actions |
+| [CLI.md](docs/CLI.md) | Every `image-puzzle` command, option and exit code |
+| [EXPORT.md](docs/EXPORT.md) | Image formats, resolution sets and atlases, SVG, printable PDF, ZIP bundles, manifest |
+| [BATCH.md](docs/BATCH.md) | Batch builds, the asset cache, publishing to filesystems or S3-compatible storage, queues |
+| [PLAYER_API.md](docs/PLAYER_API.md) | Engine, player, Web Component, configurator, React and Vue, styling and events |
+| [LIVEWIRE.md](docs/LIVEWIRE.md) and [FILAMENT.md](docs/FILAMENT.md) | Laravel integrations |
+| [CODEIGNITER.md](docs/CODEIGNITER.md) | A CodeIgniter 4 recipe with a tested example application |
+| [OPERATIONS.md](docs/OPERATIONS.md) | Limits, errors, path trust, memory, worker callbacks and file ownership |
+| [USAGE.md](docs/USAGE.md), [EDGE_STYLES.md](docs/EDGE_STYLES.md), [SPLIT_STRATEGY.md](docs/SPLIT_STRATEGY.md) | Splitting images into pieces with a manifest (the `PuzzleGenerator` API) |
+| [MIGRATION.md](docs/MIGRATION.md) | Upgrading from 1.x |
+| [WHY.md](docs/WHY.md) | When this library fits, compared with plain GD cropping and browser-only puzzles |
+| [API.md](docs/API.md) | Compact API and recipe reference |
+| [EXAMPLES.md](docs/EXAMPLES.md) | Every runnable example (PHP, JavaScript, Web Component, React, Vue, Laravel, CodeIgniter) and the test that runs it |
 
-JSON schemas for config and manifest: [docs/schemas/](docs/schemas/) (`edge-config.schema.json`, `puzzle-config.schema.json`, `piece.schema.json`, `manifest.schema.json`). Config files are JSON-only; to use YAML or other formats, decode in your code (e.g. `yaml_parse_file()` if ext-yaml is available) and pass the resulting array to `EdgeStyleFactory::fromArray($config)`.
+To show the library with your own picture, `php examples/demo/build.php
+build/demo photo.jpg` writes a static site with one puzzle per mode
+([examples/demo](examples/demo/README.md)).
 
-## Example script
+## Contributing and security
 
-```bash
-php examples/generate.php input.jpg 4 6 output_dir
-php examples/generate.php input.jpg 4 6 output_dir --config=config/edge-config.json
-```
-
-Prints the manifest path and a short summary. Use `--config=<path>` to load edge style from a JSON config file. To use YAML, decode in your code and pass the array to `EdgeStyleFactory::fromArray()`.
-
-## Command line
-
-```bash
-vendor/bin/image-puzzle generate photo.jpg public/puzzles/42 --rows=4 --cols=6 --format=webp
-vendor/bin/image-puzzle pdf public/puzzles/42 puzzle.pdf --paper=a3
-vendor/bin/image-puzzle bundle public/puzzles/42 puzzle.zip   # plays offline, also from file://
-```
-
-See [docs/CLI.md](docs/CLI.md) for every command, option and exit code.
-
-## Image formats (GD)
-
-Input: PNG, JPEG, GIF and WebP, as far as the GD build can decode them. Output: PNG, JPEG and WebP; `image-puzzle capabilities` (or `ImageEncoder::capabilities()`) shows what the current GD build can encode.
-
-## Security
-
-- When paths are user-supplied (e.g. from web input), resolve and restrict them to a base directory before calling the SDK (e.g. `realpath()` and check prefix).
-- Export only writes files inside the given output directory; `filenamePattern` and `manifestFilename` must not contain path separators.
-- Very large grids (e.g. thousands of rows/cols) can use a lot of memory; consider reasonable limits.
-
-## Troubleshooting
-
-- **"cannot read from ..."** – Ensure the file path is readable and the file is a valid image.
-- **"unsuported image type"** – GD may not support that type; check `imagetypes()` or use JPEG/PNG.
-- **GD not found** – Install ext-gd: `apt-get install php-gd`, or enable it in `php.ini`.
-
-## Extensions
-
-Custom edge styles implement `EdgeStyleInterface` (see [docs/EDGE_STYLES.md](docs/EDGE_STYLES.md)). Built-in styles include `NoEdgeStyle`, `RoundedCornersStyle`, and classic tab/socket styles (`LineStyle`, `JigsawStyle`, `ArcStyle`, `HalfCircleStyle`, `SinusStyle`). For per-side styles use `CompositeEdgeStyle`; for per-piece styles (e.g. by row/col or border vs inner) use `ResolverEdgeStyle`. You can create styles from JSON config with `EdgeStyleFactory::fromArray()` or `EdgeStyleFactory::fromFile()`. Third-party packages can provide additional styles as plugins.
-
-## Contributing
-
-Please see [CONTRIBUTING](CONTRIBUTING.md) for details.
-
-## Security
-
-If you discover any security-related issues, please email <support@offlineagency.com> instead of using the issue
-tracker.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the development setup and checks,
+and [AGENTS.md](AGENTS.md) for a condensed version aimed at coding agents.
+Report vulnerabilities privately as described in [SECURITY.md](SECURITY.md).
+Changes are listed in [CHANGELOG.md](CHANGELOG.md).
 
 ## Credits
-Inspired by the original [pear/Image_Puzzle](https://github.com/pear/Image_Puzzle) (archived). This project is a from-scratch implementation with a modern API (PHP 8.4+, Composer, edge styles, export manifest).
+
+Inspired by the archived [pear/Image_Puzzle](https://github.com/pear/Image_Puzzle);
+this is an independent implementation.
+
 - [Offline Agency](https://github.com/offline-agency)
 - [Giacomo Fabbian](https://github.com/Giacomo92)
-- [All Contributors](https://github.com/offline-agency/laravel-webex/graphs/contributors)
+- [All contributors](https://github.com/offline-agency/php-image-puzzle/graphs/contributors)
 
-## About us
-
-Offline Agency is a web design agency based in Padua, Italy. You'll find an overview of our
-projects [on our website](https://offlineagency.it/).
+Offline Agency is a web agency based in Padua, Italy: [offlineagency.it](https://offlineagency.it/).
 
 ## License
 
-The MIT License (MIT). Please see [License File](LICENSE.md) for more information.
+The MIT License (MIT). See [LICENSE](LICENSE).
