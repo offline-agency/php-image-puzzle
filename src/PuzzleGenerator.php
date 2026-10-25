@@ -5,19 +5,50 @@ declare(strict_types=1);
 namespace ImagePuzzle;
 
 use GdImage;
+use ImagePuzzle\EdgeStyle\ArcStyle;
+use ImagePuzzle\EdgeStyle\CompositeEdgeStyle;
 use ImagePuzzle\EdgeStyle\EdgeStyleInterface;
+use ImagePuzzle\EdgeStyle\HalfCircleStyle;
+use ImagePuzzle\EdgeStyle\JigsawStyle;
+use ImagePuzzle\EdgeStyle\LineStyle;
 use ImagePuzzle\EdgeStyle\NoEdgeStyle;
+use ImagePuzzle\EdgeStyle\ResolverEdgeStyle;
+use ImagePuzzle\EdgeStyle\RoundedCornersStyle;
+use ImagePuzzle\EdgeStyle\SinusStyle;
 use ImagePuzzle\Exception\InvalidArgumentException;
+use ImagePuzzle\ExporterInterface;
+use ImagePuzzle\Geometry\BoundaryProfileProvider;
+use ImagePuzzle\Geometry\Grid;
+use ImagePuzzle\Geometry\PieceRenderer;
+use ImagePuzzle\Geometry\Rasterizer;
+use ImagePuzzle\Geometry\ShapeBuilder;
+use ImagePuzzle\Geometry\Topology\Layout;
+use ImagePuzzle\Geometry\Topology\LayoutCell;
 use ImagePuzzle\SplitStrategy\DimensionSplitStrategy;
 
+/**
+ * Builds puzzles from images.
+ *
+ * Ownership: generateFromGd() keeps a reference to the supplied image and
+ * reads it whenever a piece is rendered; it never modifies or destroys it. The
+ * caller must not mutate that image while pieces are still being rendered.
+ * Images loaded by generateFromFile() are owned by the returned Puzzle.
+ */
 final class PuzzleGenerator
 {
+    private readonly ResourceLimits $limits;
+    private readonly GeometryOptions $geometry;
+
     public function __construct(
         private readonly ?EdgeStyleInterface $edgeStyle = null,
-        private readonly ?ImageLoader $imageLoader = null,
-        private readonly ?Exporter $exporter = null,
+        private readonly ?ImageLoaderInterface $imageLoader = null,
+        private readonly ?ExporterInterface $exporter = null,
         private readonly ?DimensionSplitStrategy $splitStrategy = null,
+        ?ResourceLimits $limits = null,
+        ?GeometryOptions $geometry = null,
     ) {
+        $this->limits = $limits ?? new ResourceLimits();
+        $this->geometry = $geometry ?? new GeometryOptions();
     }
 
     /**
@@ -30,91 +61,143 @@ final class PuzzleGenerator
         int $cols,
         ?EdgeStyleInterface $edgeStyle = null,
         ?ExportOptions $options = null,
+        ?ResourceLimits $limits = null,
+        ?GeometryOptions $geometry = null,
+        ?string $baseDirectory = null,
     ): ExportResult {
-        $generator = new self($edgeStyle);
+        $generator = new self($edgeStyle, new ImageLoader($limits), null, null, $limits, $geometry);
         $puzzle = $generator->generateFromFile($inputPath, $rows, $cols);
-        return $puzzle->export($outputDir, $options ?? new ExportOptions());
+
+        return $puzzle->export($outputDir, $options ?? new ExportOptions(), $baseDirectory);
+    }
+
+    public function getLimits(): ResourceLimits
+    {
+        return $this->limits;
+    }
+
+    public function getGeometryOptions(): GeometryOptions
+    {
+        return $this->geometry;
+    }
+
+    public function getEdgeStyle(): EdgeStyleInterface
+    {
+        return $this->edgeStyle ?? new NoEdgeStyle();
     }
 
     public function generateFromFile(string $path, int $rows, int $cols): Puzzle
     {
-        $this->validateGrid($rows, $cols);
-        $loader = $this->imageLoader ?? new ImageLoader();
+        $this->preflight($rows, $cols);
+        $loader = $this->imageLoader ?? new ImageLoader($this->limits);
+        $info = $loader->inspect($path);
+        Grid::assertGrid($info->orientationSwapsAxes() ? $info->height : $info->width, $info->orientationSwapsAxes() ? $info->width : $info->height, $rows, $cols);
         $image = $loader->loadFromFile($path);
-        $sourceBasename = basename($path);
-        return $this->buildPuzzle($image, $rows, $cols, $sourceBasename);
+
+        return $this->buildPuzzle($image, $rows, $cols, basename($path));
     }
 
     public function generateFromGd(GdImage $image, int $rows, int $cols): Puzzle
     {
-        $this->validateGrid($rows, $cols);
+        $this->preflight($rows, $cols);
+
         return $this->buildPuzzle($image, $rows, $cols, null);
     }
 
     /**
-     * Generate only the pieces for the given indices (for parallel export).
+     * Build the layout (cells and shared boundaries) without creating pieces.
+     */
+    public function layout(int $width, int $height, int $rows, int $cols): Layout
+    {
+        $this->preflight($rows, $cols);
+        $this->limits->assertDimensions($width, $height, 'Source image');
+        Grid::assertGrid($width, $height, $rows, $cols);
+
+        return $this->geometry->topology->layout($width, $height, $rows, $cols, $this->splitStrategy);
+    }
+
+    /**
+     * Generate only the pieces for the given [row, col] indices (used by
+     * parallel export). Indices are validated before any lookup; duplicates
+     * are rejected. Outlines are identical to a full generation.
      *
-     * @param array<int, array{0: int, 1: int}> $pieceIndices List of [row, col] pairs
+     * @param array<mixed> $pieceIndices
      * @return list<Piece>
      */
     public function generatePiecesFromGd(GdImage $image, int $rows, int $cols, array $pieceIndices): array
     {
-        $this->validateGrid($rows, $cols);
-        $width = imagesx($image);
-        $height = imagesy($image);
-        $edgeStyle = $this->edgeStyle ?? new NoEdgeStyle();
-        $pieceWidths = $this->computeDimensionSplits($width, $cols);
-        $pieceHeights = $this->computeDimensionSplits($height, $rows);
-
+        $this->preflight($rows, $cols);
+        $layout = $this->layout(imagesx($image), imagesy($image), $rows, $cols);
+        $indices = self::validateIndices($pieceIndices, $rows, $cols);
+        $builder = $this->shapeBuilder($layout);
+        $renderer = $this->renderer();
         $pieces = [];
-        $yByRow = [];
-        $xByCol = [];
-        $y = 0;
-        for ($row = 0; $row < $rows; $row++) {
-            $yByRow[$row] = $y;
-            $y += $pieceHeights[$row];
-        }
-        $x = 0;
-        for ($col = 0; $col < $cols; $col++) {
-            $xByCol[$col] = $x;
-            $x += $pieceWidths[$col];
+        foreach ($indices as [$row, $col]) {
+            $pieces[] = $this->piece($layout->cellAt($row, $col), $builder, $image, $layout, $rows, $cols, $renderer);
         }
 
-        foreach ($pieceIndices as [$row, $col]) {
-            $pieceWidth = $pieceWidths[$col];
-            $pieceHeight = $pieceHeights[$row];
-            $pieces[] = new Piece(
-                $row,
-                $col,
-                $xByCol[$col],
-                $yByRow[$row],
-                $pieceWidth,
-                $pieceHeight,
-                $image,
-                $width,
-                $height,
-                $rows,
-                $cols,
-                $edgeStyle,
-            );
-        }
         return $pieces;
     }
 
     /**
-     * Generate only the pieces for the given indices (loads image from file).
-     *
-     * @param array<int, array{0: int, 1: int}> $pieceIndices List of [row, col] pairs
+     * @param array<mixed> $pieceIndices
      * @return list<Piece>
      */
     public function generatePiecesFromFile(string $path, int $rows, int $cols, array $pieceIndices): array
     {
-        $loader = $this->imageLoader ?? new ImageLoader();
-        $image = $loader->loadFromFile($path);
-        return $this->generatePiecesFromGd($image, $rows, $cols, $pieceIndices);
+        $this->preflight($rows, $cols);
+        $loader = $this->imageLoader ?? new ImageLoader($this->limits);
+
+        return $this->generatePiecesFromGd($loader->loadFromFile($path), $rows, $cols, $pieceIndices);
     }
 
-    private function validateGrid(int $rows, int $cols): void
+    /**
+     * Stable style identifier for manifests.
+     */
+    public static function styleName(EdgeStyleInterface $style): string
+    {
+        return match (true) {
+            $style instanceof NoEdgeStyle => 'no_edge',
+            $style instanceof LineStyle => 'line',
+            $style instanceof JigsawStyle => 'jigsaw',
+            $style instanceof ArcStyle => 'arc',
+            $style instanceof HalfCircleStyle => 'half_circle',
+            $style instanceof SinusStyle => 'sinus',
+            $style instanceof RoundedCornersStyle => 'rounded_corners',
+            $style instanceof CompositeEdgeStyle => 'composite',
+            $style instanceof ResolverEdgeStyle => 'resolver',
+            default => 'custom',
+        };
+    }
+
+    /**
+     * @param array<mixed> $indices
+     * @return list<array{0: int, 1: int}>
+     */
+    public static function validateIndices(array $indices, int $rows, int $cols): array
+    {
+        $seen = [];
+        $valid = [];
+        foreach ($indices as $i => $pair) {
+            if (!is_array($pair) || !array_is_list($pair) || count($pair) !== 2 || !is_int($pair[0]) || !is_int($pair[1])) {
+                throw new InvalidArgumentException("Piece index #{$i} must be a [row, col] pair of integers.");
+            }
+            [$row, $col] = $pair;
+            if ($row < 0 || $row >= $rows || $col < 0 || $col >= $cols) {
+                throw new InvalidArgumentException("Invalid piece index: row={$row}, col={$col} (grid is {$rows}x{$cols})");
+            }
+            $key = $row . ':' . $col;
+            if (isset($seen[$key])) {
+                throw new InvalidArgumentException("Piece index row={$row}, col={$col} is requested more than once.");
+            }
+            $seen[$key] = true;
+            $valid[] = [$row, $col];
+        }
+
+        return $valid;
+    }
+
+    private function preflight(int $rows, int $cols): void
     {
         if ($rows < 1) {
             throw new InvalidArgumentException('Rows must be at least 1.');
@@ -122,74 +205,49 @@ final class PuzzleGenerator
         if ($cols < 1) {
             throw new InvalidArgumentException('Cols must be at least 1.');
         }
+        $this->limits->assertPieceCount($rows, $cols);
     }
 
     private function buildPuzzle(GdImage $image, int $rows, int $cols, ?string $sourceBasename): Puzzle
     {
         $width = imagesx($image);
         $height = imagesy($image);
-
-        $edgeStyle = $this->edgeStyle ?? new NoEdgeStyle();
-        $pieceWidths = $this->computeDimensionSplits($width, $cols);
-        $pieceHeights = $this->computeDimensionSplits($height, $rows);
+        $layout = $this->layout($width, $height, $rows, $cols);
+        $builder = $this->shapeBuilder($layout);
+        $renderer = $this->renderer();
 
         $pieces = [];
-        $y = 0;
         for ($row = 0; $row < $rows; $row++) {
-            $pieceHeight = $pieceHeights[$row];
             $pieces[$row] = [];
-            $x = 0;
             for ($col = 0; $col < $cols; $col++) {
-                $pieceWidth = $pieceWidths[$col];
-                $pieces[$row][$col] = new Piece(
-                    $row,
-                    $col,
-                    $x,
-                    $y,
-                    $pieceWidth,
-                    $pieceHeight,
-                    $image,
-                    $width,
-                    $height,
-                    $rows,
-                    $cols,
-                    $edgeStyle,
-                );
-                $x += $pieceWidth;
+                $pieces[$row][] = $this->piece($layout->cellAt($row, $col), $builder, $image, $layout, $rows, $cols, $renderer);
             }
-            $y += $pieceHeight;
         }
 
-        return new Puzzle($rows, $cols, $width, $height, $pieces, $sourceBasename, $this->exporter);
+        return new Puzzle($rows, $cols, $width, $height, $pieces, $sourceBasename, $this->exporter, [
+            'topology' => $layout->topology,
+            'style' => self::styleName($this->getEdgeStyle()),
+            'seed' => $this->geometry->seed,
+            'samples' => $this->geometry->samples,
+            'version' => GeometryOptions::VERSION,
+        ]);
     }
 
-    /**
-     * Split a dimension into segments. Uses split strategy when set; otherwise remainder to last segment.
-     * @return list<int>
-     */
-    private function computeDimensionSplits(int $total, int $count): array
+    private function shapeBuilder(Layout $layout): ShapeBuilder
     {
-        if ($this->splitStrategy !== null) {
-            $splits = $this->splitStrategy->split($total, $count);
-            if (count($splits) !== $count) {
-                throw new InvalidArgumentException(
-                    "Split strategy returned " . count($splits) . " segments, expected {$count}."
-                );
-            }
-            $sum = array_sum($splits);
-            if ($sum !== $total) {
-                throw new InvalidArgumentException(
-                    "Split strategy segments sum to {$sum}, expected {$total}."
-                );
-            }
-            return $splits;
-        }
-        $base = (int) floor($total / $count);
-        $remainder = $total % $count;
-        $splits = [];
-        for ($i = 0; $i < $count; $i++) {
-            $splits[] = $base + ($i === $count - 1 ? $remainder : 0);
-        }
-        return $splits;
+        $style = $this->getEdgeStyle();
+        $provider = $style instanceof BoundaryProfileProvider ? $style : new NoEdgeStyle();
+
+        return new ShapeBuilder($layout, $provider, $this->geometry->seed);
+    }
+
+    private function renderer(): PieceRenderer
+    {
+        return new PieceRenderer(new Rasterizer($this->geometry->samples));
+    }
+
+    private function piece(LayoutCell $cell, ShapeBuilder $builder, GdImage $image, Layout $layout, int $rows, int $cols, PieceRenderer $renderer): Piece
+    {
+        return new Piece($builder->shape($cell), $image, $layout->width, $layout->height, $rows, $cols, $this->getEdgeStyle(), $renderer);
     }
 }

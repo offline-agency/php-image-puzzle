@@ -34,7 +34,6 @@ test('loadFromFile loads valid GIF', function (): void {
     $im = imagecreate(2, 2);
     expect($im)->not->toBeFalse();
     imagegif($im, $tmp);
-    imagedestroy($im);
     try {
         $loader = new ImageLoader();
         $image = $loader->loadFromFile($tmp);
@@ -90,7 +89,7 @@ test('constructor throws GdNotAvailableException when gd not loaded', function (
 test('loadFromFile with directory path throws', function (): void {
     $loader = new ImageLoader();
     expect(fn () => $loader->loadFromFile(__DIR__ . '/fixtures'))
-        ->toThrow(UnsupportedImageTypeException::class);
+        ->toThrow(\ImagePuzzle\Exception\InvalidArgumentException::class, 'not readable');
 })->skip($skipNoGd, 'ext-gd required');
 
 test('loadFromFile with corrupt JPEG content throws', function (): void {
@@ -111,7 +110,7 @@ test('loadFromFile with file that exif_imagetype cannot determine throws Could n
     try {
         $loader = new ImageLoader();
         expect(fn () => $loader->loadFromFile($tmp))
-            ->toThrow(UnsupportedImageTypeException::class, 'Could not determine image type');
+            ->toThrow(UnsupportedImageTypeException::class, 'Unsupported image type');
     } finally {
         @unlink($tmp);
     }
@@ -127,7 +126,7 @@ test('loadFromFile with valid BMP throws Unsupported image type and uses getType
         $loader = new ImageLoader();
         expect(fn () => $loader->loadFromFile($tmp))
             ->toThrow(UnsupportedImageTypeException::class, 'Unsupported image type')
-            ->toThrow(UnsupportedImageTypeException::class, 'Only PNG, JPEG, and GIF');
+            ->toThrow(UnsupportedImageTypeException::class, 'Only PNG, JPEG, GIF and WebP');
     } finally {
         @unlink($tmp);
     }

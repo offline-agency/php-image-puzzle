@@ -196,8 +196,8 @@ test('fromArray composite returns CompositeEdgeStyle with top right bottom left'
             'type' => 'composite',
             'top' => ['type' => 'line'],
             'right' => ['type' => 'jigsaw'],
-            'bottom' => ['type' => 'jigsaw'],
-            'left' => ['type' => 'line'],
+            'bottom' => ['type' => 'line'],
+            'left' => ['type' => 'jigsaw'],
         ],
     ];
     $style = EdgeStyleFactory::fromArray($config);
@@ -217,11 +217,19 @@ test('fromArray composite with missing side uses no_edge default', function (): 
     $config = [
         'edge' => [
             'type' => 'composite',
-            'top' => ['type' => 'rounded_corners', 'options' => ['radius' => 2]],
+            'left' => ['type' => 'sinus'],
+            'right' => ['type' => 'sinus'],
         ],
     ];
     $style = EdgeStyleFactory::fromArray($config);
     expect($style)->toBeInstanceOf(CompositeEdgeStyle::class);
+});
+
+test('fromArray composite rejects contradictory and raster-only sides', function (): void {
+    expect(fn () => EdgeStyleFactory::fromArray(['edge' => ['type' => 'composite', 'top' => ['type' => 'rounded_corners', 'options' => ['radius' => 2]]]]))
+        ->toThrow(InvalidArgumentException::class);
+    expect(fn () => EdgeStyleFactory::fromArray(['edge' => ['type' => 'composite', 'top' => ['type' => 'jigsaw']]]))
+        ->toThrow(InvalidArgumentException::class, 'same profile');
 });
 
 test('fromArray composite nested composite throws', function (): void {

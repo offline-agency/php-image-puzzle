@@ -188,14 +188,23 @@ test('export with overwrite false does not overwrite existing piece files', func
 
     $piecePath = $outDir . DIRECTORY_SEPARATOR . 'piece_0_0.png';
     expect($piecePath)->toBeFile();
-    $originalContent = file_get_contents($piecePath);
-    expect($originalContent)->not->toBeFalse();
 
-    file_put_contents($piecePath, 'tampered');
+    // A valid image with the expected dimensions but different content is kept.
+    $sentinel = imagecreatetruecolor(32, 32);
+    imagefill($sentinel, 0, 0, imagecolorallocate($sentinel, 1, 2, 3));
+    imagepng($sentinel, $piecePath);
+    $sentinelBytes = file_get_contents($piecePath);
     $optionsNoOverwrite = new ExportOptions(overwrite: false);
     $result = $puzzle->export($outDir, $optionsNoOverwrite);
 
     expect($result->getFiles())->toContain($piecePath);
+    expect($result->getReusedFiles())->toBe([$piecePath]);
+    expect(file_get_contents($piecePath))->toBe($sentinelBytes);
+
+    // A file that is not a matching image is rejected before anything is written.
+    file_put_contents($piecePath, 'tampered');
+    expect(fn () => $puzzle->export($outDir, $optionsNoOverwrite))
+        ->toThrow(\ImagePuzzle\Exception\ExportFailedException::class, 'Existing output cannot be used');
     expect(file_get_contents($piecePath))->toBe('tampered');
 
     foreach ($result->getFiles() as $f) {
@@ -375,7 +384,7 @@ test('exportParallel when worker throws onPieceBeforeSave throws', function (): 
         );
         expect(false)->toBeTrue('Expected exception');
     } catch (\ImagePuzzle\Exception\ExportFailedException $e) {
-        expect($e->getMessage())->toMatch('/A worker failed during parallel export|Failed to write manifest/');
+        expect($e->getMessage())->toContain('Parallel export failed')->toContain('RuntimeException: Worker abort');
     } catch (\RuntimeException $e) {
         expect($e->getMessage())->toContain('Worker abort');
     }
@@ -457,12 +466,12 @@ test('export when onManifestBuild returns non encodable data throws ExportFailed
     $puzzle = $generator->generateFromFile(__DIR__ . '/fixtures/sample.png', 1, 1);
     $options = new ExportOptions(
         onManifestBuild: function (array $manifest): array {
-            $manifest['invalid'] = NAN;
+            $manifest['extensions'] = ['invalid' => NAN];
             return $manifest;
         },
     );
     expect(fn () => $puzzle->export($outDir, $options))
-        ->toThrow(\ImagePuzzle\Exception\ExportFailedException::class, 'Failed to write manifest');
+        ->toThrow(\ImagePuzzle\Exception\ExportFailedException::class, 'Failed to encode manifest');
     if (is_dir($outDir)) {
         foreach (glob($outDir . '/*') ?: [] as $f) {
             @unlink($f);
@@ -471,26 +480,28 @@ test('export when onManifestBuild returns non encodable data throws ExportFailed
     }
 });
 
-test('export onManifestBuild can add and modify manifest', function (): void {
+test('export onManifestBuild can extend the manifest through extensions only', function (): void {
     $outDir = getTempDir();
     $generator = new PuzzleGenerator();
     $puzzle = $generator->generateFromFile(__DIR__ . '/fixtures/sample.png', 1, 1);
     $options = new ExportOptions(
         onManifestBuild: function (array $manifest): array {
-            $manifest['customKey'] = 'customValue';
-            $manifest['pieces'][0]['customPieceKey'] = 42;
+            $manifest['extensions'] = ['acme' => ['customKey' => 'customValue', 'pieces' => ['r0c0' => 42]]];
             return $manifest;
         },
     );
     $result = $puzzle->export($outDir, $options);
     $manifest = $result->getManifest();
-    expect($manifest)->toHaveKey('customKey');
-    expect($manifest['customKey'])->toBe('customValue');
-    expect($manifest['pieces'][0])->toHaveKey('customPieceKey');
-    expect($manifest['pieces'][0]['customPieceKey'])->toBe(42);
+    expect($manifest['extensions']['acme']['customKey'])->toBe('customValue');
     $written = json_decode((string) file_get_contents($result->getManifestPath()), true);
-    expect($written['customKey'])->toBe('customValue');
-    expect($written['pieces'][0]['customPieceKey'])->toBe(42);
+    expect($written['extensions']['acme']['pieces']['r0c0'])->toBe(42);
+
+    $rejecting = new ExportOptions(onManifestBuild: function (array $manifest): array {
+        $manifest['customKey'] = 'x';
+        return $manifest;
+    });
+    expect(fn () => $puzzle->export($outDir, $rejecting))
+        ->toThrow(\ImagePuzzle\Exception\ExportFailedException::class, 'only modify the "extensions"');
     foreach ($result->getFiles() as $f) {
         @unlink($f);
     }
@@ -534,7 +545,7 @@ test('exportParallel with invalid source path throws', function (): void {
     }
 });
 
-test('exportParallel with non-image file throws ExportFailedException when getimagesize fails', function (): void {
+test('exportParallel with non-image file throws before any output', function (): void {
     $tmp = sys_get_temp_dir() . '/image-puzzle-not-image-' . uniqid() . '.png';
     $outDir = getTempDir();
     try {
@@ -542,7 +553,8 @@ test('exportParallel with non-image file throws ExportFailedException when getim
         $exporter = new \ImagePuzzle\Exporter();
         $options = new ExportOptions();
         expect(fn () => $exporter->exportParallel($tmp, $outDir, 1, 1, $options, 2))
-            ->toThrow(\ImagePuzzle\Exception\ExportFailedException::class, 'Could not get image size');
+            ->toThrow(\ImagePuzzle\Exception\UnsupportedImageTypeException::class, 'Unsupported image type');
+        expect(glob($outDir . '/*') ?: [])->toBe([]);
     } finally {
         @unlink($tmp);
         if (is_dir($outDir)) {
@@ -551,13 +563,10 @@ test('exportParallel with non-image file throws ExportFailedException when getim
     }
 })->skip(!extension_loaded('pcntl') || PHP_SAPI !== 'cli', 'pcntl and CLI required for getimagesize path');
 
-test('export with unsupported format throws ExportFailedException', function (): void {
+test('export with unsupported format is rejected when options are built', function (): void {
     $outDir = getTempDir();
-    $generator = new PuzzleGenerator();
-    $puzzle = $generator->generateFromFile(__DIR__ . '/fixtures/sample.png', 1, 1);
-    $options = new ExportOptions(format: 'gif');
-    expect(fn () => $puzzle->export($outDir, $options))
-        ->toThrow(\ImagePuzzle\Exception\ExportFailedException::class, 'Failed to write image');
+    expect(fn () => new ExportOptions(format: 'gif'))
+        ->toThrow(\ImagePuzzle\Exception\InvalidArgumentException::class, 'Unsupported export format');
     if (is_dir($outDir)) {
         foreach (glob($outDir . '/*') ?: [] as $f) {
             @unlink($f);
@@ -568,6 +577,7 @@ test('export with unsupported format throws ExportFailedException', function ():
 
 test('export with baseDirectory when output inside base succeeds', function (): void {
     $baseDir = getTempDir();
+    mkdir($baseDir); // the base directory must exist before export
     $outDir = $baseDir . '/subdir';
     $generator = new PuzzleGenerator();
     $puzzle = $generator->generateFromFile(__DIR__ . '/fixtures/sample.png', 1, 1);
@@ -611,6 +621,7 @@ test('export with baseDirectory when base directory does not exist throws', func
 
 test('exportParallel with baseDirectory when output inside base succeeds', function (): void {
     $baseDir = getTempDir();
+    mkdir($baseDir); // the base directory must exist before export
     $outDir = $baseDir . '/subdir';
     $exporter = new \ImagePuzzle\Exporter();
     $options = new ExportOptions();

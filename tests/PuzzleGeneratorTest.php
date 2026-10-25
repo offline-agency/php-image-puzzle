@@ -170,7 +170,6 @@ test('generatePiecesFromGd returns only requested pieces', function (): void {
     expect($pieces[0]->getCol())->toBe(0);
     expect($pieces[1]->getRow())->toBe(1);
     expect($pieces[1]->getCol())->toBe(1);
-    imagedestroy($image);
 });
 
 test('generatePiecesFromFile returns same piece data as full puzzle', function (): void {
@@ -202,7 +201,6 @@ test('generatePiecesFromGd with empty indices returns empty array', function ():
     $generator = new PuzzleGenerator();
     $pieces = $generator->generatePiecesFromGd($image, 2, 2, []);
     expect($pieces)->toBe([]);
-    imagedestroy($image);
 });
 
 test('generateAndExport with invalid path throws', function (): void {

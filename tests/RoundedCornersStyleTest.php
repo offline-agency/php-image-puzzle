@@ -45,7 +45,7 @@ test('radius one is valid', function (): void {
     expect(imagesy($result))->toBe(10);
 });
 
-test('apply returns same image when radius >= half of smaller dimension', function (): void {
+test('apply clamps radius >= half of smaller dimension instead of skipping', function (): void {
     $style = new RoundedCornersStyle(10);
     $width = 16;
     $height = 20;
@@ -97,11 +97,13 @@ test('mask-based corners: 8x8 piece radius 2 has transparent corner pixels', fun
         $c = imagecolorat($img, $x, $y);
         return ($c >> 24) & 0x7F;
     };
+    // Radius 2, pixel centres: only the outermost corner pixel lies outside each arc.
     expect($alphaAt($result, 0, 0))->toBe(127);
-    expect($alphaAt($result, 1, 0))->toBe(127);
-    expect($alphaAt($result, 0, 1))->toBe(127);
+    expect($alphaAt($result, 1, 0))->toBe(0);
+    expect($alphaAt($result, 0, 1))->toBe(0);
     expect($alphaAt($result, 7, 0))->toBe(127);
     expect($alphaAt($result, 0, 7))->toBe(127);
+    expect($alphaAt($result, 7, 7))->toBe(127);
 });
 
 test('clearMaskCache can be called and apply still works after', function (): void {

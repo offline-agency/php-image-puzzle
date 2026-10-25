@@ -5,11 +5,15 @@ declare(strict_types=1);
 namespace ImagePuzzle\EdgeStyle;
 
 use GdImage;
+use ImagePuzzle\Exception\InvalidArgumentException;
 use ImagePuzzle\PieceContext;
 
 /**
- * Resolves the edge style per piece using PieceContext (e.g. by row/col or border vs inner).
- * Use this when you need a different style per piece rather than a single style for the whole puzzle.
+ * Chooses a raster effect per piece (for example rounded corners only on
+ * border pieces). Boundaries stay rectangular: piece geometry is shared between
+ * neighbours and cannot be decided per piece, so a resolver that returns an
+ * interlocking profile style (JigsawStyle, ArcStyle, ...) or a composite is
+ * rejected. Use CompositeEdgeStyle or a single profile style for geometry.
  */
 final class ResolverEdgeStyle implements EdgeStyleInterface
 {
@@ -24,6 +28,13 @@ final class ResolverEdgeStyle implements EdgeStyleInterface
     public function apply(GdImage $piece, PieceContext $context): GdImage
     {
         $style = ($this->resolver)($context);
+        if ($style instanceof ProfileEdgeStyle || $style instanceof CompositeEdgeStyle) {
+            throw new InvalidArgumentException(sprintf(
+                'ResolverEdgeStyle can only resolve raster effects; %s defines shared boundary geometry.',
+                $style::class,
+            ));
+        }
+
         return $style->apply($piece, $context);
     }
 }

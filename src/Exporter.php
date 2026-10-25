@@ -4,128 +4,96 @@ declare(strict_types=1);
 
 namespace ImagePuzzle;
 
-use GdImage;
 use ImagePuzzle\EdgeStyle\EdgeStyleInterface;
-use ImagePuzzle\EdgeStyle\NoEdgeStyle;
 use ImagePuzzle\Exception\ExportFailedException;
+use ImagePuzzle\Exception\InvalidArgumentException;
+use ImagePuzzle\Export\ExportSession;
+use ImagePuzzle\Export\ImageEncoder;
+use ImagePuzzle\Export\ManifestBuilder;
+use ImagePuzzle\Export\OutputPlan;
+use ImagePuzzle\Export\PcntlProcessControl;
+use ImagePuzzle\Export\ProcessControl;
+use ImagePuzzle\Geometry\PieceShape;
+use ImagePuzzle\Geometry\ShapeBuilder;
 
-final class Exporter
+/**
+ * Writes piece images and the manifest. Sequential and parallel export share
+ * the same plan, path checks, overwrite rules, staging, verification,
+ * publication and manifest code (see {@see ExportSession}).
+ */
+final class Exporter implements ExporterInterface
 {
+    private const ENVELOPE_VERSION = 1;
+
+    private readonly ProcessControl $process;
+
+    /**
+     * @param ?\Closure(array<string, mixed>, int): string $workerEnvelopeFilter
+     *        Internal test seam: rewrites a worker's serialized result envelope.
+     */
+    public function __construct(
+        ?ProcessControl $process = null,
+        private readonly ?\Closure $workerEnvelopeFilter = null,
+    ) {
+        $this->process = $process ?? new PcntlProcessControl();
+    }
+
     public function export(Puzzle $puzzle, string $directory, ExportOptions $options, ?string $baseDirectory = null): ExportResult
     {
-        $directory = rtrim($directory, '/\\');
-        if (!is_dir($directory)) {
-            if (!@mkdir($directory, 0755, true)) {
-                throw new ExportFailedException("Failed to create directory: {$directory}");
-            }
-        }
-        if ($baseDirectory !== null) {
-            $this->assertDirectoryUnderBase($directory, $baseDirectory);
-        }
-        if (!is_writable($directory)) {
-            throw new ExportFailedException("Directory is not writable: {$directory}");
-        }
-
-        $files = [];
-        $pieceEntries = [];
-
-        $puzzleRows = $puzzle->getRows();
-        $puzzleCols = $puzzle->getCols();
+        $pieces = [];
+        $shapes = [];
         foreach ($puzzle->getPieces() as $piece) {
-            $filename = $options->resolvePieceFilename($piece->getRow(), $piece->getCol(), $puzzleRows, $puzzleCols);
-            $safeFilename = basename($filename);
-            $filepath = $directory . DIRECTORY_SEPARATOR . $safeFilename;
-
-            if (!$options->getOverwrite() && file_exists($filepath)) {
-                $files[] = $filepath;
-                $pieceEntries[] = $this->pieceToManifestEntry($piece, $safeFilename);
-                continue;
-            }
-
-            $onBefore = $options->getOnPieceBeforeSave();
-            if ($onBefore !== null) {
-                $onBefore($piece, $filepath);
-            }
-
-            $image = $piece->toGdImage();
-            try {
-                $saved = $this->saveImage($image, $filepath, $options);
-                if (!$saved) {
-                    throw new ExportFailedException("Failed to write image: {$filepath}");
+            $pieces[$piece->getId()] = $piece;
+            $shapes[] = $piece->getShape();
+        }
+        $plan = OutputPlan::create($shapes, $puzzle->getRows(), $puzzle->getCols(), $options);
+        $session = ExportSession::open($directory, $baseDirectory, $plan, $options);
+        try {
+            $before = $options->getOnPieceBeforeSave();
+            foreach ($session->pendingIds() as $id) {
+                if ($before !== null) {
+                    $before($pieces[$id], $session->destination($id));
                 }
-            } finally {
-                imagedestroy($image);
+                ImageEncoder::write($pieces[$id]->toGdImage(), $session->stagingPath($id), $options);
             }
+            $manifest = ManifestBuilder::applyHook(ManifestBuilder::build(
+                $plan,
+                $puzzle->getSourceBasename(),
+                $puzzle->getRows(),
+                $puzzle->getCols(),
+                $puzzle->getWidth(),
+                $puzzle->getHeight(),
+                $puzzle->getGeometry(),
+                $options,
+            ), $options);
+            $after = $options->getOnPieceAfterSave();
+            $result = $session->publish($manifest, static function (string $id) use ($after, $pieces, $session): void {
+                if ($after !== null) {
+                    $after($pieces[$id], $session->destination($id));
+                }
+            });
+            $session->close();
 
-            $onAfter = $options->getOnPieceAfterSave();
-            if ($onAfter !== null) {
-                $onAfter($piece, $filepath);
-            }
-
-            $files[] = $filepath;
-            $pieceEntries[] = $this->pieceToManifestEntry($piece, $safeFilename);
-        }
-
-        $manifest = [
-            'source' => $puzzle->getSourceBasename(),
-            'rows' => $puzzle->getRows(),
-            'cols' => $puzzle->getCols(),
-            'sourceWidth' => $puzzle->getWidth(),
-            'sourceHeight' => $puzzle->getHeight(),
-            'pieces' => $pieceEntries,
-        ];
-
-        $onManifestBuild = $options->getOnManifestBuild();
-        if ($onManifestBuild !== null) {
-            $manifest = $onManifestBuild($manifest);
-        }
-
-        $manifestFilename = basename($options->getManifestFilename());
-        $manifestPath = $directory . DIRECTORY_SEPARATOR . $manifestFilename;
-        $json = json_encode($manifest, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
-        if ($json === false || file_put_contents($manifestPath, $json) === false) {
-            throw new ExportFailedException("Failed to write manifest: {$manifestPath}");
-        }
-        $files[] = $manifestPath;
-
-        return new ExportResult($directory, $files, $manifestPath, $manifest);
-    }
-
-    private function assertDirectoryUnderBase(string $directory, string $baseDirectory): void
-    {
-        $base = realpath($baseDirectory);
-        if ($base === false || !is_dir($base)) {
-            throw new ExportFailedException("Base directory does not exist or is not a directory: {$baseDirectory}");
-        }
-        $resolved = realpath($directory);
-        if ($resolved === false) {
-            throw new ExportFailedException("Output directory could not be resolved: {$directory}");
-        }
-        $basePrefix = $base . DIRECTORY_SEPARATOR;
-        if ($resolved !== $base && !str_starts_with($resolved, $basePrefix)) {
-            throw new ExportFailedException("Output directory must be inside base directory: {$directory}");
+            return $result;
+        } catch (\Throwable $e) {
+            $session->abort();
+            throw $e;
         }
     }
 
     /**
-     * @return array{row: int, col: int, x: int, y: int, width: int, height: int, filename: string}
-     */
-    private function pieceToManifestEntry(Piece $piece, string $filename): array
-    {
-        return [
-            'row' => $piece->getRow(),
-            'col' => $piece->getCol(),
-            'x' => $piece->getX(),
-            'y' => $piece->getY(),
-            'width' => $piece->getWidth(),
-            'height' => $piece->getHeight(),
-            'filename' => $filename,
-        ];
-    }
-
-    /**
-     * Export puzzle pieces in parallel when ext-pcntl is loaded and PHP is CLI.
-     * Falls back to sequential export (full puzzle build + export) otherwise.
+     * Export using forked worker processes (CLI with ext-pcntl).
+     *
+     * Workers each decode the source and render a contiguous chunk of pieces
+     * into the staging directory; the parent validates every worker's exit
+     * status and result envelope before publishing. The effective worker count
+     * is bounded by ResourceLimits (worker cap, piece count and aggregate
+     * memory budget). With fewer than two effective workers, without pcntl or
+     * outside the CLI, the same export runs sequentially.
+     *
+     * onPieceBeforeSave runs inside the worker processes (their in-memory
+     * side effects are not visible to the parent); onPieceAfterSave and
+     * onManifestBuild run in the parent after publication.
      */
     public function exportParallel(
         string $sourcePath,
@@ -136,197 +104,305 @@ final class Exporter
         int $workers = 4,
         ?EdgeStyleInterface $edgeStyle = null,
         ?string $baseDirectory = null,
+        ?GeometryOptions $geometry = null,
+        ?ResourceLimits $limits = null,
     ): ExportResult {
-        $directory = rtrim($directory, '/\\');
-        if ($workers <= 1 || !extension_loaded('pcntl') || PHP_SAPI !== 'cli') {
-            $generator = new PuzzleGenerator($edgeStyle);
-            $puzzle = $generator->generateFromFile($sourcePath, $rows, $cols);
-            return $this->export($puzzle, $directory, $options, $baseDirectory);
+        if ($workers < 0) {
+            throw new InvalidArgumentException('Workers must not be negative.');
+        }
+        $limits ??= new ResourceLimits();
+        $loader = new ImageLoader($limits);
+        $generator = new PuzzleGenerator($edgeStyle, $loader, $this, null, $limits, $geometry);
+        if ($rows < 1 || $cols < 1) {
+            throw new InvalidArgumentException($rows < 1 ? 'Rows must be at least 1.' : 'Cols must be at least 1.');
+        }
+        $limits->assertPieceCount($rows, $cols);
+
+        $info = $loader->inspect($sourcePath);
+        $width = $info->width;
+        $height = $info->height;
+        $capacity = $limits->workerCapacity($workers, $rows * $cols, $width, $height);
+        if ($capacity < 2 || !$this->process->isAvailable() || $info->orientationSwapsAxes()) {
+            return $this->export($generator->generateFromFile($sourcePath, $rows, $cols), $directory, $options, $baseDirectory);
         }
 
-        $info = @getimagesize($sourcePath);
-        if ($info === false) {
-            throw new ExportFailedException("Could not get image size: {$sourcePath}");
+        $layout = $generator->layout($width, $height, $rows, $cols);
+        $builder = new ShapeBuilder($layout, $generator->getEdgeStyle() instanceof Geometry\BoundaryProfileProvider ? $generator->getEdgeStyle() : new EdgeStyle\NoEdgeStyle(), $generator->getGeometryOptions()->seed);
+        $shapes = [];
+        foreach ($layout->cells as $cell) {
+            $shapes[$cell->id] = $builder->shape($cell);
         }
-        $width = $info[0];
-        $height = $info[1];
-        $sourceBasename = basename($sourcePath);
-
-        if (!is_dir($directory)) {
-            if (!@mkdir($directory, 0755, true)) {
-                throw new ExportFailedException("Failed to create directory: {$directory}");
-            }
-        }
-        if ($baseDirectory !== null) {
-            $this->assertDirectoryUnderBase($directory, $baseDirectory);
-        }
-        if (!is_writable($directory)) {
-            throw new ExportFailedException("Directory is not writable: {$directory}");
-        }
-
-        $indices = [];
-        for ($row = 0; $row < $rows; $row++) {
-            for ($col = 0; $col < $cols; $col++) {
-                $indices[] = [$row, $col];
-            }
-        }
-        $chunks = array_chunk($indices, (int) ceil(count($indices) / $workers));
-        $edgeStyle = $edgeStyle ?? new NoEdgeStyle();
-        $tempFiles = [];
-        for ($i = 0; $i < count($chunks); $i++) {
-            $tempFiles[$i] = tempnam(sys_get_temp_dir(), 'image-puzzle-');
-        }
-
-        $pids = [];
-        for ($i = 0; $i < count($chunks); $i++) {
-            $pid = pcntl_fork();
-            if ($pid === -1) {
-                foreach ($tempFiles as $f) {
-                    @unlink($f);
+        $plan = OutputPlan::create($shapes, $rows, $cols, $options);
+        $session = ExportSession::open($directory, $baseDirectory, $plan, $options);
+        $workerDir = null;
+        try {
+            $pending = $session->pendingIds();
+            if ($pending !== []) {
+                $workerDir = $session->root() . DIRECTORY_SEPARATOR . OutputPlan::RESERVED_PREFIX . '-workers-' . bin2hex(random_bytes(8));
+                if (!@mkdir($workerDir, 0700)) {
+                    throw new ExportFailedException('Failed to create worker result directory.');
                 }
-                throw new ExportFailedException('Failed to fork worker');
+                $chunks = array_chunk($pending, (int) ceil(count($pending) / min($capacity, count($pending))));
+                $this->runWorkers($chunks, $shapes, $sourcePath, $rows, $cols, $generator, $limits, $options, $session, $workerDir);
             }
-            if ($pid === 0) {
-                $this->runExportWorker(
-                    $sourcePath,
-                    $directory,
-                    $rows,
-                    $cols,
-                    $chunks[$i],
-                    $options,
-                    $edgeStyle,
-                    $tempFiles[$i],
-                );
-                exit(0);
-            }
-            $pids[$i] = $pid;
-        }
 
-        $workerFailed = false;
-        foreach ($pids as $pid) {
-            pcntl_waitpid($pid, $status);
-            if (pcntl_wifexited($status) && pcntl_wexitstatus($status) !== 0) {
-                $workerFailed = true;
-            }
-        }
-        if ($workerFailed) {
-            foreach ($tempFiles as $f) {
-                @unlink($f);
-            }
-            throw new ExportFailedException('A worker failed during parallel export.');
-        }
+            $geometryMeta = [
+                'topology' => $layout->topology,
+                'style' => PuzzleGenerator::styleName($generator->getEdgeStyle()),
+                'seed' => $generator->getGeometryOptions()->seed,
+                'samples' => $generator->getGeometryOptions()->samples,
+                'version' => GeometryOptions::VERSION,
+            ];
+            $manifest = ManifestBuilder::applyHook(
+                ManifestBuilder::build($plan, basename($sourcePath), $rows, $cols, $width, $height, $geometryMeta, $options),
+                $options,
+            );
 
-        $pieceEntries = [];
-        $files = [];
-        foreach ($tempFiles as $tempFile) {
-            $json = file_get_contents($tempFile);
-            @unlink($tempFile);
-            if ($json !== false) {
-                $entries = json_decode($json, true);
-                if (is_array($entries)) {
-                    foreach ($entries as $entry) {
-                        $pieceEntries[] = $entry;
-                        if (isset($entry['filename'])) {
-                            $files[] = $directory . DIRECTORY_SEPARATOR . basename($entry['filename']);
-                        }
-                    }
+            $after = $options->getOnPieceAfterSave();
+            $parentPieces = null;
+            $result = $session->publish($manifest, static function (string $id) use ($after, &$parentPieces, $generator, $sourcePath, $rows, $cols, $session): void {
+                if ($after === null) {
+                    return;
                 }
+                // Decode once in the parent, after all workers have exited.
+                $parentPieces ??= self::piecesById($generator->generateFromFile($sourcePath, $rows, $cols));
+                $after($parentPieces[$id] ?? throw new ExportFailedException("Unknown piece {$id}"), $session->destination($id));
+            });
+            $session->close();
+
+            return $result;
+        } catch (\Throwable $e) {
+            $session->abort();
+            throw $e;
+        } finally {
+            if ($workerDir !== null && is_dir($workerDir)) {
+                foreach (glob($workerDir . DIRECTORY_SEPARATOR . '*') ?: [] as $file) {
+                    @unlink($file);
+                }
+                @rmdir($workerDir);
             }
         }
-        usort($pieceEntries, static fn (array $a, array $b): int => $a['row'] <=> $b['row'] ?: $a['col'] <=> $b['col']);
-
-        $manifest = [
-            'source' => $sourceBasename,
-            'rows' => $rows,
-            'cols' => $cols,
-            'sourceWidth' => $width,
-            'sourceHeight' => $height,
-            'pieces' => $pieceEntries,
-        ];
-        $onManifestBuild = $options->getOnManifestBuild();
-        if ($onManifestBuild !== null) {
-            $manifest = $onManifestBuild($manifest);
-        }
-        $manifestFilename = basename($options->getManifestFilename());
-        $manifestPath = $directory . DIRECTORY_SEPARATOR . $manifestFilename;
-        $json = json_encode($manifest, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
-        if ($json === false || file_put_contents($manifestPath, $json) === false) {
-            throw new ExportFailedException("Failed to write manifest: {$manifestPath}");
-        }
-        $files[] = $manifestPath;
-
-        return new ExportResult($directory, $files, $manifestPath, $manifest);
     }
 
     /**
-     * @param list<array{0: int, 1: int}> $chunk
+     * @return array<string, Piece>
      */
-    private function runExportWorker(
+    private static function piecesById(Puzzle $puzzle): array
+    {
+        $byId = [];
+        foreach ($puzzle->getPieces() as $piece) {
+            $byId[$piece->getId()] = $piece;
+        }
+
+        return $byId;
+    }
+
+    /**
+     * @param list<list<string>> $chunks
+     * @param array<string, PieceShape> $shapes
+     */
+    private function runWorkers(
+        array $chunks,
+        array $shapes,
         string $sourcePath,
-        string $directory,
         int $rows,
         int $cols,
-        array $chunk,
+        PuzzleGenerator $generator,
+        ResourceLimits $limits,
         ExportOptions $options,
-        EdgeStyleInterface $edgeStyle,
-        string $tempFile,
+        ExportSession $session,
+        string $workerDir,
     ): void {
-        $loader = new ImageLoader();
-        $image = $loader->loadFromFile($sourcePath);
-        try {
-            $generator = new PuzzleGenerator($edgeStyle, $loader);
-            $pieces = $generator->generatePiecesFromGd($image, $rows, $cols, $chunk);
-            $entries = [];
-            foreach ($pieces as $piece) {
-                $filename = $options->resolvePieceFilename($piece->getRow(), $piece->getCol(), $rows, $cols);
-                $safeFilename = basename($filename);
-                $filepath = $directory . DIRECTORY_SEPARATOR . $safeFilename;
-
-                $onBefore = $options->getOnPieceBeforeSave();
-                if ($onBefore !== null) {
-                    $onBefore($piece, $filepath);
-                }
-
-                $pieceImage = $piece->toGdImage();
-                try {
-                    $saved = $this->saveImage($pieceImage, $filepath, $options);
-                    if (!$saved) {
-                        throw new ExportFailedException("Failed to write image: {$filepath}");
-                    }
-                } finally {
-                    imagedestroy($pieceImage);
-                }
-
-                $onAfter = $options->getOnPieceAfterSave();
-                if ($onAfter !== null) {
-                    $onAfter($piece, $filepath);
-                }
-
-                $entries[] = [
-                    'row' => $piece->getRow(),
-                    'col' => $piece->getCol(),
-                    'x' => $piece->getX(),
-                    'y' => $piece->getY(),
-                    'width' => $piece->getWidth(),
-                    'height' => $piece->getHeight(),
-                    'filename' => $safeFilename,
-                ];
+        /** @var array<int, int> $children pid => chunk index */
+        $children = [];
+        foreach ($chunks as $index => $chunk) {
+            $pid = $this->process->fork();
+            if ($pid === -1) {
+                $this->killAndReap(array_keys($children));
+                throw new ExportFailedException('Failed to fork worker ' . ($index + 1) . ' of ' . count($chunks) . '; started workers were terminated.');
             }
-            $json = json_encode($entries);
-            if ($json === false || file_put_contents($tempFile, $json) === false) {
-                throw new ExportFailedException("Failed to write worker temp file: {$tempFile}");
+            if ($pid === 0) {
+                $code = $this->runWorker($index, $chunk, $shapes, $sourcePath, $rows, $cols, $generator, $limits, $options, $session, $workerDir);
+                $this->process->terminateChild($code);
             }
-        } finally {
-            imagedestroy($image);
+            $children[$pid] = $index;
+        }
+
+        $failures = [];
+        foreach ($children as $pid => $index) {
+            $status = $this->reap($pid);
+            if ($status === null) {
+                $failures[] = "worker {$index}: waitpid failed";
+                continue;
+            }
+            $signal = $this->process->termSignal($status);
+            if ($signal !== null) {
+                $failures[] = "worker {$index}: killed by signal {$signal}";
+                continue;
+            }
+            if (!$this->process->exitedNormally($status)) {
+                $failures[] = "worker {$index}: abnormal termination";
+                continue;
+            }
+            $error = $this->validateEnvelope($workerDir, $index, $chunks[$index], $session);
+            $code = $this->process->exitCode($status);
+            if ($code !== 0) {
+                $failures[] = "worker {$index}: exit code {$code}" . ($error !== null ? " ({$error})" : '');
+            } elseif ($error !== null) {
+                $failures[] = "worker {$index}: {$error}";
+            }
+        }
+        if ($failures !== []) {
+            throw new ExportFailedException("Parallel export failed; nothing was published:\n- " . implode("\n- ", $failures));
         }
     }
 
-    private function saveImage(GdImage $image, string $path, ExportOptions $options): bool
+    /**
+     * Child entry point. Never returns into the caller's code path: every
+     * Throwable is converted into an error envelope and an exit code.
+     *
+     * @param list<string> $chunk
+     * @param array<string, PieceShape> $shapes
+     */
+    private function runWorker(
+        int $index,
+        array $chunk,
+        array $shapes,
+        string $sourcePath,
+        int $rows,
+        int $cols,
+        PuzzleGenerator $generator,
+        ResourceLimits $limits,
+        ExportOptions $options,
+        ExportSession $session,
+        string $workerDir,
+    ): int {
+        try {
+            $image = (new ImageLoader($limits))->loadFromFile($sourcePath);
+            $indices = array_map(static fn (string $id): array => [$shapes[$id]->row, $shapes[$id]->col], $chunk);
+            $before = $options->getOnPieceBeforeSave();
+            $entries = [];
+            foreach ($generator->generatePiecesFromGd($image, $rows, $cols, $indices) as $piece) {
+                $id = $piece->getId();
+                if ($before !== null) {
+                    $before($piece, $session->destination($id));
+                }
+                $path = $session->stagingPath($id);
+                ImageEncoder::write($piece->toGdImage(), $path, $options);
+                $entries[] = ['id' => $id, 'filename' => basename($path), 'bytes' => (int) filesize($path)];
+            }
+            $envelope = ['version' => self::ENVELOPE_VERSION, 'ok' => true, 'worker' => $index, 'pieces' => $entries];
+            $code = 0;
+        } catch (\Throwable $e) {
+            $envelope = ['version' => self::ENVELOPE_VERSION, 'ok' => false, 'worker' => $index, 'error' => ['class' => $e::class, 'message' => $e->getMessage()]];
+            $code = 1;
+        }
+        try {
+            $json = $this->workerEnvelopeFilter !== null
+                ? ($this->workerEnvelopeFilter)($envelope, $index)
+                : json_encode($envelope, JSON_THROW_ON_ERROR | JSON_INVALID_UTF8_SUBSTITUTE);
+            $target = $workerDir . DIRECTORY_SEPARATOR . "worker-{$index}.json";
+            $tmp = $target . '.tmp';
+            if (file_put_contents($tmp, $json) !== strlen($json) || !rename($tmp, $target)) {
+                $code = 2;
+            }
+        } catch (\Throwable) {
+            $code = 2;
+        }
+
+        return $code;
+    }
+
+    /**
+     * @param list<string> $chunk
+     */
+    private function validateEnvelope(string $workerDir, int $index, array $chunk, ExportSession $session): ?string
     {
-        return match ($options->getFormat()) {
-            ExportOptions::FORMAT_PNG => imagepng($image, $path, min(9, max(0, $options->getQuality()))),
-            ExportOptions::FORMAT_JPEG => imagejpeg($image, $path, min(100, max(0, $options->getQuality()))),
-            default => false,
-        };
+        $file = $workerDir . DIRECTORY_SEPARATOR . "worker-{$index}.json";
+        if (!is_file($file)) {
+            return 'missing result envelope';
+        }
+        $raw = (string) file_get_contents($file);
+        if ($raw === '') {
+            return 'empty result envelope';
+        }
+        try {
+            $data = json_decode($raw, true, 16, JSON_THROW_ON_ERROR);
+        } catch (\JsonException) {
+            return 'invalid JSON result envelope';
+        }
+        if (!is_array($data) || ($data['version'] ?? null) !== self::ENVELOPE_VERSION || ($data['worker'] ?? null) !== $index) {
+            return 'malformed result envelope';
+        }
+        if (($data['ok'] ?? null) !== true) {
+            $error = $data['error'] ?? null;
+            $message = is_array($error) && is_string($error['message'] ?? null) ? $error['message'] : 'unknown error';
+            $class = is_array($error) && is_string($error['class'] ?? null) ? $error['class'] : 'Error';
+
+            return "{$class}: {$message}";
+        }
+        $pieces = $data['pieces'] ?? null;
+        if (!is_array($pieces) || !array_is_list($pieces)) {
+            return 'result envelope has no piece list';
+        }
+        $seen = [];
+        foreach ($pieces as $entry) {
+            if (!is_array($entry) || !is_string($entry['id'] ?? null) || !is_int($entry['bytes'] ?? null)) {
+                return 'malformed piece entry';
+            }
+            $id = $entry['id'];
+            if (isset($seen[$id])) {
+                return "duplicate result for piece {$id}";
+            }
+            if (!in_array($id, $chunk, true)) {
+                return "unexpected piece {$id}";
+            }
+            $seen[$id] = true;
+            if (($entry['filename'] ?? null) !== basename($session->stagingPath($id))) {
+                return "wrong filename for piece {$id}";
+            }
+            try {
+                $session->verifyStaged($id);
+            } catch (ExportFailedException $e) {
+                return $e->getMessage();
+            }
+            if ((int) filesize($session->stagingPath($id)) !== $entry['bytes']) {
+                return "size mismatch for piece {$id}";
+            }
+        }
+        $missing = array_diff($chunk, array_keys($seen));
+        if ($missing !== []) {
+            return 'missing pieces ' . implode(', ', $missing);
+        }
+
+        return null;
+    }
+
+    private function reap(int $pid): ?int
+    {
+        for ($attempt = 0; $attempt < 1000; $attempt++) {
+            $result = $this->process->wait($pid);
+            if ($result['pid'] === $pid) {
+                return $result['status'];
+            }
+            if (!$result['interrupted']) {
+                return null;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @param list<int> $pids
+     */
+    private function killAndReap(array $pids): void
+    {
+        foreach ($pids as $pid) {
+            $this->process->signal($pid, defined('SIGKILL') ? SIGKILL : 9);
+        }
+        foreach ($pids as $pid) {
+            $this->reap($pid);
+        }
     }
 }

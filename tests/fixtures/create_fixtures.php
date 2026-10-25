@@ -21,7 +21,6 @@ imagealphablending($png, true);
 $red = imagecolorallocate($png, 255, 0, 0);
 imagefilledrectangle($png, 4, 4, 28, 28, $red);
 imagepng($png, $dir . '/sample.png', 9);
-imagedestroy($png);
 echo "Created sample.png (32x32 PNG with transparency)\n";
 
 // 20x20 JPEG
@@ -32,5 +31,4 @@ if ($jpg === false) {
 $blue = imagecolorallocate($jpg, 0, 0, 255);
 imagefill($jpg, 0, 0, $blue);
 imagejpeg($jpg, $dir . '/sample.jpg', 90);
-imagedestroy($jpg);
 echo "Created sample.jpg (20x20 JPEG)\n";
