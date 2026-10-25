@@ -17,6 +17,7 @@ server=""
 cleanup() {
     if [ -n "$server" ]; then
         kill "$server" 2>/dev/null || true
+        wait "$server" 2>/dev/null || true
     fi
     rm -rf "$work"
 }
