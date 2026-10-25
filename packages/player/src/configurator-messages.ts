@@ -36,7 +36,7 @@ export interface ConfiguratorMessages {
 export const configuratorEn: ConfiguratorMessages = {
   label: 'Puzzle configuration',
   kind: 'Game mode',
-  kinds: { sliding: 'Sliding', swap: 'Swap', rotation: 'Rotation', strips: 'Strips', jigsaw: 'Jigsaw' },
+  kinds: { sliding: 'Sliding', swap: 'Swap', rotation: 'Rotation', strips: 'Strips', jigsaw: 'Jigsaw', nonogram: 'Nonogram' },
   preset: 'Difficulty',
   presets: { easy: 'Easy', medium: 'Medium', hard: 'Hard', custom: 'Custom' },
   parameters: 'Custom parameters',
@@ -50,6 +50,9 @@ export const configuratorEn: ConfiguratorMessages = {
     topology: 'Piece layout',
     edge: 'Edge',
     snap: 'Snap distance (px)',
+    threshold: 'Darkness threshold (1-255, empty: automatic)',
+    invert: 'Fill the light areas',
+    requireUnique: 'Only accept a proven unique solution',
   },
   choices: {
     horizontal: 'Horizontal',
@@ -92,7 +95,7 @@ export const configuratorEn: ConfiguratorMessages = {
 export const configuratorIt: ConfiguratorMessages = {
   label: 'Configurazione del puzzle',
   kind: 'Modalità di gioco',
-  kinds: { sliding: 'Scorrevole', swap: 'Scambio', rotation: 'Rotazione', strips: 'Strisce', jigsaw: 'Jigsaw' },
+  kinds: { sliding: 'Scorrevole', swap: 'Scambio', rotation: 'Rotazione', strips: 'Strisce', jigsaw: 'Jigsaw', nonogram: 'Nonogramma' },
   preset: 'Difficoltà',
   presets: { easy: 'Facile', medium: 'Media', hard: 'Difficile', custom: 'Personalizzata' },
   parameters: 'Parametri personalizzati',
@@ -106,6 +109,9 @@ export const configuratorIt: ConfiguratorMessages = {
     topology: 'Forma dei pezzi',
     edge: 'Bordo',
     snap: 'Distanza di aggancio (px)',
+    threshold: 'Soglia di scuro (1-255, vuoto: automatica)',
+    invert: 'Riempi le zone chiare',
+    requireUnique: 'Accetta solo una soluzione unica dimostrata',
   },
   choices: {
     horizontal: 'Orizzontali',

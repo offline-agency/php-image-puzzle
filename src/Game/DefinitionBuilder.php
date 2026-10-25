@@ -80,9 +80,11 @@ final class DefinitionBuilder
                 $image = $this->reencode($outputDir, $image, $assets);
             }
             $source = SourceImage::fromFile($outputDir . '/' . $image, new ImageLoader($this->limits));
-            $definition = $kind === GameKind::Jigsaw
-                ? $this->jigsaw($outputDir, $image, $source, $preset, $custom, $seed, $assets)
-                : $this->factory->create($kind, $source, $image, $preset, $custom, $seed);
+            $definition = match ($kind) {
+                GameKind::Jigsaw => $this->jigsaw($outputDir, $image, $source, $preset, $custom, $seed, $assets),
+                GameKind::Nonogram => $this->factory->nonogram($source, (new ImageLoader($this->limits))->loadFromFile($outputDir . '/' . $image), $image, $preset, $custom, $seed),
+                default => $this->factory->create($kind, $source, $image, $preset, $custom, $seed),
+            };
             $this->writeAtomically($outputDir . '/' . self::DEFINITION_FILE, $definition->toJson() . "\n");
         } catch (\Throwable $e) {
             self::clear($outputDir, $created);

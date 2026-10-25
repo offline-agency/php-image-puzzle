@@ -22,7 +22,7 @@ function layoutOf(kind: string, tiles: readonly Tile[], board: Board): Layout {
   if (kind === 'strips' && 'order' in board) {
     return { cells: board.order, orientation };
   }
-  if ('cells' in board) {
+  if ('cells' in board && typeof board.cells !== 'string') {
     return { cells: board.cells, orientation };
   }
   throw new Error(`Board does not match mode ${kind}`);

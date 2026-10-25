@@ -47,13 +47,20 @@
       },
       "additionalProperties": false
     },
+    "nonogram": {
+      "type": "object",
+      "required": ["cells"],
+      "properties": { "cells": { "type": "string", "pattern": "^[1x.]{4,900}$", "description": "One character per cell, row-major: 1 filled, x marked empty, . unknown." } },
+      "additionalProperties": false
+    },
     "any": {
       "anyOf": [
         { "$ref": "#/$defs/sliding" },
         { "$ref": "#/$defs/swap" },
         { "$ref": "#/$defs/rotation" },
         { "$ref": "#/$defs/strips" },
-        { "$ref": "#/$defs/jigsaw" }
+        { "$ref": "#/$defs/jigsaw" },
+        { "$ref": "#/$defs/nonogram" }
       ]
     }
   }

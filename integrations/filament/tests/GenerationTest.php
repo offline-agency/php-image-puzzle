@@ -38,6 +38,22 @@ final class GenerationTest extends TestCase
         self::assertStringStartsWith($this->generations . '/puzzle/' . $puzzle->id . '/g-', $definition);
     }
 
+    public function testGeneratesANonogramFromTheCroppedPixels(): void
+    {
+        [$team] = $this->signIn();
+        $puzzle = $this->puzzleFor($team, ['kind' => 'nonogram', 'crop' => ['x' => 10, 'y' => 0, 'width' => 100, 'height' => 90]]);
+
+        app(PuzzleGeneration::class)->generate($puzzle);
+
+        $puzzle->refresh();
+        self::assertSame(PuzzleRecord::STATUS_READY, $puzzle->imagePuzzleStatus(), (string) $puzzle->imagePuzzleError());
+        $definition = json_decode((string) file_get_contents((string) $puzzle->imagePuzzleDefinitionPath()), true, 64, JSON_THROW_ON_ERROR);
+        self::assertIsArray($definition);
+        self::assertSame('nonogram', $definition['kind']);
+        self::assertSame(['rows' => 10, 'cols' => 10, 'crop' => ['x' => 5, 'y' => 0, 'width' => 90, 'height' => 90]], $definition['board']);
+        self::assertSame([], $definition['tiles']);
+    }
+
     public function testRegeneratingReplacesThePreviousGenerationOnly(): void
     {
         [$team] = $this->signIn();

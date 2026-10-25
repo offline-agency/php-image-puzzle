@@ -51,6 +51,7 @@ final class PdfExporter
 
     public function render(PuzzleDirectory $puzzle, PdfOptions $options = new PdfOptions()): string
     {
+        $outlines = $puzzle->outlines();
         if (!$puzzle->hasLocalImage()) {
             throw new InvalidArgumentException('The source image is remote; a PDF needs the image file.');
         }
@@ -60,7 +61,6 @@ final class PdfExporter
         $plan = $this->plan($puzzle, $options);
         $crop = $definition->crop;
         $jpeg = $this->image($puzzle, $plan['imageWidth'], $plan['imageHeight'], $options->jpegQuality);
-        $outlines = $puzzle->outlines();
         $pt = self::PT_PER_MM;
         [$paperW, $paperH] = [$plan['paperW'] * $pt, $plan['paperH'] * $pt];
         $margin = $options->marginMm * $pt;
@@ -150,6 +150,8 @@ final class PdfExporter
      */
     private function plan(PuzzleDirectory $puzzle, PdfOptions $options): array
     {
+        // Refuses modes without pieces (nonogram) before any work.
+        $puzzle->outlines();
         $crop = $puzzle->definition->crop;
         $aspect = $crop->height / $crop->width;
         $candidates = [];

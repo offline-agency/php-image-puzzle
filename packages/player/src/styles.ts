@@ -81,6 +81,28 @@ button:focus-visible { outline: 3px solid var(--ipp-focus); outline-offset: 2px;
 .piece.is-placed.highlight .outline { stroke: var(--ipp-correct); stroke-width: 1; }
 .piece.is-hint .outline { stroke: var(--ipp-hint); stroke-width: 3; }
 
+
+.nonogram-tools { display: flex; gap: 0.25rem; }
+.nonogram { --ipp-clue: minmax(2.5rem, auto); display: grid; grid-template-columns: var(--ipp-clue) repeat(var(--ipp-cols), minmax(0, 1fr)); width: 100%; direction: ltr; background: var(--ipp-surface); border-radius: var(--ipp-radius); padding: 0.25rem; user-select: none; -webkit-user-select: none; font-variant-numeric: tabular-nums; }
+.nonogram-row, .nonogram-body { display: contents; }
+.nonogram-corner { grid-column: 1; }
+.clue { display: flex; gap: 0.25em; font-size: clamp(0.625rem, 2.5cqi, 0.875rem); line-height: 1.2; color: var(--ipp-fg); }
+.clue-col { flex-direction: column; justify-content: flex-end; align-items: center; padding-bottom: 0.25rem; }
+.clue-row { justify-content: flex-end; align-items: center; padding-right: 0.375rem; white-space: nowrap; }
+.clue.is-done { color: var(--ipp-muted); text-decoration: line-through; }
+.nonogram-cell { aspect-ratio: 1; position: relative; }
+.cell { position: absolute; inset: 0; width: 100%; height: 100%; padding: 0; margin: 0; border: 1px solid var(--ipp-border); border-radius: 0; background: var(--ipp-bg); cursor: pointer; touch-action: manipulation; }
+.cell[data-state='filled'] { background: var(--ipp-fg); }
+.cell[data-state='crossed']::before, .cell[data-state='crossed']::after { content: ''; position: absolute; inset: 50% 20% auto; height: 2px; background: var(--ipp-muted); transform: rotate(45deg); }
+.cell[data-state='crossed']::after { transform: rotate(-45deg); }
+.cell:focus-visible { outline: 3px solid var(--ipp-focus); outline-offset: -3px; z-index: 3; }
+.cell:disabled { cursor: default; }
+.cell.is-hint { box-shadow: inset 0 0 0 3px var(--ipp-hint); animation: ipp-hint 1s ease 2; }
+.nonogram-picture { grid-column: 2 / -1; grid-row: 2 / span var(--ipp-rows); align-self: stretch; z-index: 4; background-repeat: no-repeat; pointer-events: none; }
+.nonogram-picture[hidden] { display: none; }
+.nonogram:not(.is-complete) .nonogram-picture { opacity: 0.85; }
+.nonogram[data-loading='true'] .nonogram-picture { visibility: hidden; }
+
 @keyframes ipp-hint { 50% { opacity: 0.5; } }
 @media (prefers-reduced-motion: reduce) {
   :host(:not([data-motion='full'])) .tile, :host(:not([data-motion='full'])) .piece { transition: none; }
@@ -90,6 +112,8 @@ button:focus-visible { outline: 3px solid var(--ipp-focus); outline-offset: 2px;
 :host([data-motion='reduce']) .is-hint, :host([data-motion='reduce']) .is-hint .outline { animation: none; }
 @media (forced-colors: active) {
   .tile:focus-visible, button:focus-visible { outline-color: Highlight; }
+  .cell[data-state='filled'] { background: CanvasText; }
+  .cell[data-state='crossed']::before, .cell[data-state='crossed']::after { background: GrayText; }
   .piece:focus-visible .outline { stroke: Highlight; }
 }
 `;

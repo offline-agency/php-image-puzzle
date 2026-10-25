@@ -52,6 +52,9 @@ final class ConformanceFixtures
             'strips-vertical' => $factory->create(GameKind::Strips, $source, 'source.png', 'custom', ['count' => 5, 'axis' => 'vertical'], 16),
             'jigsaw' => self::jigsaw($factory, 'rect', 2, 3),
             'jigsaw-hex' => self::jigsaw($factory, 'hex', 2, 2),
+            'nonogram' => self::nonogram($factory, ['..##..', '.####.', '######', '##..##', '#....#', '######']),
+            // Two diagonals: the clues also fit the mirrored picture.
+            'nonogram-ambiguous' => self::nonogram($factory, ['#...', '.#..', '..#.', '...#']),
         ];
         foreach ($definitions as $name => $definition) {
             $files["mode-{$name}.json"] = self::mode($name, $definition);
@@ -239,6 +242,27 @@ final class ConformanceFixtures
     }
 
     /**
+     * A nonogram of a black-on-white picture, 8 px per cell.
+     *
+     * @param list<string> $pattern "#" filled
+     */
+    private static function nonogram(GameFactory $factory, array $pattern): GameDefinition
+    {
+        $rows = count($pattern);
+        $cols = strlen($pattern[0]);
+        $image = imagecreatetruecolor(max(1, $cols * 8), max(1, $rows * 8));
+        $white = (int) imagecolorallocate($image, 255, 255, 255);
+        $black = (int) imagecolorallocate($image, 0, 0, 0);
+        foreach ($pattern as $r => $line) {
+            for ($c = 0; $c < $cols; $c++) {
+                imagefilledrectangle($image, $c * 8, $r * 8, $c * 8 + 7, $r * 8 + 7, $line[$c] === '#' ? $black : $white);
+            }
+        }
+
+        return $factory->nonogram(new SourceImage($cols * 8, $rows * 8, hash('sha256', implode('/', $pattern))), $image, 'source.png', 'custom', ['rows' => $rows, 'cols' => $cols], 17);
+    }
+
+    /**
      * @return array<string, mixed>
      */
     private static function mode(string $name, GameDefinition $definition): array
@@ -350,8 +374,8 @@ final class ConformanceFixtures
      */
     private static function badActions(GameDefinition $definition): array
     {
-        $first = $definition->tiles[0]->id;
-        $second = $definition->tiles[1]->id ?? $first;
+        $first = ($definition->tiles[0] ?? null)->id ?? 'zz';
+        $second = ($definition->tiles[1] ?? null)->id ?? $first;
         $common = [
             ['type' => 'teleport', 'tile' => $first],
             ['type' => $definition->rules()->actionTypes()[0]],
@@ -382,6 +406,14 @@ final class ConformanceFixtures
                 ['type' => 'place', 'piece' => $first, 'x' => -500, 'y' => 0],
                 ['type' => 'place', 'piece' => 'zz', 'x' => 0, 'y' => 0],
                 ['type' => 'place', 'piece' => $first, 'x' => 1.5, 'y' => 0],
+            ],
+            GameKind::Nonogram => [
+                ['type' => 'mark', 'cell' => 0, 'state' => 'unknown'],
+                ['type' => 'mark', 'cell' => $definition->rows * $definition->cols, 'state' => 'filled'],
+                ['type' => 'mark', 'cell' => -1, 'state' => 'filled'],
+                ['type' => 'mark', 'cell' => '0', 'state' => 'filled'],
+                ['type' => 'mark', 'cell' => 0, 'state' => 'grey'],
+                ['type' => 'mark', 'cell' => 0, 'state' => 'filled', 'extra' => 1],
             ],
             default => [],
         }];
@@ -431,8 +463,9 @@ final class ConformanceFixtures
             ['name' => 'not an object', 'board' => [1, 2]],
             ['name' => 'unknown field', 'board' => $initial + ['cheat' => true]],
         ];
-        $first = $definition->tiles[0]->id;
-        $second = $definition->tiles[1]->id ?? $first;
+        $first = ($definition->tiles[0] ?? null)->id ?? 'zz';
+        $second = ($definition->tiles[1] ?? null)->id ?? $first;
+        $cells = $definition->rows * $definition->cols;
         $cases = [...$cases, ...match ($definition->kind) {
             GameKind::Sliding => [
                 ['name' => 'duplicate id', 'board' => ['cells' => self::replace($solved['cells'], $second, $first)]],
@@ -458,6 +491,13 @@ final class ConformanceFixtures
                 ['name' => 'placed away from home', 'board' => ['pieces' => self::replaceAt($solved['pieces'], 0, ['x' => 1, 'y' => 1, 'placed' => true])]],
                 ['name' => 'inside snap zone but loose', 'board' => ['pieces' => self::replaceAt($solved['pieces'], 0, self::loose($solved['pieces']))]],
                 ['name' => 'outside area', 'board' => ['pieces' => self::replaceAt($solved['pieces'], 0, ['x' => -9999, 'y' => 0, 'placed' => false])]],
+            ],
+            GameKind::Nonogram => [
+                ['name' => 'partly marked', 'board' => ['cells' => '1x' . str_repeat('.', $cells - 2)]],
+                ['name' => 'wrong but well formed', 'board' => ['cells' => str_repeat('1', $cells)]],
+                ['name' => 'too short', 'board' => ['cells' => str_repeat('.', $cells - 1)]],
+                ['name' => 'unknown symbol', 'board' => ['cells' => '0' . str_repeat('.', $cells - 1)]],
+                ['name' => 'list of cells', 'board' => ['cells' => array_fill(0, $cells, '.')]],
             ],
             default => [],
         }];

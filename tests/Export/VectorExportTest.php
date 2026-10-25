@@ -595,3 +595,12 @@ describe('PdfExporter', function (): void {
         expect($pdf)->toMatch('#/Subtype /Image /Width 100 /Height 75 #');
     });
 });
+
+describe('modes without cut pieces', function (): void {
+    it('refuses SVG and PDF output for a nonogram instead of printing its solution', function (): void {
+        $puzzle = vectorPuzzle(GameKind::Nonogram);
+        expect(fn () => (new SvgExporter())->render($puzzle))->toThrow(InvalidArgumentException::class, 'no pieces to cut')
+            ->and(fn () => (new PdfExporter())->render($puzzle))->toThrow(InvalidArgumentException::class, 'no pieces to cut')
+            ->and(fn () => (new PdfExporter())->layout($puzzle))->toThrow(InvalidArgumentException::class, 'no pieces to cut');
+    });
+});

@@ -39,6 +39,13 @@ export interface Messages {
   readonly dropped: string;
   readonly hintGiven: string;
   readonly noHint: string;
+  readonly nonogramTool: string;
+  readonly nonogramFill: string;
+  readonly nonogramCross: string;
+  readonly nonogramRow: string;
+  readonly nonogramColumn: string;
+  readonly nonogramCell: string;
+  readonly nonogramStates: Readonly<Record<string, string>>;
   readonly instructions: Readonly<Record<string, string>>;
 }
 
@@ -79,12 +86,21 @@ export const en: Messages = {
   dropped: 'Piece {n} dropped.',
   hintGiven: 'Hint: {hint}',
   noHint: 'No hint available.',
+  nonogramTool: 'Pointer tool',
+  nonogramFill: 'Fill',
+  nonogramCross: 'Cross out',
+  nonogramRow: 'Row {n} clue {clue}',
+  nonogramColumn: 'Column {n} clue {clue}',
+  nonogramCell: 'Row {row}, column {col}: {state}',
+  nonogramStates: { filled: 'filled', crossed: 'crossed out', unknown: 'empty' },
   instructions: {
     sliding: 'Use the arrow keys to move between tiles and Enter to slide a tile next to the gap.',
     swap: 'Press Enter on two tiles to swap them. Escape cancels the selection.',
     rotation: 'Press Enter to rotate a tile clockwise, Shift+Enter to rotate it counter-clockwise.',
     strips: 'Press Enter to pick up a strip, the arrow keys to move it, and Enter again to drop it.',
     jigsaw: 'Tab to a piece, move it with the arrow keys (Shift for larger steps) and press Enter to drop it.',
+    nonogram:
+      'Fill cells so each row and column shows its clue: the lengths of its runs of filled cells, in order. Arrow keys move, Enter or Space fills or clears a cell, X crosses it out, Delete clears it.',
   },
 };
 
@@ -125,12 +141,21 @@ export const it: Messages = {
   dropped: 'Pezzo {n} lasciato.',
   hintGiven: 'Suggerimento: {hint}',
   noHint: 'Nessun suggerimento disponibile.',
+  nonogramTool: 'Strumento del puntatore',
+  nonogramFill: 'Riempi',
+  nonogramCross: 'Segna vuota',
+  nonogramRow: 'Indizio riga {n}: {clue}',
+  nonogramColumn: 'Indizio colonna {n}: {clue}',
+  nonogramCell: 'Riga {row}, colonna {col}: {state}',
+  nonogramStates: { filled: 'piena', crossed: 'segnata vuota', unknown: 'vuota' },
   instructions: {
     sliding: 'Usa le frecce per spostarti tra le tessere e Invio per far scorrere una tessera vicina allo spazio vuoto.',
     swap: 'Premi Invio su due tessere per scambiarle. Esc annulla la selezione.',
     rotation: 'Premi Invio per ruotare una tessera in senso orario, Maiusc+Invio in senso antiorario.',
     strips: 'Premi Invio per prendere una striscia, le frecce per spostarla e di nuovo Invio per lasciarla.',
     jigsaw: 'Usa Tab per scegliere un pezzo, le frecce per spostarlo (Maiusc per passi più lunghi) e Invio per lasciarlo.',
+    nonogram:
+      'Riempi le caselle in modo che ogni riga e colonna mostri il suo indizio: le lunghezze dei gruppi di caselle piene, in ordine. Le frecce spostano, Invio o Spazio riempie o svuota una casella, X la segna vuota, Canc la svuota.',
   },
 };
 

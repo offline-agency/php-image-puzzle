@@ -16,7 +16,7 @@ export const MAX_CROP = 100000;
 /** Jigsaw seeds also drive the PHP outline geometry, which takes 31 bits. */
 export const MAX_JIGSAW_SEED = 2147483647;
 
-export const BUILD_KINDS = ['sliding', 'swap', 'rotation', 'strips', 'jigsaw'] as const;
+export const BUILD_KINDS = ['sliding', 'swap', 'rotation', 'strips', 'jigsaw', 'nonogram'] as const;
 export type BuildKind = (typeof BUILD_KINDS)[number];
 
 export const PRESET_NAMES = ['easy', 'medium', 'hard'] as const;
@@ -28,6 +28,7 @@ export const CUSTOM_KEYS: Readonly<Record<BuildKind, readonly string[]>> = {
   rotation: ['rows', 'cols', 'orientations', 'assistance'],
   strips: ['count', 'axis', 'assistance'],
   jigsaw: ['rows', 'cols', 'topology', 'edge', 'snap'],
+  nonogram: ['rows', 'cols', 'threshold', 'invert', 'requireUnique', 'assistance'],
 };
 
 /** Board shape parameters of each preset (src/Game/Presets.php, conformance/presets.json). */
@@ -53,6 +54,7 @@ export const PRESET_SHAPES: Readonly<Record<BuildKind, Readonly<Record<PresetNam
     medium: { rows: 6, cols: 8, edge: 'jigsaw' },
     hard: { rows: 10, cols: 12, edge: 'jigsaw' },
   },
+  nonogram: { easy: { rows: 10, cols: 10 }, medium: { rows: 15, cols: 15 }, hard: { rows: 20, cols: 20 } },
 };
 
 export interface CropRect {

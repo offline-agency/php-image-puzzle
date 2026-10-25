@@ -5,7 +5,7 @@ declare(strict_types=1);
 
 /**
  * Regenerates the offline player example assets in examples/player/assets:
- * a synthetic picture, one game definition per mode and the jigsaw pieces,
+ * a synthetic picture, one game definition per mode (the nonogram from its pixels) and the jigsaw pieces,
  * plus three DefinitionBuilder jigsaw builds of the same puzzle: default PNG
  * pieces (jigsaw-png/), WebP pieces in three resolutions (jigsaw-responsive/)
  * and PNG pieces with an atlas (jigsaw-atlas/).
@@ -71,6 +71,7 @@ $definitions = [
     'swap' => $factory->create(GameKind::Swap, $source, 'picture.png', 'medium', seed: 2),
     'rotation' => $factory->create(GameKind::Rotation, $source, 'picture.png', 'medium', seed: 3),
     'strips' => $factory->create(GameKind::Strips, $source, 'picture.png', 'easy', seed: 4),
+    'nonogram' => $factory->nonogram($source, $image, 'picture.png', 'easy', seed: 6),
 ];
 
 foreach (['rect' => 'jigsaw', 'hex' => 'jigsaw-hex'] as $topology => $name) {

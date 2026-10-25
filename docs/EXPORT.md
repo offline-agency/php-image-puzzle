@@ -187,7 +187,11 @@ ratio was 1.21×, for the atlas in desktop WebKit at 300 px.
 
 ## SVG
 
-`ImagePuzzle\Export\SvgExporter` draws a built puzzle from its definition:
+`ImagePuzzle\Export\SvgExporter` draws a built puzzle from its definition.
+SVG and PDF need pieces to cut: for a nonogram, which has none, both refuse
+with `InvalidArgumentException` (CLI exit code 3) rather than print the
+picture, which is the solution. Bundles and reconstruction work for every
+mode.
 
 ```php
 use ImagePuzzle\Export\SvgExporter;

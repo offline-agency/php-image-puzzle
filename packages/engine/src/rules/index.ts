@@ -1,6 +1,7 @@
 import { PuzzleError } from '../errors.js';
 import type { GameKind } from '../types.js';
 import { jigsawRules } from './jigsaw.js';
+import { nonogramRules } from './nonogram.js';
 import { rotationRules } from './rotation.js';
 import { slidingRules } from './sliding.js';
 import { stripsRules } from './strips.js';
@@ -13,6 +14,7 @@ const RULES: Partial<Record<GameKind, ModeRules>> = {
   rotation: rotationRules,
   strips: stripsRules,
   jigsaw: jigsawRules,
+  nonogram: nonogramRules,
 };
 
 /** Rules for a kind, or an `unsupported` error for kinds this version does not ship. */

@@ -106,6 +106,10 @@ try {
     check('reconstruct', $bin, ['reconstruct', "{$work}/puzzle", "{$work}/board.png"], 0, 'Wrote');
     check('svg', $bin, ['svg', "{$work}/puzzle", "{$work}/puzzle.svg", '--image=embed'], 0, 'Wrote');
     check('pdf', $bin, ['pdf', "{$work}/puzzle", "{$work}/puzzle.pdf", '--paper=a4'], 0, '2 page(s)');
+    if (in_array('nonogram', $modes, true)) {
+        // Printing a nonogram's picture would print its solution.
+        check('svg refuses a nonogram', $bin, ['svg', "{$work}/mode-nonogram", "{$work}/nonogram.svg"], 3, 'no pieces to cut');
+    }
     if (class_exists(ZipArchive::class)) {
         check('bundle', $bin, ['bundle', "{$work}/puzzle", "{$work}/bundle.zip"], 0, 'image-puzzle/index.html');
         $zip = new ZipArchive();

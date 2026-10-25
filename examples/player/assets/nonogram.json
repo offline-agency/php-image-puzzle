@@ -1,0 +1,139 @@
+{
+    "id": "gd1-29802a3cc350c3da92be3d3e98a82183d27d359fdf6bb859d5df82e17a534c98",
+    "$schema": "https://raw.githubusercontent.com/offline-agency/php-image-puzzle/HEAD/docs/schemas/game/v1/definition.schema.json",
+    "format": "image-puzzle/game-definition",
+    "version": 1,
+    "kind": "nonogram",
+    "generator": {
+        "algorithm": 1
+    },
+    "seed": 6,
+    "preset": {
+        "name": "easy",
+        "version": 1
+    },
+    "source": {
+        "width": 640,
+        "height": 480,
+        "sha256": "ddeb783c0a5e5bc2927c98903abcebdbaa01ccae446c8337c2278a8f3901b80d"
+    },
+    "media": {
+        "image": "picture.png"
+    },
+    "board": {
+        "rows": 10,
+        "cols": 10,
+        "crop": {
+            "x": 80,
+            "y": 0,
+            "width": 480,
+            "height": 480
+        }
+    },
+    "tiles": [],
+    "rules": {
+        "solution": "1111111111011101111100100011110111011111111111111111111111111111101010111110001011111111111111111111",
+        "clues": {
+            "rows": [
+                [
+                    10
+                ],
+                [
+                    3,
+                    5
+                ],
+                [
+                    1,
+                    4
+                ],
+                [
+                    3,
+                    5
+                ],
+                [
+                    10
+                ],
+                [
+                    10
+                ],
+                [
+                    5,
+                    1,
+                    1
+                ],
+                [
+                    5,
+                    1
+                ],
+                [
+                    10
+                ],
+                [
+                    10
+                ]
+            ],
+            "cols": [
+                [
+                    1,
+                    6
+                ],
+                [
+                    2,
+                    7
+                ],
+                [
+                    10
+                ],
+                [
+                    2,
+                    7
+                ],
+                [
+                    1,
+                    6
+                ],
+                [
+                    2,
+                    3,
+                    2
+                ],
+                [
+                    7,
+                    2
+                ],
+                [
+                    6,
+                    2
+                ],
+                [
+                    10
+                ],
+                [
+                    6,
+                    2
+                ]
+            ]
+        },
+        "uniqueness": "unique",
+        "threshold": 139,
+        "invert": false
+    },
+    "actions": [
+        "mark"
+    ],
+    "capabilities": {
+        "undo": true,
+        "redo": true,
+        "reset": true,
+        "shuffle": false,
+        "hint": true
+    },
+    "assistance": {
+        "preview": false,
+        "numbers": false,
+        "highlightCorrect": true
+    },
+    "initial": {
+        "cells": "...................................................................................................."
+    }
+}

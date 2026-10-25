@@ -15,6 +15,7 @@ import type { Messages } from './messages.js';
 import { styles } from './styles.js';
 import { createGridView } from './views/grid.js';
 import { createJigsawView } from './views/jigsaw.js';
+import { createNonogramView } from './views/nonogram.js';
 import type { ModeView, ViewContext } from './views/types.js';
 
 /** Largest definition document fetched from `src` (matches the PHP GameDefinition::MAX_JSON_BYTES). */
@@ -319,7 +320,12 @@ export function createPlayer(target: HTMLElement | ShadowRoot, options: PlayerOp
         setView('error', `Could not load ${url}`);
       },
     };
-    view = definition.kind === 'jigsaw' ? createJigsawView(context) : createGridView(context);
+    view =
+      definition.kind === 'jigsaw'
+        ? createJigsawView(context)
+        : definition.kind === 'nonogram'
+          ? createNonogramView(context)
+          : createGridView(context);
     slot.replaceChildren(view.element);
   }
 

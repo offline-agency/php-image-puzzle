@@ -73,7 +73,8 @@ export interface Configurator {
 type FieldSpec =
   | { readonly key: string; readonly type: 'int'; readonly min: number; readonly max: number; readonly optional?: boolean }
   | { readonly key: string; readonly type: 'choice'; readonly options: readonly string[] }
-  | { readonly key: 'orientations'; readonly type: 'angles' };
+  | { readonly key: 'orientations'; readonly type: 'angles' }
+  | { readonly key: string; readonly type: 'flag' };
 
 /** Custom parameters per mode, with the ranges the PHP generator accepts (GameFactory, DefinitionBuilder). */
 const FIELDS: Readonly<Record<BuildKind, readonly FieldSpec[]>> = {
@@ -101,6 +102,13 @@ const FIELDS: Readonly<Record<BuildKind, readonly FieldSpec[]>> = {
     { key: 'topology', type: 'choice', options: ['rect', 'hex', 'triangle'] },
     { key: 'edge', type: 'choice', options: ['jigsaw', 'line', 'arc', 'half_circle', 'sinus', 'no_edge'] },
     { key: 'snap', type: 'int', min: 1, max: 256, optional: true },
+  ],
+  nonogram: [
+    { key: 'rows', type: 'int', min: 2, max: 30 },
+    { key: 'cols', type: 'int', min: 2, max: 30 },
+    { key: 'threshold', type: 'int', min: 1, max: 255, optional: true },
+    { key: 'invert', type: 'flag' },
+    { key: 'requireUnique', type: 'flag' },
   ],
 };
 
@@ -333,6 +341,21 @@ export function createConfigurator(target: HTMLElement | ShadowRoot, options: Co
         }
         set.append(row);
         customBody.append(set);
+        continue;
+      }
+      if (field.type === 'flag') {
+        // Unchecked flags are left out: the generator defaults them to false.
+        const label = el(doc, 'label', { class: 'inline', style: 'grid-column: 1 / -1' });
+        const box = el(doc, 'input', { type: 'checkbox', name: field.key, 'data-field': `custom.${field.key}` });
+        box.checked = draft.custom[field.key] === true;
+        box.disabled = disabled;
+        box.addEventListener('change', () => {
+          if (box.checked) draft.custom[field.key] = true;
+          else Reflect.deleteProperty(draft.custom, field.key);
+          update();
+        });
+        label.append(box, fieldLabel(field.key));
+        customBody.append(label);
         continue;
       }
       const label = el(doc, 'label');

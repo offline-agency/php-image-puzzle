@@ -1,0 +1,542 @@
+{
+    "name": "nonogram-ambiguous",
+    "definition": {
+        "id": "gd1-5255ac72d50994fd76b0f35f1914bbdc5d1ec7b301d99efacd63e65e186eb75a",
+        "$schema": "https://raw.githubusercontent.com/offline-agency/php-image-puzzle/HEAD/docs/schemas/game/v1/definition.schema.json",
+        "format": "image-puzzle/game-definition",
+        "version": 1,
+        "kind": "nonogram",
+        "generator": {
+            "algorithm": 1
+        },
+        "seed": 17,
+        "preset": {
+            "name": "custom",
+            "version": 1
+        },
+        "source": {
+            "width": 32,
+            "height": 32,
+            "sha256": "ec1718e6b3ca93647d85a1239a87f3ae450f290c6bdb65e1bf5c402dc3f6a28f"
+        },
+        "media": {
+            "image": "source.png"
+        },
+        "board": {
+            "rows": 4,
+            "cols": 4,
+            "crop": {
+                "x": 0,
+                "y": 0,
+                "width": 32,
+                "height": 32
+            }
+        },
+        "tiles": [],
+        "rules": {
+            "solution": "1000010000100001",
+            "clues": {
+                "rows": [
+                    [
+                        1
+                    ],
+                    [
+                        1
+                    ],
+                    [
+                        1
+                    ],
+                    [
+                        1
+                    ]
+                ],
+                "cols": [
+                    [
+                        1
+                    ],
+                    [
+                        1
+                    ],
+                    [
+                        1
+                    ],
+                    [
+                        1
+                    ]
+                ]
+            },
+            "uniqueness": "multiple",
+            "threshold": 1,
+            "invert": false
+        },
+        "actions": [
+            "mark"
+        ],
+        "capabilities": {
+            "undo": true,
+            "redo": true,
+            "reset": true,
+            "shuffle": false,
+            "hint": true
+        },
+        "assistance": {
+            "preview": true,
+            "numbers": false,
+            "highlightCorrect": false
+        },
+        "initial": {
+            "cells": "................"
+        }
+    },
+    "solved": {
+        "cells": "1xxxx1xxxx1xxxx1"
+    },
+    "scrambles": [
+        {
+            "seed": 0,
+            "board": {
+                "cells": "................"
+            }
+        },
+        {
+            "seed": 1,
+            "board": {
+                "cells": "................"
+            }
+        },
+        {
+            "seed": 2,
+            "board": {
+                "cells": "................"
+            }
+        },
+        {
+            "seed": 99,
+            "board": {
+                "cells": "................"
+            }
+        },
+        {
+            "seed": 4294967295,
+            "board": {
+                "cells": "................"
+            }
+        }
+    ],
+    "legalActions": [
+        {
+            "type": "mark",
+            "cell": 0,
+            "state": "filled"
+        },
+        {
+            "type": "mark",
+            "cell": 0,
+            "state": "crossed"
+        },
+        {
+            "type": "mark",
+            "cell": 1,
+            "state": "filled"
+        },
+        {
+            "type": "mark",
+            "cell": 1,
+            "state": "crossed"
+        },
+        {
+            "type": "mark",
+            "cell": 2,
+            "state": "filled"
+        },
+        {
+            "type": "mark",
+            "cell": 2,
+            "state": "crossed"
+        },
+        {
+            "type": "mark",
+            "cell": 3,
+            "state": "filled"
+        },
+        {
+            "type": "mark",
+            "cell": 3,
+            "state": "crossed"
+        },
+        {
+            "type": "mark",
+            "cell": 4,
+            "state": "filled"
+        },
+        {
+            "type": "mark",
+            "cell": 4,
+            "state": "crossed"
+        },
+        {
+            "type": "mark",
+            "cell": 5,
+            "state": "filled"
+        },
+        {
+            "type": "mark",
+            "cell": 5,
+            "state": "crossed"
+        },
+        {
+            "type": "mark",
+            "cell": 6,
+            "state": "filled"
+        },
+        {
+            "type": "mark",
+            "cell": 6,
+            "state": "crossed"
+        },
+        {
+            "type": "mark",
+            "cell": 7,
+            "state": "filled"
+        },
+        {
+            "type": "mark",
+            "cell": 7,
+            "state": "crossed"
+        },
+        {
+            "type": "mark",
+            "cell": 8,
+            "state": "filled"
+        },
+        {
+            "type": "mark",
+            "cell": 8,
+            "state": "crossed"
+        },
+        {
+            "type": "mark",
+            "cell": 9,
+            "state": "filled"
+        },
+        {
+            "type": "mark",
+            "cell": 9,
+            "state": "crossed"
+        },
+        {
+            "type": "mark",
+            "cell": 10,
+            "state": "filled"
+        },
+        {
+            "type": "mark",
+            "cell": 10,
+            "state": "crossed"
+        },
+        {
+            "type": "mark",
+            "cell": 11,
+            "state": "filled"
+        },
+        {
+            "type": "mark",
+            "cell": 11,
+            "state": "crossed"
+        },
+        {
+            "type": "mark",
+            "cell": 12,
+            "state": "filled"
+        },
+        {
+            "type": "mark",
+            "cell": 12,
+            "state": "crossed"
+        },
+        {
+            "type": "mark",
+            "cell": 13,
+            "state": "filled"
+        },
+        {
+            "type": "mark",
+            "cell": 13,
+            "state": "crossed"
+        },
+        {
+            "type": "mark",
+            "cell": 14,
+            "state": "filled"
+        },
+        {
+            "type": "mark",
+            "cell": 14,
+            "state": "crossed"
+        },
+        {
+            "type": "mark",
+            "cell": 15,
+            "state": "filled"
+        },
+        {
+            "type": "mark",
+            "cell": 15,
+            "state": "crossed"
+        }
+    ],
+    "cases": [
+        {
+            "name": "play from initial",
+            "board": {
+                "cells": "................"
+            },
+            "steps": [
+                {
+                    "action": {
+                        "type": "mark",
+                        "cell": 0,
+                        "state": "filled"
+                    },
+                    "result": "ok",
+                    "board": {
+                        "cells": "1..............."
+                    },
+                    "complete": false,
+                    "progress": 0.25,
+                    "hint": {
+                        "type": "mark",
+                        "cell": 5,
+                        "state": "filled"
+                    }
+                },
+                {
+                    "action": {
+                        "type": "mark",
+                        "cell": 5,
+                        "state": "filled"
+                    },
+                    "result": "ok",
+                    "board": {
+                        "cells": "1....1.........."
+                    },
+                    "complete": false,
+                    "progress": 0.5,
+                    "hint": {
+                        "type": "mark",
+                        "cell": 10,
+                        "state": "filled"
+                    }
+                },
+                {
+                    "action": {
+                        "type": "mark",
+                        "cell": 10,
+                        "state": "filled"
+                    },
+                    "result": "ok",
+                    "board": {
+                        "cells": "1....1....1....."
+                    },
+                    "complete": false,
+                    "progress": 0.75,
+                    "hint": {
+                        "type": "mark",
+                        "cell": 15,
+                        "state": "filled"
+                    }
+                },
+                {
+                    "action": {
+                        "type": "mark",
+                        "cell": 15,
+                        "state": "filled"
+                    },
+                    "result": "ok",
+                    "board": {
+                        "cells": "1....1....1....1"
+                    },
+                    "complete": true,
+                    "progress": 1,
+                    "hint": null
+                }
+            ]
+        },
+        {
+            "name": "last move completes",
+            "board": {
+                "cells": "xxxxx1xxxx1xxxx1"
+            },
+            "steps": [
+                {
+                    "action": {
+                        "type": "mark",
+                        "cell": 0,
+                        "state": "filled"
+                    },
+                    "result": "ok",
+                    "board": {
+                        "cells": "1xxxx1xxxx1xxxx1"
+                    },
+                    "complete": true,
+                    "progress": 1,
+                    "hint": null
+                }
+            ]
+        },
+        {
+            "name": "rejected actions",
+            "board": {
+                "cells": "................"
+            },
+            "steps": [
+                {
+                    "action": {
+                        "type": "teleport",
+                        "tile": "zz"
+                    },
+                    "result": "illegal"
+                },
+                {
+                    "action": {
+                        "type": "mark"
+                    },
+                    "result": "invalid"
+                },
+                {
+                    "action": {
+                        "type": "mark",
+                        "cell": 0,
+                        "state": "unknown"
+                    },
+                    "result": "illegal"
+                },
+                {
+                    "action": {
+                        "type": "mark",
+                        "cell": 16,
+                        "state": "filled"
+                    },
+                    "result": "illegal"
+                },
+                {
+                    "action": {
+                        "type": "mark",
+                        "cell": -1,
+                        "state": "filled"
+                    },
+                    "result": "invalid"
+                },
+                {
+                    "action": {
+                        "type": "mark",
+                        "cell": "0",
+                        "state": "filled"
+                    },
+                    "result": "invalid"
+                },
+                {
+                    "action": {
+                        "type": "mark",
+                        "cell": 0,
+                        "state": "grey"
+                    },
+                    "result": "invalid"
+                },
+                {
+                    "action": {
+                        "type": "mark",
+                        "cell": 0,
+                        "state": "filled",
+                        "extra": 1
+                    },
+                    "result": "invalid"
+                }
+            ]
+        }
+    ],
+    "imports": [
+        {
+            "name": "initial",
+            "board": {
+                "cells": "................"
+            },
+            "valid": true
+        },
+        {
+            "name": "solved",
+            "board": {
+                "cells": "1xxxx1xxxx1xxxx1"
+            },
+            "valid": true
+        },
+        {
+            "name": "not an object",
+            "board": [
+                1,
+                2
+            ],
+            "valid": false
+        },
+        {
+            "name": "unknown field",
+            "board": {
+                "cells": "................",
+                "cheat": true
+            },
+            "valid": false
+        },
+        {
+            "name": "partly marked",
+            "board": {
+                "cells": "1x.............."
+            },
+            "valid": true
+        },
+        {
+            "name": "wrong but well formed",
+            "board": {
+                "cells": "1111111111111111"
+            },
+            "valid": true
+        },
+        {
+            "name": "too short",
+            "board": {
+                "cells": "..............."
+            },
+            "valid": false
+        },
+        {
+            "name": "unknown symbol",
+            "board": {
+                "cells": "0..............."
+            },
+            "valid": false
+        },
+        {
+            "name": "list of cells",
+            "board": {
+                "cells": [
+                    ".",
+                    ".",
+                    ".",
+                    ".",
+                    ".",
+                    ".",
+                    ".",
+                    ".",
+                    ".",
+                    ".",
+                    ".",
+                    ".",
+                    ".",
+                    ".",
+                    ".",
+                    "."
+                ]
+            },
+            "valid": false
+        }
+    ]
+}

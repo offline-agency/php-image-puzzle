@@ -33,6 +33,12 @@
       "required": ["type", "piece", "x", "y"],
       "properties": { "type": { "const": "place" }, "piece": { "$ref": "#/$defs/id" }, "x": { "type": "integer" }, "y": { "type": "integer" } },
       "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": ["type", "cell", "state"],
+      "properties": { "type": { "const": "mark" }, "cell": { "type": "integer", "minimum": 0 }, "state": { "enum": ["filled", "crossed", "unknown"] } },
+      "additionalProperties": false
     }
   ],
   "$defs": {

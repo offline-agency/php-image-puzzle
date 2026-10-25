@@ -45,6 +45,11 @@ final class Presets
             'medium' => ['rows' => 6, 'cols' => 8, 'edge' => 'jigsaw', 'snapRatio' => 0.15, 'assistance' => ['preview' => true, 'numbers' => false, 'highlightCorrect' => false]],
             'hard' => ['rows' => 10, 'cols' => 12, 'edge' => 'jigsaw', 'snapRatio' => 0.08, 'assistance' => ['preview' => false, 'numbers' => false, 'highlightCorrect' => false]],
         ],
+        'nonogram' => [
+            'easy' => ['rows' => 10, 'cols' => 10, 'threshold' => 'auto', 'invert' => false, 'requireUnique' => false, 'assistance' => ['preview' => false, 'numbers' => false, 'highlightCorrect' => true]],
+            'medium' => ['rows' => 15, 'cols' => 15, 'threshold' => 'auto', 'invert' => false, 'requireUnique' => false, 'assistance' => ['preview' => false, 'numbers' => false, 'highlightCorrect' => true]],
+            'hard' => ['rows' => 20, 'cols' => 20, 'threshold' => 'auto', 'invert' => false, 'requireUnique' => false, 'assistance' => ['preview' => false, 'numbers' => false, 'highlightCorrect' => false]],
+        ],
     ];
 
     /**

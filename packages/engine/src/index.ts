@@ -31,6 +31,16 @@ export { allowedOrientations } from './rules/rotation.js';
 export { stripAxis } from './rules/strips.js';
 export { playArea, renderedRect, snapDistance, trayRect } from './rules/jigsaw.js';
 export { cellRect, cellSize } from './rules/grid.js';
+export {
+  NONOGRAM_MAX_SIDE,
+  NONOGRAM_MIN_SIDE,
+  NONOGRAM_STATES,
+  cluesOf,
+  lineClue,
+  nonogramCells,
+  nonogramClues,
+} from './rules/nonogram.js';
+export type { NonogramClues } from './rules/nonogram.js';
 export { MAX_ATLAS_SIZE, MAX_RESOLUTIONS, parseMedia, resolutionImage, resolutionLength, validateMedia } from './media.js';
 export { autoPersist, browserStorage, clearState, restoreState, saveState, storageKey } from './persistence.js';
 export type { AutoPersistOptions, PersistResult, RestoreResult, StateStorage } from './persistence.js';
@@ -60,6 +70,8 @@ export type {
   GameStateDocument,
   JigsawBoard,
   JigsawPiece,
+  NonogramBoard,
+  NonogramMark,
   Media,
   PieceAtlas,
   PieceResolution,

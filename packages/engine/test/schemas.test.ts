@@ -21,7 +21,7 @@ function check(schema: string, value: unknown): void {
   expect(valid ? [] : validate.errors).toEqual([]);
 }
 
-describe.each(['sliding', 'swap', 'rotation', 'strips', 'jigsaw', 'jigsaw-hex'])('%s', (name) => {
+describe.each(['sliding', 'swap', 'rotation', 'strips', 'jigsaw', 'jigsaw-hex', 'nonogram', 'nonogram-ambiguous'])('%s', (name) => {
   it('definitions, states and every event payload match the schemas', () => {
     const engine = createEngine();
     const events: { type: string; detail: unknown }[] = [];

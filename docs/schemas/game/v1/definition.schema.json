@@ -189,10 +189,45 @@
           "initial": { "$ref": "board.schema.json#/$defs/jigsaw" }
         }
       }
+    },
+    {
+      "if": { "properties": { "kind": { "const": "nonogram" } } },
+      "then": {
+        "properties": {
+          "actions": { "const": ["mark"] },
+          "board": { "properties": { "rows": { "minimum": 2, "maximum": 30 }, "cols": { "minimum": 2, "maximum": 30 } } },
+          "tiles": { "maxItems": 0 },
+          "rules": {
+            "type": "object",
+            "required": ["solution", "clues", "uniqueness", "threshold", "invert"],
+            "properties": {
+              "solution": { "type": "string", "pattern": "^[01]{4,900}$", "description": "The generated grid, row-major: 1 filled, 0 empty." },
+              "clues": {
+                "type": "object",
+                "required": ["rows", "cols"],
+                "properties": { "rows": { "$ref": "#/$defs/clues" }, "cols": { "$ref": "#/$defs/clues" } },
+                "additionalProperties": false
+              },
+              "uniqueness": { "enum": ["unique", "multiple", "unverified"], "description": "The bounded solver's verdict. unverified: the budget ran out before uniqueness was decided." },
+              "threshold": { "type": "integer", "minimum": 1, "maximum": 255 },
+              "invert": { "type": "boolean" }
+            },
+            "additionalProperties": false
+          },
+          "initial": { "$ref": "board.schema.json#/$defs/nonogram" }
+        }
+      }
     }
   ],
   "$defs": {
     "id": { "type": "string", "pattern": "^[a-z][a-z0-9_-]{0,31}$" },
+    "clues": {
+      "description": "One clue per line: the lengths of its runs of filled cells, in order; [] for an empty line.",
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 30,
+      "items": { "type": "array", "maxItems": 15, "items": { "type": "integer", "minimum": 1, "maximum": 30 } }
+    },
     "rect": {
       "type": "object",
       "required": ["x", "y", "width", "height"],

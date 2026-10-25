@@ -95,14 +95,22 @@ export interface JigsawBoard {
   readonly pieces: readonly JigsawPiece[];
 }
 
-export type Board = SlidingBoard | SwapBoard | RotationBoard | StripsBoard | JigsawBoard;
+export interface NonogramBoard {
+  /** One character per cell, row-major: "1" filled, "x" marked empty, "." unknown. */
+  readonly cells: string;
+}
+
+export type Board = SlidingBoard | SwapBoard | RotationBoard | StripsBoard | JigsawBoard | NonogramBoard;
+
+export type NonogramMark = 'filled' | 'crossed' | 'unknown';
 
 export type Action =
   | { readonly type: 'slide'; readonly tile: string }
   | { readonly type: 'swap'; readonly a: string; readonly b: string }
   | { readonly type: 'rotate'; readonly tile: string; readonly direction: 'cw' | 'ccw' }
   | { readonly type: 'move'; readonly strip: string; readonly to: number }
-  | { readonly type: 'place'; readonly piece: string; readonly x: number; readonly y: number };
+  | { readonly type: 'place'; readonly piece: string; readonly x: number; readonly y: number }
+  | { readonly type: 'mark'; readonly cell: number; readonly state: NonogramMark };
 
 /** Exported state document (docs/schemas/game/v1/state.schema.json). */
 export interface GameStateDocument {

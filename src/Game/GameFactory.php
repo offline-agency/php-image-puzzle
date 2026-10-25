@@ -4,8 +4,11 @@ declare(strict_types=1);
 
 namespace ImagePuzzle\Game;
 
+use GdImage;
 use ImagePuzzle\Exception\InvalidArgumentException;
 use ImagePuzzle\Exception\InvalidDefinitionException;
+use ImagePuzzle\Game\Nonogram\NonogramGenerator;
+use ImagePuzzle\Game\Nonogram\NonogramSolver;
 use ImagePuzzle\Game\Rules\JigsawRules;
 use ImagePuzzle\Geometry\Bounds;
 
@@ -25,6 +28,7 @@ final class GameFactory
         'swap' => ['rows', 'cols'],
         'rotation' => ['rows', 'cols', 'orientations'],
         'strips' => ['count', 'axis'],
+        'nonogram' => ['rows', 'cols', 'threshold', 'invert', 'requireUnique'],
     ];
 
     /**
@@ -34,6 +38,9 @@ final class GameFactory
     {
         if ($kind === GameKind::Jigsaw) {
             throw new InvalidArgumentException('Jigsaw definitions are built from an export manifest: use jigsawFromManifest().');
+        }
+        if ($kind === GameKind::Nonogram) {
+            throw new InvalidArgumentException('Nonogram definitions are generated from the image pixels: use nonogram().');
         }
         $params = $this->parameters($kind, $preset, $custom);
         $assistance = self::assistance($params['assistance'] ?? self::ASSISTANCE_DEFAULT);
@@ -48,6 +55,41 @@ final class GameFactory
             GameKind::Strips => $this->strips($source, $image, $preset, $seed, $params, $assistance),
             default => throw new InvalidArgumentException("The {$kind->value} mode has its own factory."),
         };
+    }
+
+    /**
+     * Generates a nonogram from the image pixels (see NonogramGenerator for
+     * the crop, resampling, threshold and uniqueness steps). $pixels must be
+     * the image $source describes, upright.
+     *
+     * @param array<string, mixed> $custom
+     */
+    public function nonogram(SourceImage $source, GdImage $pixels, string $image, string $preset = 'medium', array $custom = [], int $seed = 0, int $budget = NonogramSolver::DEFAULT_BUDGET): GameDefinition
+    {
+        if (imagesx($pixels) !== $source->width || imagesy($pixels) !== $source->height) {
+            throw new InvalidArgumentException('The nonogram pixels do not match the source image size.');
+        }
+        $params = $this->parameters(GameKind::Nonogram, $preset, $custom);
+        $rows = self::side($params, 'rows', NonogramGenerator::MIN_SIDE, NonogramGenerator::MAX_SIDE);
+        $cols = self::side($params, 'cols', NonogramGenerator::MIN_SIDE, NonogramGenerator::MAX_SIDE);
+        $threshold = $params['threshold'] ?? 'auto';
+        if (!is_int($threshold) && $threshold !== 'auto') {
+            throw new InvalidArgumentException('The nonogram threshold must be "auto" or 1-255.');
+        }
+        $crop = NonogramGenerator::crop($source->width, $source->height, $rows, $cols);
+        $invert = isset($params['invert']) && Doc::bool($params, 'invert', 'parameters');
+        $requireUnique = isset($params['requireUnique']) && Doc::bool($params, 'requireUnique', 'parameters');
+        $grid = (new NonogramGenerator($budget))->generate($pixels, $crop, $rows, $cols, $threshold, $invert, $requireUnique);
+        [$rowClues, $colClues] = NonogramGenerator::cluesOf($grid['solution'], $rows, $cols);
+        $rules = [
+            'solution' => $grid['solution'],
+            'clues' => ['rows' => $rowClues, 'cols' => $colClues],
+            'uniqueness' => $grid['uniqueness'],
+            'threshold' => $grid['threshold'],
+            'invert' => $invert,
+        ];
+
+        return GameDefinition::create(GameKind::Nonogram, $seed, $preset, Presets::VERSION, $source->width, $source->height, $source->sha256, $image, $rows, $cols, $crop, [], $rules, self::assistance($params['assistance'] ?? self::ASSISTANCE_DEFAULT));
     }
 
     /**
