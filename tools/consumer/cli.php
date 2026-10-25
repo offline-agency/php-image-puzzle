@@ -114,6 +114,14 @@ try {
     file_put_contents("{$work}/batch.json", json_encode(['format' => 'image-puzzle/batch', 'version' => 1, 'items' => $items]));
     check('batch', $bin, ['batch', "{$work}/batch.json", '--concurrency=2', "--checkpoint={$work}/batch.checkpoint.json", "--cache={$work}/cache"], 0, 'Batch complete: 3 built');
     check('batch resume', $bin, ['batch', "{$work}/batch.json", "--checkpoint={$work}/batch.checkpoint.json"], 0, '0 built, 3 resumed');
+    // The demo site builder works from the installed package with the user's picture.
+    $demo = "{$package}/examples/demo/build.php";
+    check('demo site', $demo, ["{$work}/demo", "{$work}/photo.png", '--title=Consumer demo'], 0, 'Demo written to');
+    if (!is_file("{$work}/demo/index.html") || !is_file("{$work}/demo/image-puzzle-player.iife.js") || !is_file("{$work}/demo/jigsaw/definition.json")) {
+        fwrite(STDERR, "FAIL  the demo site is missing its index, player or a definition\n");
+        Checks::$failures++;
+    }
+    check('demo site needs a picture outside the repository', $demo, ["{$work}/demo-default"], 1, 'Pass an image');
     if (in_array('nonogram', $modes, true)) {
         // Printing a nonogram's picture would print its solution.
         check('svg refuses a nonogram', $bin, ['svg', "{$work}/mode-nonogram", "{$work}/nonogram.svg"], 3, 'no pieces to cut');
