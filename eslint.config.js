@@ -7,8 +7,8 @@ export default tseslint.config(
     ignores: [
       '**/dist/**',
       '**/node_modules/**',
-      'vendor/**',
-      'build/**',
+      '**/vendor/**',
+      '**/build/**',
       'test-results/**',
       'playwright-report/**',
       'examples/**/assets/**',

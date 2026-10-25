@@ -10,3 +10,5 @@ test-results/
 playwright-report/
 # The npm lockfile is committed (reproducible frozen installs).
 !/package-lock.json
+/integrations/*/vendor/
+/integrations/*/build/

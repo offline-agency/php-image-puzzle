@@ -184,6 +184,8 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
+      # The PHP integrations ship a copy of the bundle: it must match this build.
+      - run: node tools/sync-player-bundle.mjs --check
 
   browser:
     name: Browser tests (Chromium, Firefox, WebKit, mobile emulation)
@@ -239,10 +241,87 @@ jobs:
       - run: composer install --no-progress --prefer-dist
       - run: php tools/conformance.php --check
 
+  integrations:
+    name: ${{ matrix.package }} (PHP ${{ matrix.php }}, ${{ matrix.dependencies }})
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        package: [livewire]
+        php: ['8.4', '8.5']
+        dependencies: [locked, lowest, highest]
+        exclude:
+          - php: '8.4'
+            dependencies: highest
+          - php: '8.5'
+            dependencies: lowest
+    defaults:
+      run:
+        working-directory: integrations/${{ matrix.package }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: gd, exif, intl, zip
+          coverage: none
+          tools: composer:v2
+      - run: composer validate --strict
+      - name: Install locked dependencies
+        if: matrix.dependencies == 'locked'
+        run: composer install --no-progress --prefer-dist
+      - name: Resolve highest dependencies
+        if: matrix.dependencies == 'highest'
+        run: composer update --no-progress --prefer-dist --prefer-stable
+      - name: Resolve lowest dependencies
+        if: matrix.dependencies == 'lowest'
+        run: composer update --no-progress --prefer-dist --prefer-stable --prefer-lowest
+      - run: vendor/bin/pint --test
+      - run: vendor/bin/phpstan analyse --memory-limit=1G --no-progress
+      - run: vendor/bin/pest
+      - run: composer audit
+
+  integrations-browser:
+    name: ${{ matrix.package }} in a real Laravel app (Chromium, Firefox, WebKit)
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        package: [livewire]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
+        with:
+          php-version: '8.5'
+          extensions: gd, exif, intl, zip
+          coverage: none
+          tools: composer:v2
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24'
+          cache: npm
+      - run: composer install --no-progress --prefer-dist
+        working-directory: integrations/${{ matrix.package }}
+      - run: npm ci --no-fund --no-audit
+      - run: npx tsc -p integrations/${{ matrix.package }}/tsconfig.json
+      - run: npx playwright install --with-deps chromium firefox webkit
+      - run: npx playwright test -c integrations/${{ matrix.package }}/playwright.config.ts
+      - name: Upload the Playwright report on failure
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: playwright-report-${{ matrix.package }}
+          path: integrations/${{ matrix.package }}/playwright-report
+          retention-days: 7
+
   gate:
     name: CI gate
     if: always()
-    needs: [quality, tests, minimal-extensions, coverage, mutation, consumer, docker, js, browser, js-consumer, conformance]
+    needs: [quality, tests, minimal-extensions, coverage, mutation, consumer, docker, js, browser, js-consumer, conformance, integrations, integrations-browser]
     runs-on: ubuntu-24.04
     steps:
       - name: Every required job succeeded

@@ -16,6 +16,7 @@
     "typecheck": "npm run typecheck --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
     "test:browser": "npm run test:browser --workspace packages/player",
+    "sync:bundles": "node tools/sync-player-bundle.mjs",
     "lint": "eslint . && prettier --check .",
     "format": "prettier --write ."
   },

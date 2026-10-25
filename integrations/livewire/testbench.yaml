@@ -1,0 +1,15 @@
+providers:
+  - Livewire\LivewireServiceProvider
+  - ImagePuzzle\Livewire\ImagePuzzleServiceProvider
+  - Workbench\App\Providers\WorkbenchServiceProvider
+
+env:
+  - APP_KEY="base64:aW1hZ2UtcHV6emxlLXdvcmtiZW5jaC1kZW1vLWtleSE="  # public demo key for the local workbench only
+  - SESSION_DRIVER=file
+  - CACHE_STORE=file
+
+workbench:
+  start: '/'
+  discovers:
+    web: true
+    views: true
