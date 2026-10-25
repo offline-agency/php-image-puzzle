@@ -362,6 +362,34 @@ test('exportParallel with 2 workers when pcntl available produces correct manife
     @rmdir($outDir);
 })->skip(!extension_loaded('pcntl') || PHP_SAPI !== 'cli', 'pcntl and CLI required');
 
+test('exportParallel runs onPieceBeforeSave in the workers and the other hooks in the parent', function (): void {
+    $outDir = getTempDir();
+    $before = 0;
+    $after = [];
+    $manifests = 0;
+    $options = (new ExportOptions())
+        ->withOnPieceBeforeSave(function () use (&$before): void {
+            $before++;
+        })
+        ->withOnPieceAfterSave(function (\ImagePuzzle\Piece $piece, string $path) use (&$after): void {
+            $after[] = is_file($path) ? getmypid() : -1;
+        })
+        ->withOnManifestBuild(function (array $manifest) use (&$manifests): array {
+            $manifests++;
+
+            return $manifest;
+        });
+    $result = (new \ImagePuzzle\Exporter())->exportParallel(__DIR__ . '/fixtures/sample.png', $outDir, 2, 2, $options, 2);
+    expect($result->getManifest()['pieces'])->toHaveCount(4)
+        ->and($before)->toBe(0, 'onPieceBeforeSave ran in the workers, so the parent saw no increments')
+        ->and($after)->toBe(array_fill(0, 4, getmypid()))
+        ->and($manifests)->toBe(1);
+    foreach ($result->getFiles() as $f) {
+        @unlink($f);
+    }
+    @rmdir($outDir);
+})->skip(!extension_loaded('pcntl') || PHP_SAPI !== 'cli', 'pcntl and CLI required');
+
 test('exportParallel when worker throws onPieceBeforeSave throws', function (): void {
     if (!extension_loaded('pcntl') || PHP_SAPI !== 'cli') {
         expect(true)->toBeTrue();

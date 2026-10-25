@@ -69,8 +69,10 @@ Fluent methods: `withFormat()`, `withQuality()`, `withFilenamePattern()`,
 | `onPieceAfterSave` | `(Piece $piece, string $filepath): void` | After the piece is published at its final path |
 | `onManifestBuild` | `(array $manifest): array` | Before the manifest is written; only its `extensions` object may change |
 
-In parallel export, piece hooks run in the workers and `onManifestBuild` runs
-once in the parent process.
+In parallel export, `onPieceBeforeSave` runs inside the worker processes, so
+its in-memory side effects (counters, collected objects, open connections) are
+not visible to the parent. `onPieceAfterSave` and `onManifestBuild` run in the
+parent process after publication.
 
 ### Base directory
 
