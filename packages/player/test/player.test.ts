@@ -208,7 +208,8 @@ describe('createPlayer', () => {
   });
 
   it('rejects incompatible imported state without touching the game', async () => {
-    const { player } = mount();
+    // A frozen clock: exportState() includes elapsedMs, which would otherwise tick between the two reads.
+    const { player } = mount({ clock: manualClock().now });
     await player.load(definitionDocument('swap'));
     player.dispatchAction(player.engine.legalActions()[0]);
     const before = player.exportState();
