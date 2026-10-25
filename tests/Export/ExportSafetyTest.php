@@ -7,6 +7,7 @@ use ImagePuzzle\Exception\ExportFailedException;
 use ImagePuzzle\ExportOptions;
 use ImagePuzzle\PuzzleGenerator;
 use ImagePuzzle\Tests\Support\Fixtures;
+use ImagePuzzle\Tests\Support\Workspace;
 use ImagePuzzle\Tests\Support\ManifestAssertions;
 
 /*
@@ -15,33 +16,33 @@ use ImagePuzzle\Tests\Support\ManifestAssertions;
  */
 
 beforeEach(function (): void {
-    $this->dir = Fixtures::tempDir();
-    $this->puzzle = (new PuzzleGenerator(new JigsawStyle()))->generateFromGd(Fixtures::coordinateImage(60, 40), 2, 3);
+    Workspace::$dir = Fixtures::tempDir();
+    Workspace::$puzzle = (new PuzzleGenerator(new JigsawStyle()))->generateFromGd(Fixtures::coordinateImage(60, 40), 2, 3);
 });
 
 afterEach(function (): void {
-    Fixtures::removeDir($this->dir);
+    Fixtures::removeDir(Workspace::$dir);
 });
 
 test('duplicate destinations are rejected with no writes', function (string $pattern): void {
-    $out = $this->dir . '/out';
-    expect(fn () => $this->puzzle->export($out, (new ExportOptions())->withFilenamePattern($pattern)))
+    $out = Workspace::$dir . '/out';
+    expect(fn () => Workspace::$puzzle->export($out, (new ExportOptions())->withFilenamePattern($pattern)))
         ->toThrow(ExportFailedException::class);
     expect(file_exists($out))->toBeFalse();
 })->with(['same.png', 'piece_{row}.png', 'p_{col}.png']);
 
 test('case-insensitive duplicates and manifest collisions are rejected', function (): void {
-    $out = $this->dir . '/out';
-    $puzzle = (new PuzzleGenerator())->generateFromGd(imagecreatetruecolor(10, 10), 1, 1);
+    $out = Workspace::$dir . '/out';
+    $puzzle = (new PuzzleGenerator())->generateFromGd(Fixtures::canvas(10, 10), 1, 1);
     expect(fn () => $puzzle->export($out, new ExportOptions(filenamePattern: 'manifest.png', manifestFilename: 'MANIFEST.png.json')))
         ->not->toThrow(ExportFailedException::class);
-    expect(fn () => $puzzle->export($this->dir . '/b', new ExportOptions(filenamePattern: 'Piece.png', manifestFilename: 'piece.png')))
+    expect(fn () => $puzzle->export(Workspace::$dir . '/b', new ExportOptions(filenamePattern: 'Piece.png', manifestFilename: 'piece.png')))
         ->toThrow(\ImagePuzzle\Exception\InvalidArgumentException::class, '.json');
-    expect(fn () => $puzzle->export($this->dir . '/c', new ExportOptions(filenamePattern: '.image-puzzle-x.png')))
+    expect(fn () => $puzzle->export(Workspace::$dir . '/c', new ExportOptions(filenamePattern: '.image-puzzle-x.png')))
         ->toThrow(ExportFailedException::class, 'reserved');
-    expect(fn () => $puzzle->export($this->dir . '/d', new ExportOptions(filenamePattern: 'piece.gif')))
+    expect(fn () => $puzzle->export(Workspace::$dir . '/d', new ExportOptions(filenamePattern: 'piece.gif')))
         ->toThrow(ExportFailedException::class, 'does not match');
-    expect(file_exists($this->dir . '/c') ? ManifestAssertions::snapshot($this->dir . '/c') : [])->toBe([]);
+    expect(file_exists(Workspace::$dir . '/c') ? ManifestAssertions::snapshot(Workspace::$dir . '/c') : [])->toBe([]);
 });
 
 test('NUL and control characters in names are rejected', function (): void {
@@ -50,17 +51,17 @@ test('NUL and control characters in names are rejected', function (): void {
 });
 
 test('outside-base targets are rejected before any directory is created', function (string $relative): void {
-    $base = $this->dir . '/base';
+    $base = Workspace::$dir . '/base';
     mkdir($base);
-    $sentinelDir = $this->dir . '/outside';
+    $sentinelDir = Workspace::$dir . '/outside';
     mkdir($sentinelDir);
     file_put_contents($sentinelDir . '/sentinel.txt', 'keep');
-    $before = ManifestAssertions::snapshot($this->dir);
+    $before = ManifestAssertions::snapshot(Workspace::$dir);
 
-    expect(fn () => $this->puzzle->export($base . '/' . $relative, new ExportOptions(), $base))
+    expect(fn () => Workspace::$puzzle->export($base . '/' . $relative, new ExportOptions(), $base))
         ->toThrow(ExportFailedException::class);
-    expect(ManifestAssertions::snapshot($this->dir))->toBe($before);
-    expect(is_dir($this->dir . '/new-outside'))->toBeFalse();
+    expect(ManifestAssertions::snapshot(Workspace::$dir))->toBe($before);
+    expect(is_dir(Workspace::$dir . '/new-outside'))->toBeFalse();
 })->with([
     'parent traversal' => ['../new-outside'],
     'nested traversal' => ['a/../../new-outside'],
@@ -69,65 +70,65 @@ test('outside-base targets are rejected before any directory is created', functi
 ]);
 
 test('symlinked directories pointing outside the base are rejected', function (): void {
-    $base = $this->dir . '/base';
+    $base = Workspace::$dir . '/base';
     mkdir($base);
-    mkdir($this->dir . '/outside');
-    file_put_contents($this->dir . '/outside/sentinel.txt', 'keep');
-    symlink($this->dir . '/outside', $base . '/link');
-    $before = ManifestAssertions::snapshot($this->dir . '/outside');
+    mkdir(Workspace::$dir . '/outside');
+    file_put_contents(Workspace::$dir . '/outside/sentinel.txt', 'keep');
+    symlink(Workspace::$dir . '/outside', $base . '/link');
+    $before = ManifestAssertions::snapshot(Workspace::$dir . '/outside');
 
-    expect(fn () => $this->puzzle->export($base . '/link', new ExportOptions(), $base))->toThrow(ExportFailedException::class, 'inside base');
-    expect(fn () => $this->puzzle->export($base . '/link/deeper', new ExportOptions(), $base))->toThrow(ExportFailedException::class, 'inside base');
-    expect(ManifestAssertions::snapshot($this->dir . '/outside'))->toBe($before);
-    expect(is_dir($this->dir . '/outside/deeper'))->toBeFalse();
+    expect(fn () => Workspace::$puzzle->export($base . '/link', new ExportOptions(), $base))->toThrow(ExportFailedException::class, 'inside base');
+    expect(fn () => Workspace::$puzzle->export($base . '/link/deeper', new ExportOptions(), $base))->toThrow(ExportFailedException::class, 'inside base');
+    expect(ManifestAssertions::snapshot(Workspace::$dir . '/outside'))->toBe($before);
+    expect(is_dir(Workspace::$dir . '/outside/deeper'))->toBeFalse();
 })->skip(PHP_OS_FAMILY === 'Windows', 'symlink semantics differ on Windows');
 
 test('nested paths inside the base are created', function (): void {
-    $base = $this->dir . '/base';
+    $base = Workspace::$dir . '/base';
     mkdir($base);
-    $result = $this->puzzle->export($base . '/a/b/c', new ExportOptions(), $base);
+    $result = Workspace::$puzzle->export($base . '/a/b/c', new ExportOptions(), $base);
     ManifestAssertions::assertConsistent($result->getManifestPath());
     expect($result->getOutputDirectory())->toBe($base . '/a/b/c');
 });
 
 test('pre-existing destination symlinks are rejected, never followed', function (): void {
-    $out = $this->dir . '/out';
+    $out = Workspace::$dir . '/out';
     mkdir($out);
-    file_put_contents($this->dir . '/victim.png', 'victim');
-    symlink($this->dir . '/victim.png', $out . '/piece_0_0.png');
-    expect(fn () => $this->puzzle->export($out, new ExportOptions()))->toThrow(ExportFailedException::class, 'symbolic link');
-    expect(file_get_contents($this->dir . '/victim.png'))->toBe('victim');
+    file_put_contents(Workspace::$dir . '/victim.png', 'victim');
+    symlink(Workspace::$dir . '/victim.png', $out . '/piece_0_0.png');
+    expect(fn () => Workspace::$puzzle->export($out, new ExportOptions()))->toThrow(ExportFailedException::class, 'symbolic link');
+    expect(file_get_contents(Workspace::$dir . '/victim.png'))->toBe('victim');
 })->skip(PHP_OS_FAMILY === 'Windows', 'symlink semantics differ on Windows');
 
 test('overwrite=false keeps valid existing pieces and rewrites the manifest', function (): void {
-    $out = $this->dir . '/out';
-    $first = $this->puzzle->export($out, new ExportOptions());
+    $out = Workspace::$dir . '/out';
+    $first = Workspace::$puzzle->export($out, new ExportOptions());
     $piece = $out . '/piece_0_1.png';
-    $size = getimagesize($piece);
-    $sentinel = imagecreatetruecolor($size[0], $size[1]);
-    imagefill($sentinel, 0, 0, imagecolorallocate($sentinel, 9, 9, 9));
+    [$width, $height] = Fixtures::size($piece);
+    $sentinel = Fixtures::canvas($width, $height);
+    imagefill($sentinel, 0, 0, Fixtures::color($sentinel, 9, 9, 9));
     imagepng($sentinel, $piece);
     $sentinelHash = sha1_file($piece);
     unlink($first->getManifestPath());
 
-    $result = $this->puzzle->export($out, new ExportOptions(overwrite: false));
+    $result = Workspace::$puzzle->export($out, new ExportOptions(overwrite: false));
     expect(sha1_file($piece))->toBe($sentinelHash);
     expect($result->getReusedFiles())->toHaveCount(6);
     ManifestAssertions::assertConsistent($result->getManifestPath());
 });
 
 test('overwrite=false rejects stale files with other dimensions before writing', function (): void {
-    $out = $this->dir . '/out';
+    $out = Workspace::$dir . '/out';
     mkdir($out);
-    imagepng(imagecreatetruecolor(3, 3), $out . '/piece_1_2.png');
+    imagepng(Fixtures::canvas(3, 3), $out . '/piece_1_2.png');
     $before = ManifestAssertions::snapshot($out);
-    expect(fn () => $this->puzzle->export($out, new ExportOptions(overwrite: false)))->toThrow(ExportFailedException::class, 'Existing output cannot be used');
+    expect(fn () => Workspace::$puzzle->export($out, new ExportOptions(overwrite: false)))->toThrow(ExportFailedException::class, 'Existing output cannot be used');
     expect(ManifestAssertions::snapshot($out))->toBe($before);
 });
 
 test('a failure while staging leaves the previous export untouched', function (): void {
-    $out = $this->dir . '/out';
-    $this->puzzle->export($out, new ExportOptions());
+    $out = Workspace::$dir . '/out';
+    Workspace::$puzzle->export($out, new ExportOptions());
     $before = ManifestAssertions::snapshot($out);
     $count = 0;
     $other = (new PuzzleGenerator(new JigsawStyle()))->generateFromGd(Fixtures::coordinateImage(90, 60), 2, 3);
@@ -141,8 +142,8 @@ test('a failure while staging leaves the previous export untouched', function ()
 });
 
 test('a manifest failure leaves the previous export untouched', function (): void {
-    $out = $this->dir . '/out';
-    $this->puzzle->export($out, new ExportOptions());
+    $out = Workspace::$dir . '/out';
+    Workspace::$puzzle->export($out, new ExportOptions());
     $before = ManifestAssertions::snapshot($out);
     $other = (new PuzzleGenerator())->generateFromGd(Fixtures::coordinateImage(90, 60), 2, 3);
     expect(fn () => $other->export($out, new ExportOptions(onManifestBuild: static fn (array $m): array => ['extensions' => ['x' => NAN]] + $m)))
@@ -151,8 +152,8 @@ test('a manifest failure leaves the previous export untouched', function (): voi
 });
 
 test('a publication failure leaves no manifest (documented incomplete state) and a re-run recovers', function (): void {
-    $out = $this->dir . '/out';
-    $this->puzzle->export($out, new ExportOptions());
+    $out = Workspace::$dir . '/out';
+    Workspace::$puzzle->export($out, new ExportOptions());
     // Pieces are published in row/col order; a callback after the first publish
     // turns the next destination into a directory so its rename fails.
     $options = new ExportOptions(onPieceAfterSave: static function ($piece, string $path) use ($out): void {
@@ -161,55 +162,55 @@ test('a publication failure leaves no manifest (documented incomplete state) and
             mkdir($out . '/piece_0_1.png');
         }
     });
-    expect(fn () => $this->puzzle->export($out, $options))->toThrow(ExportFailedException::class);
+    expect(fn () => Workspace::$puzzle->export($out, $options))->toThrow(ExportFailedException::class);
     expect(file_exists($out . '/manifest.json'))->toBeFalse();
-    expect(glob($out . '/.image-puzzle-*') ?: [])->toBe([]);
+    expect(Fixtures::glob($out . '/.image-puzzle-*'))->toBe([]);
 
     rmdir($out . '/piece_0_1.png');
-    $result = $this->puzzle->export($out, new ExportOptions());
+    $result = Workspace::$puzzle->export($out, new ExportOptions());
     ManifestAssertions::assertConsistent($result->getManifestPath());
 });
 
 test('generation mode publishes an all-or-nothing view through current.json', function (): void {
-    $out = $this->dir . '/out';
+    $out = Workspace::$dir . '/out';
     $options = new ExportOptions(publishMode: ExportOptions::PUBLISH_GENERATION);
-    $first = $this->puzzle->export($out, $options);
-    $pointer = json_decode((string) file_get_contents($out . '/current.json'), true);
+    $first = Workspace::$puzzle->export($out, $options);
+    $pointer = Fixtures::json($out . '/current.json');
     expect($pointer['generation'])->toBe($first->getGenerationId());
-    ManifestAssertions::assertConsistent($out . '/' . $pointer['manifest']);
+    ManifestAssertions::assertConsistent($out . '/' . Fixtures::str($pointer, 'manifest'));
 
     $count = 0;
-    expect(fn () => $this->puzzle->export($out, $options->withOnPieceBeforeSave(static function () use (&$count): void {
+    expect(fn () => Workspace::$puzzle->export($out, $options->withOnPieceBeforeSave(static function () use (&$count): void {
         if (++$count === 2) {
             throw new RuntimeException('boom');
         }
     })))->toThrow(RuntimeException::class);
     // The failed generation is removed; current.json still points to the first one.
-    expect(json_decode((string) file_get_contents($out . '/current.json'), true))->toBe($pointer);
-    expect(glob($out . '/generations/*') ?: [])->toHaveCount(1);
+    expect(Fixtures::json($out . '/current.json'))->toBe($pointer);
+    expect(Fixtures::glob($out . '/generations/*'))->toHaveCount(1);
 
     sleep(1);
-    $second = $this->puzzle->export($out, $options);
-    expect(\ImagePuzzle\Export\ExportSession::currentGenerationDirectory(realpath($out)))->toEndWith((string) $second->getGenerationId());
-    expect(\ImagePuzzle\Export\ExportSession::pruneGenerations(realpath($out), 1))->toBe([$first->getGenerationId()]);
+    $second = Workspace::$puzzle->export($out, $options);
+    expect($second->getGenerationId())->toBeString();
+    expect(\ImagePuzzle\Export\ExportSession::currentGenerationDirectory(Fixtures::realpath($out)))->toBe(Fixtures::realpath($out) . '/generations/' . $second->getGenerationId());
+    expect(\ImagePuzzle\Export\ExportSession::pruneGenerations(Fixtures::realpath($out), 1))->toBe([$first->getGenerationId()]);
 });
 
 test('JPEG export flattens transparency onto the configured background', function (): void {
-    $out = $this->dir . '/out';
-    $image = imagecreatetruecolor(20, 20);
+    $out = Workspace::$dir . '/out';
+    $image = Fixtures::canvas(20, 20);
     imagealphablending($image, false);
-    imagefill($image, 0, 0, imagecolorallocatealpha($image, 0, 0, 0, 127));
+    imagefill($image, 0, 0, Fixtures::color($image, 0, 0, 0, 127));
     $puzzle = (new PuzzleGenerator())->generateFromGd($image, 1, 1);
     $result = $puzzle->export($out, new ExportOptions(format: ExportOptions::FORMAT_JPEG, jpegBackground: [255, 0, 0]));
-    $jpg = imagecreatefromjpeg($result->getFiles()[0]);
-    $c = imagecolorat($jpg, 10, 10);
+    $c = Fixtures::pixel(Fixtures::load($result->getFiles()[0]), 10, 10);
     expect(($c >> 16) & 0xFF)->toBeGreaterThan(240)->and(($c >> 8) & 0xFF)->toBeLessThan(15);
     expect((new ExportOptions())->withFormat(ExportOptions::FORMAT_JPEG)->getQuality())->toBe(85);
 });
 
 test('WebP export when the encoder is available', function (): void {
-    $out = $this->dir . '/out';
-    $result = $this->puzzle->export($out, new ExportOptions(format: ExportOptions::FORMAT_WEBP));
+    $out = Workspace::$dir . '/out';
+    $result = Workspace::$puzzle->export($out, new ExportOptions(format: ExportOptions::FORMAT_WEBP));
     expect($result->getFiles()[0])->toEndWith('.webp');
     ManifestAssertions::assertConsistent($result->getManifestPath());
 })->skip(!(\ImagePuzzle\Export\ImageEncoder::capabilities()['webp']), 'GD built without WebP');

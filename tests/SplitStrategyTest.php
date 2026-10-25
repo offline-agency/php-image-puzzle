@@ -58,10 +58,9 @@ test('PuzzleGenerator with custom split strategy uses custom segments', function
     $customStrategy = new class implements DimensionSplitStrategy {
         public function split(int $totalSize, int $segmentCount): array
         {
-            $base = (int) floor($totalSize / $segmentCount);
-            $splits = array_fill(0, $segmentCount, $base);
-            $splits[$segmentCount - 1] += $totalSize - $base * $segmentCount;
-            return $splits;
+            $base = intdiv($totalSize, $segmentCount);
+
+            return [...array_fill(0, $segmentCount - 1, $base), $totalSize - $base * ($segmentCount - 1)];
         }
     };
     $generator = new PuzzleGenerator(null, null, null, $customStrategy);

@@ -54,7 +54,7 @@ test('composite applies whole side geometry: jigsaw horizontal and sinus vertica
 
 test('flat composite equals rectangular slicing', function (): void {
     $style = new CompositeEdgeStyle(new NoEdgeStyle(), new LineStyle(), new LineStyle(), new NoEdgeStyle());
-    $puzzle = (new PuzzleGenerator($style))->generateFromGd(imagecreatetruecolor(40, 40), 2, 2);
+    $puzzle = (new PuzzleGenerator($style))->generateFromGd(Fixtures::canvas(40, 40), 2, 2);
     foreach ($puzzle->getPieces() as $piece) {
         expect($piece->getRenderedBounds()->toArray())->toBe(['x' => $piece->getX(), 'y' => $piece->getY(), 'width' => 20, 'height' => 20]);
     }

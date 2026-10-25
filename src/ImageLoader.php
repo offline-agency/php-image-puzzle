@@ -255,8 +255,16 @@ final class ImageLoader implements ImageLoaderInterface
             return null;
         }
         $little = substr($tiff, 0, 2) === 'II';
-        $u16 = static fn (int $o): int => strlen($tiff) >= $o + 2 ? (int) unpack($little ? 'v' : 'n', $tiff, $o)[1] : 0;
-        $u32 = static fn (int $o): int => strlen($tiff) >= $o + 4 ? (int) unpack($little ? 'V' : 'N', $tiff, $o)[1] : 0;
+        $read = static function (string $format, int $size, int $o) use ($tiff): int {
+            if ($o < 0 || strlen($tiff) < $o + $size) {
+                return 0;
+            }
+            $value = unpack($format, $tiff, $o);
+
+            return is_array($value) && is_int($value[1] ?? null) ? $value[1] : 0;
+        };
+        $u16 = static fn (int $o): int => $read($little ? 'v' : 'n', 2, $o);
+        $u32 = static fn (int $o): int => $read($little ? 'V' : 'N', 4, $o);
         $ifd = $u32(4);
         $count = $u16($ifd);
         for ($i = 0; $i < $count; $i++) {

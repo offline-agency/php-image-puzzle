@@ -14,25 +14,38 @@ use ImagePuzzle\Tools\SchemaValidator;
 
 require dirname(__DIR__) . '/vendor/autoload.php';
 
+/**
+ * @param array<mixed> $errors
+ */
+function printReport(string $subject, array $errors): bool
+{
+    if ($errors === []) {
+        echo "ok    {$subject}\n";
+
+        return true;
+    }
+    echo "FAIL  {$subject}\n";
+    foreach ($errors as $error) {
+        echo '      ' . (is_string($error) ? $error : json_encode($error)) . "\n";
+    }
+
+    return false;
+}
+
 $root = dirname(__DIR__);
 $validator = SchemaValidator::forRepository();
 $failures = 0;
 $report = static function (string $subject, array $errors) use (&$failures): void {
-    if ($errors === []) {
-        echo "ok    {$subject}\n";
-
+    if (printReport($subject, $errors)) {
         return;
     }
     $failures++;
-    echo "FAIL  {$subject}\n";
-    foreach ($errors as $error) {
-        echo "      {$error}\n";
-    }
 };
 
 $report('schema files ($id and syntax)', $validator->checkSchemaFiles());
 
-foreach (glob($root . '/config/*.json') ?: [] as $file) {
+$configs = glob($root . '/config/*.json');
+foreach ($configs === false ? [] : $configs as $file) {
     $report('config/' . basename($file), $validator->validateFile($file));
 }
 $report('tests/fixtures/config/legacy-v1.json (v1)', $validator->validateFile($root . '/tests/fixtures/config/legacy-v1.json', 'v1/puzzle-config.schema.json'));
@@ -68,6 +81,9 @@ try {
 } finally {
     $it = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($tmp, FilesystemIterator::SKIP_DOTS), RecursiveIteratorIterator::CHILD_FIRST);
     foreach ($it as $entry) {
+        if (!$entry instanceof SplFileInfo) {
+            continue;
+        }
         $entry->isDir() && !$entry->isLink() ? rmdir($entry->getPathname()) : unlink($entry->getPathname());
     }
     rmdir($tmp);

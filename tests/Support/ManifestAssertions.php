@@ -17,22 +17,18 @@ final class ManifestAssertions
      */
     public static function assertConsistent(string $manifestPath): array
     {
-        $manifest = json_decode((string) file_get_contents($manifestPath), true, 64, JSON_THROW_ON_ERROR);
-        if (!is_array($manifest) || !is_array($manifest['pieces'] ?? null)) {
-            throw new RuntimeException('Manifest has no pieces');
-        }
+        $manifest = Fixtures::json($manifestPath);
+        $pieces = Fixtures::pieces($manifest);
         $dir = dirname($manifestPath);
-        $expected = (int) $manifest['rows'] * (int) $manifest['cols'];
-        if (count($manifest['pieces']) !== $expected) {
+        $geometry = is_array($manifest['geometry'] ?? null) ? $manifest['geometry'] : [];
+        // Only rectangular boards hold exactly rows x cols pieces.
+        if (($geometry['topology'] ?? 'rect') === 'rect' && count($pieces) !== Fixtures::int($manifest, 'rows') * Fixtures::int($manifest, 'cols')) {
             throw new RuntimeException('Manifest piece count mismatch');
         }
-        foreach ($manifest['pieces'] as $piece) {
+        foreach ($pieces as $piece) {
             $file = $dir . DIRECTORY_SEPARATOR . $piece['filename'];
-            $size = @getimagesize($file);
-            if ($size === false) {
-                throw new RuntimeException("Undecodable piece {$file}");
-            }
-            if ($size[0] !== $piece['rendered']['width'] || $size[1] !== $piece['rendered']['height']) {
+            [$width, $height] = Fixtures::size($file);
+            if ($width !== $piece['rendered']['width'] || $height !== $piece['rendered']['height']) {
                 throw new RuntimeException("Piece {$file} has wrong dimensions");
             }
         }
@@ -51,9 +47,12 @@ final class ManifestAssertions
         }
         $it = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($dir, \FilesystemIterator::SKIP_DOTS));
         foreach ($it as $file) {
-            /** @var \SplFileInfo $file */
-            if ($file->isFile()) {
-                $out[substr($file->getPathname(), strlen($dir) + 1)] = (string) sha1_file($file->getPathname());
+            if ($file instanceof \SplFileInfo && $file->isFile()) {
+                $hash = sha1_file($file->getPathname());
+                if ($hash === false) {
+                    throw new RuntimeException("Cannot hash {$file->getPathname()}");
+                }
+                $out[substr($file->getPathname(), strlen($dir) + 1)] = $hash;
             }
         }
         ksort($out);

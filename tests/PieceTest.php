@@ -5,6 +5,7 @@ declare(strict_types=1);
 use ImagePuzzle\EdgeStyle\NoEdgeStyle;
 use ImagePuzzle\Piece;
 use ImagePuzzle\PuzzleGenerator;
+use ImagePuzzle\Tests\Support\Fixtures;
 
 test('piece coordinates and dimensions', function (): void {
     $generator = new PuzzleGenerator();
@@ -61,7 +62,7 @@ test('last piece in grid has remainder dimensions when source not divisible', fu
 });
 
 test('toGdImage renders the rendered bounds of the shape', function (): void {
-    $sourceImage = imagecreatefrompng(__DIR__ . '/fixtures/sample.png');
+    $sourceImage = Fixtures::load(__DIR__ . '/fixtures/sample.png');
     expect($sourceImage)->not->toBeFalse();
     $shape = new \ImagePuzzle\Geometry\PieceShape(
         'r0c0',

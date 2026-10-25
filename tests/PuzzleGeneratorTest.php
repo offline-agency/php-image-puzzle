@@ -6,6 +6,7 @@ use ImagePuzzle\Exception\InvalidArgumentException;
 use ImagePuzzle\Exception\UnsupportedImageTypeException;
 use ImagePuzzle\Puzzle;
 use ImagePuzzle\PuzzleGenerator;
+use ImagePuzzle\Tests\Support\Fixtures;
 
 test('generateFromFile produces correct number of pieces', function (): void {
     $generator = new PuzzleGenerator();
@@ -94,7 +95,7 @@ test('getPiece out of range throws', function (): void {
 });
 
 test('generateFromGd produces puzzle from GdImage', function (): void {
-    $image = imagecreatefrompng(__DIR__ . '/fixtures/sample.png');
+    $image = Fixtures::load(__DIR__ . '/fixtures/sample.png');
     expect($image)->not->toBeFalse();
     $expectedWidth = imagesx($image);
     $expectedHeight = imagesy($image);
@@ -112,7 +113,7 @@ test('generateFromGd produces puzzle from GdImage', function (): void {
 });
 
 test('generateFromGd with invalid rows throws', function (): void {
-    $image = imagecreatefrompng(__DIR__ . '/fixtures/sample.png');
+    $image = Fixtures::load(__DIR__ . '/fixtures/sample.png');
     expect($image)->not->toBeFalse();
     $generator = new PuzzleGenerator();
     expect(fn () => $generator->generateFromGd($image, 0, 2))
@@ -120,7 +121,7 @@ test('generateFromGd with invalid rows throws', function (): void {
 });
 
 test('generateFromGd with invalid cols throws', function (): void {
-    $image = imagecreatefrompng(__DIR__ . '/fixtures/sample.png');
+    $image = Fixtures::load(__DIR__ . '/fixtures/sample.png');
     expect($image)->not->toBeFalse();
     $generator = new PuzzleGenerator();
     expect(fn () => $generator->generateFromGd($image, 2, 0))
@@ -161,7 +162,7 @@ test('generateFromFile 3x4 grid produces 12 pieces', function (): void {
 });
 
 test('generatePiecesFromGd returns only requested pieces', function (): void {
-    $image = imagecreatefrompng(__DIR__ . '/fixtures/sample.png');
+    $image = Fixtures::load(__DIR__ . '/fixtures/sample.png');
     expect($image)->not->toBeFalse();
     $generator = new PuzzleGenerator();
     $pieces = $generator->generatePiecesFromGd($image, 2, 2, [[0, 0], [1, 1]]);
@@ -196,7 +197,7 @@ test('generatePiecesFromFile with unreadable path throws', function (): void {
 });
 
 test('generatePiecesFromGd with empty indices returns empty array', function (): void {
-    $image = imagecreatefrompng(__DIR__ . '/fixtures/sample.png');
+    $image = Fixtures::load(__DIR__ . '/fixtures/sample.png');
     expect($image)->not->toBeFalse();
     $generator = new PuzzleGenerator();
     $pieces = $generator->generatePiecesFromGd($image, 2, 2, []);
@@ -251,7 +252,7 @@ test('generateAndExport produces same result as three-step flow', function (): v
     expect($resultOneShot->getFiles())->toHaveCount(count($resultThree->getFiles()));
     expect($resultOneShot->getManifest()['rows'])->toBe($resultThree->getManifest()['rows']);
     expect($resultOneShot->getManifest()['cols'])->toBe($resultThree->getManifest()['cols']);
-    expect($resultOneShot->getManifest()['pieces'])->toHaveCount(count($resultThree->getManifest()['pieces']));
+    expect(Fixtures::pieces($resultOneShot->getManifest()))->toHaveCount(count(Fixtures::pieces($resultThree->getManifest())));
     foreach ($resultOneShot->getFiles() as $f) {
         @unlink($f);
     }

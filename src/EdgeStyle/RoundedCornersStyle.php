@@ -27,7 +27,7 @@ final class RoundedCornersStyle implements EdgeStyleInterface
     /** Upper bound of distinct radius masks cached per process (FIFO eviction). */
     public const MAX_CACHED_MASKS = 32;
 
-    /** @var array<string, list<array{0: int, 1: int}>> effective radius -> removed top-left pixels */
+    /** @var array<array-key, list<array{0: int, 1: int}>> effective radius ("%.1f") -> removed top-left pixels */
     private static array $maskCache = [];
 
     public function __construct(
@@ -71,16 +71,15 @@ final class RoundedCornersStyle implements EdgeStyleInterface
             return $piece;
         }
 
-        $previousBlending = imagealphablending($piece, false);
+        // Alpha blending stays disabled, as PieceRenderer leaves it: GD offers
+        // no way to read the previous state back.
+        imagealphablending($piece, false);
         imagesavealpha($piece, true);
         foreach (self::mask($r) as [$px, $py]) {
             imagesetpixel($piece, $px, $py, $transparent);
             imagesetpixel($piece, $width - 1 - $px, $py, $transparent);
             imagesetpixel($piece, $px, $height - 1 - $py, $transparent);
             imagesetpixel($piece, $width - 1 - $px, $height - 1 - $py, $transparent);
-        }
-        if ($previousBlending) {
-            imagealphablending($piece, true);
         }
 
         return $piece;
@@ -115,7 +114,7 @@ final class RoundedCornersStyle implements EdgeStyleInterface
         }
 
         if (count(self::$maskCache) >= self::MAX_CACHED_MASKS) {
-            array_shift(self::$maskCache);
+            unset(self::$maskCache[array_key_first(self::$maskCache)]);
         }
         self::$maskCache[$key] = $removed;
 

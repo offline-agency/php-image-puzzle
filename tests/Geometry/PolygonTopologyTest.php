@@ -55,6 +55,9 @@ function topologyPieces(Puzzle $puzzle): array
     return iterator_to_array($puzzle->getPieces(), false);
 }
 
+/**
+ * @return array<string, array{0: TopologyInterface, 1: EdgeStyleInterface}>
+ */
 function topologyCases(): array
 {
     $cases = [];
@@ -67,8 +70,16 @@ function topologyCases(): array
     return $cases;
 }
 
+/**
+ * @param list<array{0: float, 1: float}> $points
+ */
+function joinPoints(array $points): string
+{
+    return implode(';', array_map(static fn (array $p): string => $p[0] . ',' . $p[1], $points));
+}
+
 test('every pixel centre belongs to exactly one piece', function (TopologyInterface $topology, EdgeStyleInterface $style, int $rows, int $cols, int $w, int $h): void {
-    $puzzle = (new PuzzleGenerator($style, geometry: new GeometryOptions(7, 4, $topology)))->generateFromGd(imagecreatetruecolor($w, $h), $rows, $cols);
+    $puzzle = (new PuzzleGenerator($style, geometry: new GeometryOptions(7, 4, $topology)))->generateFromGd(Fixtures::canvas($w, $h), $rows, $cols);
     $pieces = topologyPieces($puzzle);
     for ($y = 0; $y < $h; $y++) {
         for ($x = 0; $x < $w; $x++) {
@@ -121,10 +132,10 @@ test('every internal boundary is shared by exactly two cells in opposite directi
 
 test('shared boundaries are exact complements and outlines are simple', function (TopologyInterface $topology, EdgeStyleInterface $style): void {
     $gen = new PuzzleGenerator($style, geometry: new GeometryOptions(3, 4, $topology));
-    $puzzle = $gen->generateFromGd(imagecreatetruecolor(130, 100), 3, 3);
+    $puzzle = $gen->generateFromGd(Fixtures::canvas(130, 100), 3, 3);
     $layout = $gen->layout(130, 100, 3, 3);
     $builder = new ShapeBuilder($layout, $style instanceof BoundaryProfileProvider ? $style : new NoEdgeStyle(), 3);
-    $join = static fn (array $points): string => implode(';', array_map(static fn (array $p): string => $p[0] . ',' . $p[1], $points));
+    $join = joinPoints(...);
 
     foreach ($layout->edges as $edge) {
         if ($edge->isExternal()) {
@@ -190,7 +201,7 @@ test('exact mode reconstructs every source pixel with exactly one owner', functi
 })->with(topologyCases());
 
 test('subsets and repeated runs give identical outlines; border flags follow the layout', function (TopologyInterface $topology): void {
-    $image = imagecreatetruecolor(120, 100);
+    $image = Fixtures::canvas(120, 100);
     $gen = new PuzzleGenerator(new JigsawStyle(), geometry: new GeometryOptions(42, 4, $topology));
     $full = [];
     $borders = 0;
@@ -210,8 +221,8 @@ test('subsets and repeated runs give identical outlines; border flags follow the
 test('indices outside a ragged row are rejected', function (): void {
     $gen = new PuzzleGenerator(new JigsawStyle(), geometry: new GeometryOptions(1, 4, new HexagonalTopology()));
     // Even rows hold cols + 1 cells, odd rows cols cells.
-    expect($gen->generatePiecesFromGd(imagecreatetruecolor(90, 90), 3, 3, [[0, 3]]))->toHaveCount(1);
-    expect(fn () => $gen->generatePiecesFromGd(imagecreatetruecolor(90, 90), 3, 3, [[1, 3]]))
+    expect($gen->generatePiecesFromGd(Fixtures::canvas(90, 90), 3, 3, [[0, 3]]))->toHaveCount(1);
+    expect(fn () => $gen->generatePiecesFromGd(Fixtures::canvas(90, 90), 3, 3, [[1, 3]]))
         ->toThrow(InvalidArgumentException::class, 'not a cell of this hex board');
 });
 
@@ -227,11 +238,11 @@ test('invalid board requests are rejected before rendering', function (): void {
     expect(fn () => (new HexagonalTopology())->layout(100, 100, 3, 3, $split))->toThrow(InvalidArgumentException::class, 'rectangular boards only');
     // Composite styles pick profiles by horizontal/vertical orientation only.
     $composite = new CompositeEdgeStyle(new JigsawStyle(), new ArcStyle(), new JigsawStyle(), new ArcStyle());
-    expect(fn () => (new PuzzleGenerator($composite, geometry: new GeometryOptions(1, 4, new TriangularTopology())))->generateFromGd(imagecreatetruecolor(60, 60), 2, 2))
+    expect(fn () => (new PuzzleGenerator($composite, geometry: new GeometryOptions(1, 4, new TriangularTopology())))->generateFromGd(Fixtures::canvas(60, 60), 2, 2))
         ->toThrow(InvalidArgumentException::class, 'rectangular boards only');
     // The piece budget counts real cells, not rows x cols.
     $limits = new ResourceLimits(maxPieces: 10);
-    expect(fn () => (new PuzzleGenerator(new JigsawStyle(), limits: $limits, geometry: new GeometryOptions(1, 4, new TriangularTopology())))->generateFromGd(imagecreatetruecolor(80, 80), 2, 3))
+    expect(fn () => (new PuzzleGenerator(new JigsawStyle(), limits: $limits, geometry: new GeometryOptions(1, 4, new TriangularTopology())))->generateFromGd(Fixtures::canvas(80, 80), 2, 3))
         ->toThrow(ResourceLimitExceededException::class, '14 pieces');
 });
 
@@ -241,9 +252,10 @@ test('a hexagonal export records its topology in the manifest', function (): voi
         $source = $dir . '/source.png';
         Fixtures::writePng(Fixtures::coordinateImage(90, 70), $source);
         $result = PuzzleGenerator::generateAndExport($source, $dir . '/out', 3, 2, new JigsawStyle(), new ExportOptions(), geometry: new GeometryOptions(5, 2, new HexagonalTopology()));
-        expect($result->getManifest()['geometry']['topology'])->toBe('hex');
-        expect($result->getManifest()['pieces'])->toHaveCount(3 + 2 + 3);
-        foreach ($result->getManifest()['pieces'] as $piece) {
+        expect($result->getManifest())->toMatchArray(['geometry' => ['version' => 2, 'topology' => 'hex', 'style' => 'jigsaw', 'seed' => 5, 'samples' => 2, 'compositing' => 'additive']]);
+        $pieces = Fixtures::pieces($result->getManifest());
+        expect($pieces)->toHaveCount(3 + 2 + 3);
+        foreach ($pieces as $piece) {
             expect(is_file($dir . '/out/' . $piece['filename']))->toBeTrue();
         }
     } finally {

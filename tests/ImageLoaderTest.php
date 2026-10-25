@@ -6,6 +6,7 @@ use ImagePuzzle\Exception\GdNotAvailableException;
 use ImagePuzzle\Exception\InvalidArgumentException;
 use ImagePuzzle\Exception\UnsupportedImageTypeException;
 use ImagePuzzle\ImageLoader;
+use ImagePuzzle\Tests\Support\Fixtures;
 
 $skipNoGd = !extension_loaded('gd');
 
@@ -17,10 +18,7 @@ test('loadFromFile loads valid PNG', function (): void {
     $h = imagesy($image);
     expect($w)->toBeGreaterThan(0);
     expect($h)->toBeGreaterThan(0);
-    $info = getimagesize(__DIR__ . '/fixtures/sample.png');
-    expect($info)->not->toBeFalse();
-    expect($w)->toBe($info[0]);
-    expect($h)->toBe($info[1]);
+    expect([$w, $h])->toBe(Fixtures::size(__DIR__ . '/fixtures/sample.png'));
 })->skip($skipNoGd, 'ext-gd required');
 
 test('loadFromFile loads valid JPEG', function (): void {

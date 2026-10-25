@@ -142,7 +142,7 @@ final class Exporter implements ExporterInterface
                 if (!@mkdir($workerDir, 0700)) {
                     throw new ExportFailedException('Failed to create worker result directory.');
                 }
-                $chunks = array_chunk($pending, (int) ceil(count($pending) / min($capacity, count($pending))));
+                $chunks = array_chunk($pending, max(1, (int) ceil(count($pending) / min($capacity, count($pending)))));
                 $this->runWorkers($chunks, $shapes, $sourcePath, $rows, $cols, $generator, $limits, $options, $session, $workerDir);
             }
 
@@ -176,7 +176,8 @@ final class Exporter implements ExporterInterface
             throw $e;
         } finally {
             if ($workerDir !== null && is_dir($workerDir)) {
-                foreach (glob($workerDir . DIRECTORY_SEPARATOR . '*') ?: [] as $file) {
+                $leftovers = glob($workerDir . DIRECTORY_SEPARATOR . '*');
+                foreach ($leftovers === false ? [] : $leftovers as $file) {
                     @unlink($file);
                 }
                 @rmdir($workerDir);

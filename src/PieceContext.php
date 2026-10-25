@@ -30,6 +30,9 @@ final class PieceContext
         private readonly ?string $id = null,
         private readonly ?bool $border = null,
     ) {
+        if ($width < 1 || $height < 1) {
+            throw new \ImagePuzzle\Exception\InvalidArgumentException("Piece context must be at least 1x1, got {$width}x{$height}.");
+        }
         $this->rendered = $rendered ?? new Bounds($x, $y, $width, $height);
     }
 

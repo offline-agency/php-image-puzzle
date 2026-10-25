@@ -101,7 +101,7 @@ final class ImageEncoder
     }
 
     /**
-     * @param array{0: int, 1: int, 2: int} $rgb
+     * @param array{0: int<0, 255>, 1: int<0, 255>, 2: int<0, 255>} $rgb
      */
     private static function flatten(GdImage $image, array $rgb): GdImage
     {

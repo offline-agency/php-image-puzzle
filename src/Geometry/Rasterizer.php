@@ -40,7 +40,7 @@ final readonly class Rasterizer
      * a list of integer coverages (0..maxCoverage) indexed from $bounds->x.
      *
      * @param list<array{0: float, 1: float}> $polygon
-     * @param callable(int, list<int>): void $row
+     * @param callable(int, array<int, int>): void $row
      */
     public function scan(array $polygon, Bounds $bounds, callable $row): void
     {

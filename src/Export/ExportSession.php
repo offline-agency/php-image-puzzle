@@ -160,7 +160,7 @@ final class ExportSession
         }
         $json = ManifestBuilder::encode($manifest);
         // Results expose the manifest exactly as a JSON reader will see it.
-        $manifest = (array) json_decode($json, true);
+        $manifest = self::decodeObject($json);
         $manifestStaging = $this->stagingDirectory() . DIRECTORY_SEPARATOR . OutputPlan::RESERVED_PREFIX . '-manifest.json';
         if (file_put_contents($manifestStaging, $json, LOCK_EX) !== strlen($json)) {
             throw new ExportFailedException("Failed to write manifest: {$manifestStaging}");
@@ -233,6 +233,23 @@ final class ExportSession
     }
 
     /**
+     * @return array<string, mixed>
+     */
+    private static function decodeObject(string $json): array
+    {
+        $decoded = json_decode($json, true, 512, JSON_THROW_ON_ERROR);
+        if (!is_array($decoded)) {
+            throw new ExportFailedException('Encoded manifest is not a JSON object.');
+        }
+        $object = [];
+        foreach ($decoded as $key => $value) {
+            $object[(string) $key] = $value;
+        }
+
+        return $object;
+    }
+
+    /**
      * Delete all but the $keep most recent generations (never the current one).
      *
      * @return list<string> removed generation ids
@@ -244,7 +261,8 @@ final class ExportSession
             return [];
         }
         $current = self::currentGenerationDirectory($root);
-        $ids = array_values(array_filter(scandir($dir) ?: [], static fn (string $e): bool => preg_match('/^[0-9TZ]+-[0-9a-f]{8}$/', $e) === 1));
+        $entries = scandir($dir);
+        $ids = array_values(array_filter($entries === false ? [] : $entries, static fn (string $e): bool => preg_match('/^[0-9TZ]+-[0-9a-f]{8}$/', $e) === 1));
         rsort($ids);
         $removed = [];
         foreach (array_slice($ids, max(0, $keep)) as $id) {
@@ -382,7 +400,8 @@ final class ExportSession
         if (!is_dir($path)) {
             return;
         }
-        foreach (scandir($path) ?: [] as $entry) {
+        $entries = scandir($path);
+        foreach ($entries === false ? [] : $entries as $entry) {
             if ($entry !== '.' && $entry !== '..') {
                 self::removeTree($path . DIRECTORY_SEPARATOR . $entry);
             }

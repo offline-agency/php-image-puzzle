@@ -30,12 +30,12 @@ final class PcntlProcessControl implements ProcessControl
         $result = pcntl_waitpid($pid, $status);
         $interrupted = $result === -1 && pcntl_get_last_error() === PCNTL_EINTR;
 
-        return ['pid' => $result, 'status' => $status, 'interrupted' => $interrupted];
+        return ['pid' => $result, 'status' => is_int($status) ? $status : 0, 'interrupted' => $interrupted];
     }
 
     public function signal(int $pid, int $signal): bool
     {
-        return function_exists('posix_kill') ? posix_kill($pid, $signal) : false;
+        return function_exists('posix_kill') && posix_kill($pid, $signal);
     }
 
     public function exitedNormally(int $status): bool
@@ -45,12 +45,19 @@ final class PcntlProcessControl implements ProcessControl
 
     public function exitCode(int $status): int
     {
-        return pcntl_wexitstatus($status) ?: 0;
+        $code = pcntl_wexitstatus($status);
+
+        return $code === false ? 0 : $code;
     }
 
     public function termSignal(int $status): ?int
     {
-        return pcntl_wifsignaled($status) ? (pcntl_wtermsig($status) ?: null) : null;
+        if (!pcntl_wifsignaled($status)) {
+            return null;
+        }
+        $signal = pcntl_wtermsig($status);
+
+        return $signal === false || $signal === 0 ? null : $signal;
     }
 
     public function terminateChild(int $code): never

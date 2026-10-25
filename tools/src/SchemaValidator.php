@@ -38,7 +38,8 @@ final class SchemaValidator
     public function checkSchemaFiles(): array
     {
         $problems = [];
-        $files = glob(rtrim($this->schemaDir, '/') . '/*/*.schema.json') ?: [];
+        $files = glob(rtrim($this->schemaDir, '/') . '/*/*.schema.json');
+        $files = $files === false ? [] : $files;
         foreach ($files as $file) {
             $relative = substr($file, strlen(rtrim($this->schemaDir, '/')) + 1);
             try {

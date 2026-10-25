@@ -96,7 +96,7 @@ test('identical configs reproduce identical piece files', function (): void {
         foreach (['a', 'b'] as $run) {
             $copy = PuzzleConfig::fromJson($config->toJson());
             $result = PuzzleGenerator::generateAndExport($source, "{$dir}/{$run}", 3, 3, $copy->edgeStyle(), $copy->exportOptions(), geometry: $copy->geometryOptions());
-            $hashes[$run] = array_map(static fn (string $f): string => hash_file('sha256', $f), $result->getFiles());
+            $hashes[$run] = array_map(Fixtures::sha256(...), $result->getFiles());
             sort($hashes[$run]);
         }
         expect($hashes['a'])->toBe($hashes['b']);
@@ -114,10 +114,16 @@ test('the schema validator rejects documents that violate the manifest schema', 
         $source = Fixtures::writePng(Fixtures::coordinateImage(40, 30), $dir . '/s.png');
         $result = PuzzleGenerator::generateAndExport($source, $dir . '/out', 2, 2, new JigsawStyle());
         expect($validator->validateFile($result->getManifestPath(), 'v2/manifest.schema.json'))->toBe([]);
+        // Decode as objects so that {} and [] survive the round trip.
         $tampered = json_decode((string) file_get_contents($result->getManifestPath()), false, 64, JSON_THROW_ON_ERROR);
-        $tampered->pieces[0]->extra = true;
-        file_put_contents($dir . '/tampered.json', json_encode($tampered));
-        expect($validator->validateFile($dir . '/tampered.json', 'v2/manifest.schema.json'))->not->toBe([]);
+        $first = $tampered instanceof stdClass && is_array($tampered->pieces ?? null) ? ($tampered->pieces[0] ?? null) : null;
+        if (!$first instanceof stdClass) {
+            throw new RuntimeException('Unexpected manifest shape');
+        }
+        $first->extra = true;
+        file_put_contents($dir . '/tampered.json', json_encode($tampered, JSON_THROW_ON_ERROR));
+        $errors = $validator->validateFile($dir . '/tampered.json', 'v2/manifest.schema.json');
+        expect(implode("\n", $errors))->toContain('/pieces/0');
     } finally {
         Fixtures::removeDir($dir);
     }

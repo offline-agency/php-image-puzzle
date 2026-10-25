@@ -51,6 +51,9 @@ function piecesOf(Puzzle $puzzle): array
     return iterator_to_array($puzzle->getPieces(), false);
 }
 
+/**
+ * @return array<string, array{0: EdgeStyleInterface}>
+ */
 function styles(): array
 {
     return [
@@ -62,7 +65,7 @@ function styles(): array
 }
 
 test('every pixel centre belongs to exactly one piece (winding-number oracle)', function (EdgeStyleInterface $style, int $rows, int $cols, int $w, int $h, int $seed): void {
-    $puzzle = (new PuzzleGenerator($style, geometry: new GeometryOptions($seed)))->generateFromGd(imagecreatetruecolor($w, $h), $rows, $cols);
+    $puzzle = (new PuzzleGenerator($style, geometry: new GeometryOptions($seed)))->generateFromGd(Fixtures::canvas($w, $h), $rows, $cols);
     $pieces = piecesOf($puzzle);
     for ($y = 0; $y < $h; $y++) {
         for ($x = 0; $x < $w; $x++) {
@@ -82,7 +85,7 @@ test('every pixel centre belongs to exactly one piece (winding-number oracle)', 
 ]);
 
 test('outlines are simple polygons (no self-intersection)', function (EdgeStyleInterface $style): void {
-    $puzzle = (new PuzzleGenerator($style, geometry: new GeometryOptions(11)))->generateFromGd(imagecreatetruecolor(90, 70), 3, 3);
+    $puzzle = (new PuzzleGenerator($style, geometry: new GeometryOptions(11)))->generateFromGd(Fixtures::canvas(90, 70), 3, 3);
     foreach (piecesOf($puzzle) as $piece) {
         $p = $piece->getShape()->polygon;
         $n = count($p);
@@ -106,7 +109,7 @@ test('outlines are simple polygons (no self-intersection)', function (EdgeStyleI
 test('areas sum to the board and tabs protrude while sockets indent', function (EdgeStyleInterface $style): void {
     $w = 120;
     $h = 90;
-    $puzzle = (new PuzzleGenerator($style))->generateFromGd(imagecreatetruecolor($w, $h), 3, 4);
+    $puzzle = (new PuzzleGenerator($style))->generateFromGd(Fixtures::canvas($w, $h), 3, 4);
     $total = 0.0;
     $protruding = 0;
     $smallerThanCell = 0;
@@ -133,7 +136,7 @@ test('shared boundaries are exact complements and the board perimeter is flat', 
     $w = 100;
     $h = 80;
     $gen = new PuzzleGenerator($style, geometry: new GeometryOptions(3));
-    $puzzle = $gen->generateFromGd(imagecreatetruecolor($w, $h), 2, 3);
+    $puzzle = $gen->generateFromGd(Fixtures::canvas($w, $h), 2, 3);
     $layout = $gen->layout($w, $h, 2, 3);
     $builder = new \ImagePuzzle\Geometry\ShapeBuilder($layout, $style instanceof \ImagePuzzle\Geometry\BoundaryProfileProvider ? $style : new NoEdgeStyle(), 3);
 
@@ -164,7 +167,7 @@ test('shared boundaries are exact complements and the board perimeter is flat', 
 })->with(styles());
 
 test('a single-piece board is the untouched rectangle', function (EdgeStyleInterface $style): void {
-    $puzzle = (new PuzzleGenerator($style))->generateFromGd(imagecreatetruecolor(30, 20), 1, 1);
+    $puzzle = (new PuzzleGenerator($style))->generateFromGd(Fixtures::canvas(30, 20), 1, 1);
     expect($puzzle->getPiece(0, 0)->getShape()->polygon)->toBe([[0.0, 0.0], [30.0, 0.0], [30.0, 20.0], [0.0, 20.0]]);
 })->with(styles());
 
@@ -242,7 +245,7 @@ test('antialiased mode stays within the documented additive alpha budget', funct
 })->with(styles());
 
 test('outlines are deterministic and independent of piece order and subsets', function (EdgeStyleInterface $style): void {
-    $image = imagecreatetruecolor(100, 100);
+    $image = Fixtures::canvas(100, 100);
     $gen = new PuzzleGenerator($style, geometry: new GeometryOptions(42));
     $full = [];
     foreach (piecesOf($gen->generateFromGd($image, 4, 4)) as $piece) {
@@ -274,7 +277,7 @@ test('unequal last cells from a custom split stay a valid partition', function (
     };
     $w = 50;
     $h = 40;
-    $puzzle = (new PuzzleGenerator(new JigsawStyle(), splitStrategy: $split))->generateFromGd(imagecreatetruecolor($w, $h), 3, 3);
+    $puzzle = (new PuzzleGenerator(new JigsawStyle(), splitStrategy: $split))->generateFromGd(Fixtures::canvas($w, $h), 3, 3);
     $pieces = piecesOf($puzzle);
     expect($puzzle->getPiece(0, 2)->getWidth())->toBeGreaterThan($puzzle->getPiece(0, 0)->getWidth());
     for ($y = 0; $y < $h; $y += 3) {

@@ -13,6 +13,7 @@ use ImagePuzzle\EdgeStyle\NoEdgeStyle;
 use ImagePuzzle\EdgeStyle\RoundedCornersStyle;
 use ImagePuzzle\EdgeStyle\SinusStyle;
 use ImagePuzzle\Exception\InvalidArgumentException;
+use ImagePuzzle\Tests\Support\Fixtures;
 
 test('fromArray no_edge returns NoEdgeStyle', function (): void {
     $style = EdgeStyleFactory::fromArray(['edge' => ['type' => 'no_edge']]);
@@ -48,7 +49,7 @@ test('fromArray sinus returns SinusStyle', function (): void {
 test('fromArray rounded_corners without options uses default radius', function (): void {
     $style = EdgeStyleFactory::fromArray(['edge' => ['type' => 'rounded_corners']]);
     expect($style)->toBeInstanceOf(RoundedCornersStyle::class);
-    $image = imagecreatetruecolor(20, 20);
+    $image = Fixtures::canvas(20, 20);
     expect($image)->not->toBeFalse();
     imagesavealpha($image, true);
     $context = new \ImagePuzzle\PieceContext(0, 0, 0, 0, 20, 20, 100, 100, 4, 4);
@@ -64,7 +65,7 @@ test('fromArray rounded_corners with options.radius uses that value', function (
         ],
     ]);
     expect($style)->toBeInstanceOf(RoundedCornersStyle::class);
-    $image = imagecreatetruecolor(30, 30);
+    $image = Fixtures::canvas(30, 30);
     expect($image)->not->toBeFalse();
     imagesavealpha($image, true);
     $context = new \ImagePuzzle\PieceContext(0, 0, 0, 0, 30, 30, 100, 100, 4, 4);
@@ -214,7 +215,7 @@ test('fromArray composite returns CompositeEdgeStyle with top right bottom left'
     $style = EdgeStyleFactory::fromArray($config);
     expect($style)->toBeInstanceOf(CompositeEdgeStyle::class)
         ->and($style)->toBeInstanceOf(EdgeStyleInterface::class);
-    $image = imagecreatetruecolor(16, 16);
+    $image = Fixtures::canvas(16, 16);
     expect($image)->not->toBeFalse();
     imagesavealpha($image, true);
     $context = new \ImagePuzzle\PieceContext(0, 0, 0, 0, 16, 16, 100, 100, 2, 2);

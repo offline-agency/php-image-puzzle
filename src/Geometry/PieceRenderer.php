@@ -65,6 +65,9 @@ final readonly class PieceRenderer
                 }
                 if ($c > 0) {
                     $rgba = imagecolorat($source, $bounds->x + $lx, $y);
+                    if ($rgba === false) {
+                        throw new RuntimeException("Failed to read source pixel {$lx},{$y}.");
+                    }
                     if (!$sourceIsTrueColor) {
                         $i = imagecolorsforindex($source, $rgba);
                         $rgba = ($i['alpha'] << 24) | ($i['red'] << 16) | ($i['green'] << 8) | $i['blue'];

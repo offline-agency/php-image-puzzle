@@ -51,8 +51,15 @@ final class PathGuard
             throw new ExportFailedException("Base directory does not exist or is not a directory: {$baseDirectory}");
         }
 
-        $absolute = self::isAbsolute($directory) ? $directory : getcwd() . DIRECTORY_SEPARATOR . $directory;
-        $parts = preg_split('#[/\\\\]+#', $absolute, -1, PREG_SPLIT_NO_EMPTY) ?: [];
+        $cwd = getcwd();
+        if (!self::isAbsolute($directory) && $cwd === false) {
+            throw new ExportFailedException('Cannot resolve a relative output directory: the working directory is unavailable.');
+        }
+        $absolute = self::isAbsolute($directory) ? $directory : $cwd . DIRECTORY_SEPARATOR . $directory;
+        $parts = preg_split('#[/\\\\]+#', $absolute, -1, PREG_SPLIT_NO_EMPTY);
+        if ($parts === false) {
+            throw new ExportFailedException("Cannot parse output directory: {$directory}");
+        }
         $prefix = self::rootOf($absolute);
 
         // Find the deepest existing ancestor.

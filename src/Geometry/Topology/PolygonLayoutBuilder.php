@@ -135,11 +135,9 @@ final class PolygonLayoutBuilder
         }
         $t = ($value - $s[$axis]) / ($e[$axis] - $s[$axis]);
         $other = 1 - $axis;
-        $point = [0.0, 0.0];
-        $point[$axis] = $value;
-        $point[$other] = $s[$other] + $t * ($e[$other] - $s[$other]);
+        $coordinate = $s[$other] + $t * ($e[$other] - $s[$other]);
 
-        return $point;
+        return $axis === 0 ? [$value, $coordinate] : [$coordinate, $value];
     }
 
     /**
@@ -202,10 +200,27 @@ final class PolygonLayoutBuilder
      */
     private static function minDimension(array $polygon): float
     {
-        $xs = array_column($polygon, 0);
-        $ys = array_column($polygon, 1);
+        [$minX, $minY, $maxX, $maxY] = self::extent($polygon);
 
-        return min(max($xs) - min($xs), max($ys) - min($ys));
+        return min($maxX - $minX, $maxY - $minY);
+    }
+
+    /**
+     * @param list<array{0: float, 1: float}> $polygon
+     * @return array{0: float, 1: float, 2: float, 3: float} minX, minY, maxX, maxY
+     */
+    private static function extent(array $polygon): array
+    {
+        $minX = $minY = INF;
+        $maxX = $maxY = -INF;
+        foreach ($polygon as [$x, $y]) {
+            $minX = min($minX, $x);
+            $minY = min($minY, $y);
+            $maxX = max($maxX, $x);
+            $maxY = max($maxY, $y);
+        }
+
+        return [$minX, $minY, $maxX, $maxY];
     }
 
     /**
@@ -213,12 +228,11 @@ final class PolygonLayoutBuilder
      */
     private static function bounds(array $polygon, int $width, int $height): Bounds
     {
-        $xs = array_column($polygon, 0);
-        $ys = array_column($polygon, 1);
-        $x0 = max(0, (int) floor(min($xs)));
-        $y0 = max(0, (int) floor(min($ys)));
-        $x1 = min($width, (int) ceil(max($xs)));
-        $y1 = min($height, (int) ceil(max($ys)));
+        [$minX, $minY, $maxX, $maxY] = self::extent($polygon);
+        $x0 = max(0, (int) floor($minX));
+        $y0 = max(0, (int) floor($minY));
+        $x1 = min($width, (int) ceil($maxX));
+        $y1 = min($height, (int) ceil($maxY));
 
         return new Bounds($x0, $y0, max(1, $x1 - $x0), max(1, $y1 - $y0));
     }

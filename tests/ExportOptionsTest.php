@@ -149,10 +149,19 @@ test('withOnPieceBeforeSave returns new instance with callback set', function ()
     expect($options->getOnPieceBeforeSave())->toBeNull();
 });
 
+/**
+ * @param array<string, mixed> $m
+ * @return array<string, mixed>
+ */
+function identityManifest(array $m): array
+{
+    return $m;
+}
+
 test('withOnPieceAfterSave and withOnManifestBuild return new instance with callback set', function (): void {
     $options = new ExportOptions();
     $afterSave = function (): void {};
-    $manifestBuild = function (array $m): array { return $m; };
+    $manifestBuild = identityManifest(...);
     $modified = $options->withOnPieceAfterSave($afterSave)->withOnManifestBuild($manifestBuild);
     expect($modified->getOnPieceAfterSave())->toBe($afterSave);
     expect($modified->getOnManifestBuild())->toBe($manifestBuild);

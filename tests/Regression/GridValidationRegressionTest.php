@@ -29,18 +29,18 @@ final class FixedSplit implements DimensionSplitStrategy
 }
 
 test('more rows or cols than source pixels is rejected', function (int $rows, int $cols): void {
-    expect(fn () => (new PuzzleGenerator())->generateFromGd(imagecreatetruecolor(3, 4), $rows, $cols))
+    expect(fn () => (new PuzzleGenerator())->generateFromGd(Fixtures::canvas(3, 4), $rows, $cols))
         ->toThrow(InvalidArgumentException::class);
 })->with([[5, 1], [1, 4], [2, 5]]);
 
 test('zero and negative grids are rejected', function (int $rows, int $cols): void {
-    expect(fn () => (new PuzzleGenerator())->generateFromGd(imagecreatetruecolor(10, 10), $rows, $cols))
+    expect(fn () => (new PuzzleGenerator())->generateFromGd(Fixtures::canvas(10, 10), $rows, $cols))
         ->toThrow(InvalidArgumentException::class);
 })->with([[0, 1], [1, 0], [-1, 2], [2, -5]]);
 
 test('invalid custom split strategy output is rejected', function (array $split): void {
     $generator = new PuzzleGenerator(splitStrategy: new FixedSplit($split));
-    expect(fn () => $generator->generateFromGd(imagecreatetruecolor(10, 10), 2, 2))
+    expect(fn () => $generator->generateFromGd(Fixtures::canvas(10, 10), 2, 2))
         ->toThrow(InvalidArgumentException::class);
 })->with([
     'zero segment' => [[10, 0]],
@@ -54,7 +54,7 @@ test('invalid custom split strategy output is rejected', function (array $split)
 
 test('requested piece indices are validated before lookup', function (array $indices): void {
     $generator = new PuzzleGenerator();
-    expect(fn () => $generator->generatePiecesFromGd(imagecreatetruecolor(10, 10), 2, 2, $indices))
+    expect(fn () => $generator->generatePiecesFromGd(Fixtures::canvas(10, 10), 2, 2, $indices))
         ->toThrow(InvalidArgumentException::class);
 })->with([
     'row out of range' => [[[2, 0]]],
@@ -66,7 +66,7 @@ test('requested piece indices are validated before lookup', function (array $ind
 ]);
 
 test('non divisible dimensions put the remainder on the last cell', function (): void {
-    $puzzle = (new PuzzleGenerator())->generateFromGd(imagecreatetruecolor(101, 50), 3, 5);
+    $puzzle = (new PuzzleGenerator())->generateFromGd(Fixtures::canvas(101, 50), 3, 5);
     $widths = array_map(static fn (int $c): int => $puzzle->getPiece(0, $c)->getWidth(), range(0, 4));
     expect($widths)->toBe([20, 20, 20, 20, 21]);
     $heights = array_map(static fn (int $r): int => $puzzle->getPiece($r, 0)->getHeight(), range(0, 2));
@@ -75,19 +75,19 @@ test('non divisible dimensions put the remainder on the last cell', function ():
 
 test('piece budget is enforced before generation', function (): void {
     $limits = new ResourceLimits(maxPieces: 10);
-    expect(fn () => (new PuzzleGenerator(limits: $limits))->generateFromGd(imagecreatetruecolor(100, 100), 4, 4))
+    expect(fn () => (new PuzzleGenerator(limits: $limits))->generateFromGd(Fixtures::canvas(100, 100), 4, 4))
         ->toThrow(ResourceLimitExceededException::class);
 });
 
 test('pixel budget is enforced on supplied images', function (): void {
     $limits = new ResourceLimits(maxPixels: 99);
-    expect(fn () => (new PuzzleGenerator(limits: $limits))->generateFromGd(imagecreatetruecolor(10, 10), 1, 1))
+    expect(fn () => (new PuzzleGenerator(limits: $limits))->generateFromGd(Fixtures::canvas(10, 10), 1, 1))
         ->toThrow(ResourceLimitExceededException::class);
 });
 
 test('budget rejection leaves no output', function (): void {
     $dir = Fixtures::tempDir();
-    $src = Fixtures::writePng(imagecreatetruecolor(50, 50), $dir . '/src.png');
+    $src = Fixtures::writePng(Fixtures::canvas(50, 50), $dir . '/src.png');
     $out = $dir . '/out';
     try {
         PuzzleGenerator::generateAndExport($src, $out, 20, 20, options: null, limits: new ResourceLimits(maxPieces: 4));

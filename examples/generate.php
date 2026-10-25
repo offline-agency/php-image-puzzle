@@ -34,7 +34,14 @@ $positional = [];
 $configPath = null;
 $rounded = null;
 
+$argv = $_SERVER['argv'] ?? [];
+if (!is_array($argv)) {
+    $argv = [];
+}
 foreach (array_slice($argv, 1) as $arg) {
+    if (!is_string($arg)) {
+        continue;
+    }
     if (str_starts_with($arg, '--config=')) {
         $configPath = substr($arg, strlen('--config='));
     } elseif (str_starts_with($arg, '--rounded')) {

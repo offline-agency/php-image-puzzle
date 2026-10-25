@@ -70,6 +70,10 @@ final class EdgeStyleFactory
     public static function normalize(array $edge): array
     {
         $style = self::fromEdge($edge);
+        $type = $edge['type'];
+        if (!is_string($type)) {
+            throw new InvalidArgumentException('Edge config must contain a "type" string.');
+        }
         if ($style instanceof RoundedCornersStyle) {
             return ['type' => 'rounded_corners', 'options' => ['radius' => $style->getRadius()]];
         }
@@ -83,7 +87,7 @@ final class EdgeStyleFactory
             return $out;
         }
 
-        return ['type' => (string) $edge['type']];
+        return ['type' => $type];
     }
 
     /**

@@ -9,27 +9,10 @@ G06  REPRODUCED      1x1 board (all edges external) still loses 19 top-perimeter
 G07  REPRODUCED      CompositeEdgeStyle::copyEdge copies 1-pixel strips only
 G08  REPRODUCED      child branch has no Throwable boundary before exit(0)
 G09  REPRODUCED      signal deaths (wifexited=false) are not treated as failure
-Deprecated: Function imagedestroy() is deprecated since 8.5, as it has no effect since PHP 8.0 in /Users/gfabbian/projects/php-image-puzzle/.claude/worktrees/remediation-modes-releases/src/Exporter.php on line 297
-Deprecated: Function imagedestroy() is deprecated since 8.5, as it has no effect since PHP 8.0 in /Users/gfabbian/projects/php-image-puzzle/.claude/worktrees/remediation-modes-releases/src/Exporter.php on line 297
-Deprecated: Function imagedestroy() is deprecated since 8.5, as it has no effect since PHP 8.0 in /Users/gfabbian/projects/php-image-puzzle/.claude/worktrees/remediation-modes-releases/src/Exporter.php on line 297
-Deprecated: Function imagedestroy() is deprecated since 8.5, as it has no effect since PHP 8.0 in /Users/gfabbian/projects/php-image-puzzle/.claude/worktrees/remediation-modes-releases/src/Exporter.php on line 297
-Deprecated: Function imagedestroy() is deprecated since 8.5, as it has no effect since PHP 8.0 in /Users/gfabbian/projects/php-image-puzzle/.claude/worktrees/remediation-modes-releases/src/Exporter.php on line 320
-Deprecated: Function imagedestroy() is deprecated since 8.5, as it has no effect since PHP 8.0 in /Users/gfabbian/projects/php-image-puzzle/.claude/worktrees/remediation-modes-releases/src/Exporter.php on line 320
 G10  REPRODUCED      parallel export with overwrite=false overwrote the sentinel
-Deprecated: Function imagedestroy() is deprecated since 8.5, as it has no effect since PHP 8.0 in /Users/gfabbian/projects/php-image-puzzle/.claude/worktrees/remediation-modes-releases/src/Exporter.php on line 57
-Deprecated: Function imagedestroy() is deprecated since 8.5, as it has no effect since PHP 8.0 in /Users/gfabbian/projects/php-image-puzzle/.claude/worktrees/remediation-modes-releases/src/Exporter.php on line 57
-Deprecated: Function imagedestroy() is deprecated since 8.5, as it has no effect since PHP 8.0 in /Users/gfabbian/projects/php-image-puzzle/.claude/worktrees/remediation-modes-releases/src/Exporter.php on line 57
-Deprecated: Function imagedestroy() is deprecated since 8.5, as it has no effect since PHP 8.0 in /Users/gfabbian/projects/php-image-puzzle/.claude/worktrees/remediation-modes-releases/src/Exporter.php on line 57
 G12  REPRODUCED      4 pieces mapped to 2 distinct files (5 reported)
-Deprecated: Function imagedestroy() is deprecated since 8.5, as it has no effect since PHP 8.0 in /Users/gfabbian/projects/php-image-puzzle/.claude/worktrees/remediation-modes-releases/src/Exporter.php on line 57
 G12b REPRODUCED      piece filename equal to manifest name accepted; piece overwritten by manifest
 G13  REPRODUCED      rejected outside-base directory was still created
-Deprecated: Function imagedestroy() is deprecated since 8.5, as it has no effect since PHP 8.0 in /Users/gfabbian/projects/php-image-puzzle/.claude/worktrees/remediation-modes-releases/src/Exporter.php on line 57
-Deprecated: Function imagedestroy() is deprecated since 8.5, as it has no effect since PHP 8.0 in /Users/gfabbian/projects/php-image-puzzle/.claude/worktrees/remediation-modes-releases/src/Exporter.php on line 57
-Deprecated: Function imagedestroy() is deprecated since 8.5, as it has no effect since PHP 8.0 in /Users/gfabbian/projects/php-image-puzzle/.claude/worktrees/remediation-modes-releases/src/Exporter.php on line 57
-Deprecated: Function imagedestroy() is deprecated since 8.5, as it has no effect since PHP 8.0 in /Users/gfabbian/projects/php-image-puzzle/.claude/worktrees/remediation-modes-releases/src/Exporter.php on line 57
-Deprecated: Function imagedestroy() is deprecated since 8.5, as it has no effect since PHP 8.0 in /Users/gfabbian/projects/php-image-puzzle/.claude/worktrees/remediation-modes-releases/src/Exporter.php on line 57
-Deprecated: Function imagedestroy() is deprecated since 8.5, as it has no effect since PHP 8.0 in /Users/gfabbian/projects/php-image-puzzle/.claude/worktrees/remediation-modes-releases/src/Exporter.php on line 57
 G14  REPRODUCED      after injected failure: new piece files mixed with stale manifest describing old dimensions
 G15  REPRODUCED      ImageLoader has no byte/dimension/pixel budget
 G17  REPRODUCED      withFormat(jpeg) keeps quality=9 (JPEG quality 9/100)

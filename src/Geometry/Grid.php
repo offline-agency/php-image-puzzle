@@ -14,8 +14,8 @@ use ImagePuzzle\SplitStrategy\DimensionSplitStrategy;
 final readonly class Grid
 {
     /**
-     * @param list<int> $colWidths
-     * @param list<int> $rowHeights
+     * @param list<positive-int> $colWidths
+     * @param list<positive-int> $rowHeights
      * @param list<int> $xOffsets length cols + 1
      * @param list<int> $yOffsets length rows + 1
      */
@@ -73,7 +73,7 @@ final readonly class Grid
 
     /**
      * @param array<mixed> $split
-     * @return list<int>
+     * @return list<positive-int>
      */
     private static function validatedSplit(array $split, int $total, int $count, string $dimension): array
     {
@@ -84,6 +84,7 @@ final readonly class Grid
             throw new InvalidArgumentException('Split strategy returned ' . count($split) . " segments, expected {$count}.");
         }
         $sum = 0;
+        $validated = [];
         foreach ($split as $i => $segment) {
             if (!is_int($segment)) {
                 throw new InvalidArgumentException("Split strategy segment #{$i} for {$dimension} must be an integer.");
@@ -92,12 +93,13 @@ final readonly class Grid
                 throw new InvalidArgumentException("Split strategy segment #{$i} for {$dimension} must be at least 1 pixel, got {$segment}.");
             }
             $sum += $segment;
+            $validated[] = $segment;
         }
         if ($sum !== $total) {
             throw new InvalidArgumentException("Split strategy segments sum to {$sum}, expected {$total}.");
         }
 
-        return $split;
+        return $validated;
     }
 
     /**

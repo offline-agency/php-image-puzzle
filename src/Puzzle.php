@@ -10,7 +10,7 @@ namespace ImagePuzzle;
 final class Puzzle
 {
     /**
-     * @param list<list<Piece>> $pieces 2D grid indexed by [row][col]
+     * @param array<int, array<int, Piece>> $pieces indexed by [row][col]; rows of non-rectangular boards differ in length
      * @param array{topology: string, style: string, seed: int, samples: int, version: int}|null $geometry
      */
     public function __construct(

@@ -9,16 +9,24 @@ namespace ImagePuzzle\Geometry;
  */
 final readonly class Bounds
 {
+    /**
+     * @param positive-int $width
+     * @param positive-int $height
+     */
     public function __construct(
         public int $x,
         public int $y,
         public int $width,
         public int $height,
     ) {
+        // Guards callers that bypass static analysis.
+        if ($width < 1 || $height < 1) {
+            throw new \ImagePuzzle\Exception\InvalidArgumentException("Bounds must be at least 1x1, got {$width}x{$height}.");
+        }
     }
 
     /**
-     * @return array{x: int, y: int, width: int, height: int}
+     * @return array{x: int, y: int, width: positive-int, height: positive-int}
      */
     public function toArray(): array
     {

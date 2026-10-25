@@ -40,14 +40,14 @@ final class ExportOptions
         self::FORMAT_WEBP => ['webp'],
     ];
 
-    /** @var array{0: int, 1: int, 2: int} */
+    /** @var array{0: int<0, 255>, 1: int<0, 255>, 2: int<0, 255>} */
     private readonly array $jpegBackground;
 
     /**
      * @param ?callable(Piece, string): void $onPieceBeforeSave Invoked before each piece is encoded (receives the final destination path; the file is not published yet).
      * @param ?callable(Piece, string): void $onPieceAfterSave Invoked after the piece file is published at its final path.
      * @param ?callable(array<string, mixed>): array<string, mixed> $onManifestBuild Receives the manifest; may only change its "extensions" object.
-     * @param array{0: int, 1: int, 2: int}|null $jpegBackground RGB background used to flatten transparency for JPEG
+     * @param array<mixed>|null $jpegBackground RGB [r, g, b] list (0..255) used to flatten transparency for JPEG
      */
     public function __construct(
         private readonly string $format = self::FORMAT_PNG,
@@ -85,15 +85,22 @@ final class ExportOptions
         if (!array_is_list($jpegBackground) || count($jpegBackground) !== 3) {
             throw new InvalidArgumentException('jpegBackground must be an [r, g, b] list.');
         }
-        foreach ($jpegBackground as $channel) {
-            if (!is_int($channel) || $channel < 0 || $channel > 255) {
-                throw new InvalidArgumentException('jpegBackground channels must be integers 0..255.');
-            }
-        }
-        $this->jpegBackground = $jpegBackground;
+        $this->jpegBackground = [self::channel($jpegBackground[0]), self::channel($jpegBackground[1]), self::channel($jpegBackground[2])];
         if (!in_array($publishMode, [self::PUBLISH_IN_PLACE, self::PUBLISH_GENERATION], true)) {
             throw new InvalidArgumentException("Unknown publish mode: {$publishMode}.");
         }
+    }
+
+    /**
+     * @return int<0, 255>
+     */
+    private static function channel(mixed $value): int
+    {
+        if (!is_int($value) || $value < 0 || $value > 255) {
+            throw new InvalidArgumentException('jpegBackground channels must be integers 0..255.');
+        }
+
+        return $value;
     }
 
     private static function validateFilename(string $paramName, string $value): void
@@ -167,7 +174,7 @@ final class ExportOptions
         return $this->onManifestBuild;
     }
 
-    /** @return array{0: int, 1: int, 2: int} */
+    /** @return array{0: int<0, 255>, 1: int<0, 255>, 2: int<0, 255>} */
     public function getJpegBackground(): array
     {
         return $this->jpegBackground;
@@ -184,25 +191,26 @@ final class ExportOptions
     }
 
     /**
-     * @param array<string, mixed> $changes
+     * Copy with some constructor arguments replaced; the copy is validated
+     * again by the constructor.
+     *
+     * @param array{format?: string, quality?: ?int, filenamePattern?: string, overwrite?: bool, manifestFilename?: string, onPieceBeforeSave?: ?callable, onPieceAfterSave?: ?callable, onManifestBuild?: ?callable, jpegBackground?: array<mixed>, publishMode?: string, includePaths?: bool} $changes
      */
     private function with(array $changes): self
     {
-        $args = [
-            'format' => $this->format,
-            'quality' => $this->quality,
-            'filenamePattern' => $this->filenamePattern,
-            'overwrite' => $this->overwrite,
-            'manifestFilename' => $this->manifestFilename,
-            'onPieceBeforeSave' => $this->onPieceBeforeSave,
-            'onPieceAfterSave' => $this->onPieceAfterSave,
-            'onManifestBuild' => $this->onManifestBuild,
-            'jpegBackground' => $this->jpegBackground,
-            'publishMode' => $this->publishMode,
-            'includePaths' => $this->includePaths,
-        ];
-
-        return new self(...array_merge($args, $changes));
+        return new self(
+            format: array_key_exists('format', $changes) ? $changes['format'] : $this->format,
+            quality: array_key_exists('quality', $changes) ? $changes['quality'] : $this->quality,
+            filenamePattern: array_key_exists('filenamePattern', $changes) ? $changes['filenamePattern'] : $this->filenamePattern,
+            overwrite: array_key_exists('overwrite', $changes) ? $changes['overwrite'] : $this->overwrite,
+            manifestFilename: array_key_exists('manifestFilename', $changes) ? $changes['manifestFilename'] : $this->manifestFilename,
+            onPieceBeforeSave: array_key_exists('onPieceBeforeSave', $changes) ? $changes['onPieceBeforeSave'] : $this->onPieceBeforeSave,
+            onPieceAfterSave: array_key_exists('onPieceAfterSave', $changes) ? $changes['onPieceAfterSave'] : $this->onPieceAfterSave,
+            onManifestBuild: array_key_exists('onManifestBuild', $changes) ? $changes['onManifestBuild'] : $this->onManifestBuild,
+            jpegBackground: array_key_exists('jpegBackground', $changes) ? $changes['jpegBackground'] : $this->jpegBackground,
+            publishMode: array_key_exists('publishMode', $changes) ? $changes['publishMode'] : $this->publishMode,
+            includePaths: array_key_exists('includePaths', $changes) ? $changes['includePaths'] : $this->includePaths,
+        );
     }
 
     /**
@@ -257,7 +265,7 @@ final class ExportOptions
         return $this->with(['onManifestBuild' => $callback]);
     }
 
-    /** @param array{0: int, 1: int, 2: int} $rgb */
+    /** @param array<mixed> $rgb [r, g, b] list of integers 0..255 */
     public function withJpegBackground(array $rgb): self
     {
         return $this->with(['jpegBackground' => $rgb]);

@@ -78,7 +78,7 @@ test('radius larger than half the shorter side is clamped, not disabled', functi
 test('mask cache is bounded', function (): void {
     RoundedCornersStyle::clearMaskCache();
     for ($r = 1; $r <= RoundedCornersStyle::MAX_CACHED_MASKS + 10; $r++) {
-        (new RoundedCornersStyle($r))->apply(imagecreatetruecolor(200, 200), roundedContext(200, 200));
+        (new RoundedCornersStyle($r))->apply(Fixtures::canvas(200, 200), roundedContext(200, 200));
     }
     expect(RoundedCornersStyle::cachedMaskCount())->toBeLessThanOrEqual(RoundedCornersStyle::MAX_CACHED_MASKS);
 });
