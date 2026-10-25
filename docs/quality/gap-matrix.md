@@ -370,7 +370,9 @@ Pest suite and `pest --group=process --fail-on-skipped`.
   removing this project's stale volumes addressed.
 - Blocker: the Docker Desktop VM disk on this machine is full (70.3 GB,
   0 bytes available; 30 GB of reclaimable volumes that belong to other
-  projects), so the images could not be rebuilt and run. Procedure: free
+  projects). In the final run the images built from cache, but `composer
+  install` inside them failed ("less than 100MiB of free space"), so the
+  suites could not run. Procedure: free
   space (`docker system df`, then remove what you no longer need), then
   `docker compose build && docker compose run --rm php84 sh -c 'composer
   install && vendor/bin/pest'` and the same for `minimal`. The CI `docker`
