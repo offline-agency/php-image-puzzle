@@ -22,7 +22,9 @@ RUN apt-get update \
 COPY --from=composer /usr/bin/composer /usr/bin/composer
 ARG UID=1000
 ARG GID=1000
-RUN groupadd --gid "${GID}" app && useradd --uid "${UID}" --gid "${GID}" --create-home app
+# -o: the host IDs may already exist in the image (macOS users are in group
+# 20, which Debian calls dialout).
+RUN groupadd -o --gid "${GID}" app && useradd -o --uid "${UID}" --gid "${GID}" --create-home app
 ENV COMPOSER_HOME=/home/app/.composer
 # Named vendor volumes inherit this ownership on first use.
 RUN mkdir -p /app/vendor && chown -R app:app /app

@@ -238,6 +238,9 @@ final class Exporter implements ExporterInterface
         foreach ($children as $pid => $index) {
             $status = $this->reap($pid);
             if ($status === null) {
+                // The worker may still be running: stop it before the
+                // staging area is discarded, and reap it.
+                $this->killAndReap([$pid]);
                 $failures[] = "worker {$index}: waitpid failed";
                 continue;
             }

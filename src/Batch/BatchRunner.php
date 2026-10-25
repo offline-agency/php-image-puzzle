@@ -265,6 +265,23 @@ final class BatchRunner
                     break;
                 }
                 $waited = $this->process->wait(-1);
+                if ($waited['pid'] === -1 && !$waited['interrupted']) {
+                    // waitpid failed: the running workers can no longer be
+                    // tracked. Stop and reap them, and fail their items,
+                    // rather than waiting again forever.
+                    foreach ($running as $pid => $lost) {
+                        $this->process->signal($pid, defined('SIGKILL') ? SIGKILL : 9);
+                        do {
+                            $reaped = $this->process->wait($pid);
+                        } while ($reaped['interrupted']);
+                        if (file_exists($items[$lost]->output)) {
+                            self::clear($items[$lost]->output, false);
+                        }
+                        $finish($lost, new ItemResult($items[$lost]->id, ItemResult::FAILED, error: 'Lost track of the worker process (waitpid failed).'));
+                    }
+                    $running = [];
+                    continue;
+                }
                 if ($waited['interrupted'] || !isset($running[$waited['pid']])) {
                     continue;
                 }

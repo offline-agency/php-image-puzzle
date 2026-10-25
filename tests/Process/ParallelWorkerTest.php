@@ -80,6 +80,69 @@ final class ForkFailsAfter implements ProcessControl
     }
 }
 
+/**
+ * Real process control whose first wait() calls return scripted results:
+ * 'interrupted' (EINTR) or 'failed' (waitpid returned -1).
+ */
+final class ScriptedWait implements ProcessControl
+{
+    private readonly PcntlProcessControl $inner;
+
+    /**
+     * @param list<'interrupted'|'failed'> $script
+     */
+    public function __construct(private array $script)
+    {
+        $this->inner = new PcntlProcessControl();
+    }
+
+    public function isAvailable(): bool
+    {
+        return $this->inner->isAvailable();
+    }
+
+    public function fork(): int
+    {
+        return $this->inner->fork();
+    }
+
+    public function wait(int $pid): array
+    {
+        $next = array_shift($this->script);
+
+        return match ($next) {
+            'interrupted' => ['pid' => -1, 'status' => 0, 'interrupted' => true],
+            'failed' => ['pid' => -1, 'status' => 0, 'interrupted' => false],
+            null => $this->inner->wait($pid),
+        };
+    }
+
+    public function signal(int $pid, int $signal): bool
+    {
+        return $this->inner->signal($pid, $signal);
+    }
+
+    public function exitedNormally(int $status): bool
+    {
+        return $this->inner->exitedNormally($status);
+    }
+
+    public function exitCode(int $status): int
+    {
+        return $this->inner->exitCode($status);
+    }
+
+    public function termSignal(int $status): ?int
+    {
+        return $this->inner->termSignal($status);
+    }
+
+    public function terminateChild(int $code): never
+    {
+        $this->inner->terminateChild($code);
+    }
+}
+
 function noChildrenLeft(): bool
 {
     $status = 0;
@@ -212,6 +275,27 @@ test('fork failure after one worker started terminates and reaps it with no orph
     $after = ManifestAssertions::snapshot($out);
     usleep(500_000);
     expect(ManifestAssertions::snapshot($out))->toBe($after)->toBe([]);
+})->group('process')->skip(!pcntlAvailable(), 'ext-pcntl is not available (the sequential fallback is covered in tests/Export).');
+
+test('an interrupted wait is retried and the export succeeds', function (): void {
+    $result = (new Exporter(new ScriptedWait(['interrupted', 'interrupted'])))->exportParallel(Workspace::$source, Workspace::$dir . '/out', 2, 3, new ExportOptions(), 2);
+
+    expect(count($result->getFiles()))->toBe(7)
+        ->and(noChildrenLeft())->toBeTrue();
+})->group('process')->skip(!pcntlAvailable(), 'ext-pcntl is not available (the sequential fallback is covered in tests/Export).');
+
+test('a failed wait fails the export, stops the worker and leaves no orphan writes', function (): void {
+    $out = Workspace::$dir . '/out';
+    $slow = static function (): void {
+        usleep(200_000);
+    };
+    expect(fn () => (new Exporter(new ScriptedWait(['failed'])))->exportParallel(Workspace::$source, $out, 3, 4, new ExportOptions(onPieceBeforeSave: $slow), 2))
+        ->toThrow(ExportFailedException::class, 'waitpid failed');
+    expect(file_exists("{$out}/manifest.json"))->toBeFalse()
+        ->and(noChildrenLeft())->toBeTrue();
+    $after = ManifestAssertions::snapshot($out);
+    usleep(500_000);
+    expect(ManifestAssertions::snapshot($out))->toBe($after);
 })->group('process')->skip(!pcntlAvailable(), 'ext-pcntl is not available (the sequential fallback is covered in tests/Export).');
 
 test('parallel output is byte-identical to sequential output', function (string $style): void {

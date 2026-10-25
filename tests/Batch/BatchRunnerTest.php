@@ -11,6 +11,8 @@ use ImagePuzzle\Batch\CancellationToken;
 use ImagePuzzle\Batch\ItemResult;
 use ImagePuzzle\Cache\AssetCache;
 use ImagePuzzle\Exception\InvalidArgumentException;
+use ImagePuzzle\Export\PcntlProcessControl;
+use ImagePuzzle\Export\ProcessControl;
 use ImagePuzzle\Game\BuildConfiguration;
 use ImagePuzzle\Game\DefinitionBuilder;
 use ImagePuzzle\Game\GameKind;
@@ -272,4 +274,80 @@ describe('concurrency', function (): void {
         expect($result->items[0]->files)->toBe($reference->items[0]->files);
         expect(statuses(runBatch($items, new BatchOptions(concurrency: 2, checkpoint: $dir . '/batch.checkpoint.json'))))->toBe(['resumed', 'failed', 'resumed', 'resumed']);
     })->skip(!extension_loaded('pcntl') || PHP_SAPI !== 'cli', 'pcntl and CLI required');
+
+    it('fails the running items instead of spinning when waiting for workers fails', function (): void {
+        $dir = batchDir();
+        $items = [batchItem($dir, 'a'), batchItem($dir, 'b', 2), batchItem($dir, 'c', 3)];
+        // A hang would otherwise block the suite; the alarm kills the process.
+        pcntl_alarm(30);
+        try {
+            $result = (new BatchRunner(new DefinitionBuilder(), null, new BatchWaitFailsOnce()))->run($items, new BatchOptions(concurrency: 2));
+        } finally {
+            pcntl_alarm(0);
+        }
+        $status = 0;
+
+        expect(statuses($result))->toBe(['failed', 'failed', 'done'])
+            ->and($result->items[0]->error)->toContain('waitpid failed')
+            ->and(file_exists($dir . '/out/a'))->toBeFalse()
+            ->and(pcntl_waitpid(-1, $status, WNOHANG))->toBe(-1);
+    })->skip(!extension_loaded('pcntl') || PHP_SAPI !== 'cli', 'pcntl and CLI required');
 });
+
+/** Real process control whose first wait() fails as if waitpid returned -1. */
+final class BatchWaitFailsOnce implements ProcessControl
+{
+    private bool $failed = false;
+    private readonly PcntlProcessControl $inner;
+
+    public function __construct()
+    {
+        $this->inner = new PcntlProcessControl();
+    }
+
+    public function isAvailable(): bool
+    {
+        return $this->inner->isAvailable();
+    }
+
+    public function fork(): int
+    {
+        return $this->inner->fork();
+    }
+
+    public function wait(int $pid): array
+    {
+        if (!$this->failed) {
+            $this->failed = true;
+
+            return ['pid' => -1, 'status' => 0, 'interrupted' => false];
+        }
+
+        return $this->inner->wait($pid);
+    }
+
+    public function signal(int $pid, int $signal): bool
+    {
+        return $this->inner->signal($pid, $signal);
+    }
+
+    public function exitedNormally(int $status): bool
+    {
+        return $this->inner->exitedNormally($status);
+    }
+
+    public function exitCode(int $status): int
+    {
+        return $this->inner->exitCode($status);
+    }
+
+    public function termSignal(int $status): ?int
+    {
+        return $this->inner->termSignal($status);
+    }
+
+    public function terminateChild(int $code): never
+    {
+        $this->inner->terminateChild($code);
+    }
+}
