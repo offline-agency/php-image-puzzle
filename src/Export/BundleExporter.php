@@ -125,11 +125,11 @@ final class BundleExporter
      */
     public function write(PuzzleDirectory $puzzle, string $target, string $root = 'image-puzzle', ?string $title = null): array
     {
-        if (!($this->zipAvailable ?? self::supported())) {
-            throw new CapabilityUnavailableException('ZIP bundles need the zip extension (ext-zip).');
-        }
         if (preg_match(self::ROOT_PATTERN, $root) !== 1 || $root === '..') {
             throw new InvalidArgumentException('The bundle folder name must be 1-64 letters, digits, dots, dashes or underscores.');
+        }
+        if (!($this->zipAvailable ?? self::supported())) {
+            throw new CapabilityUnavailableException('ZIP bundles need the zip extension (ext-zip).');
         }
         if (file_exists($target)) {
             throw new ExportFailedException("{$target} already exists.");
