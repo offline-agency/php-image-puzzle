@@ -92,7 +92,8 @@ When the image size is not evenly divisible by rows/cols, **remainder pixels are
 ## Documentation
 
 - [docs/USAGE.md](docs/USAGE.md) – Step-by-step usage
-- [docs/EXPORT.md](docs/EXPORT.md) – Export formats and options
+- [docs/EXPORT.md](docs/EXPORT.md) – Image formats, piece images (WebP, resolution sets, atlases), SVG, printable PDF and offline ZIP bundles
+- [docs/CLI.md](docs/CLI.md) – The `image-puzzle` command: generate, validate, inspect, export and bundle puzzles
 - [docs/EDGE_STYLES.md](docs/EDGE_STYLES.md) – Edge styles and config-driven style (JSON schema, `EdgeStyleFactory`)
 - [docs/EDGE_EXAMPLES.md](docs/EDGE_EXAMPLES.md) – Example image for every edge type
 - [docs/SPLIT_STRATEGY.md](docs/SPLIT_STRATEGY.md) – Customizing grid split strategy
@@ -112,9 +113,19 @@ php examples/generate.php input.jpg 4 6 output_dir --config=config/edge-config.j
 
 Prints the manifest path and a short summary. Use `--config=<path>` to load edge style from a JSON config file. To use YAML, decode in your code and pass the array to `EdgeStyleFactory::fromArray()`.
 
+## Command line
+
+```bash
+vendor/bin/image-puzzle generate photo.jpg public/puzzles/42 --rows=4 --cols=6 --format=webp
+vendor/bin/image-puzzle pdf public/puzzles/42 puzzle.pdf --paper=a3
+vendor/bin/image-puzzle bundle public/puzzles/42 puzzle.zip   # plays offline, also from file://
+```
+
+See [docs/CLI.md](docs/CLI.md) for every command, option and exit code.
+
 ## Image formats (GD)
 
-Supported input formats: PNG, JPEG, GIF (as detected by GD). The exporter supports PNG and JPEG output.
+Input: PNG, JPEG, GIF and WebP, as far as the GD build can decode them. Output: PNG, JPEG and WebP; `image-puzzle capabilities` (or `ImageEncoder::capabilities()`) shows what the current GD build can encode.
 
 ## Security
 

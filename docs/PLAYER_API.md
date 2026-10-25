@@ -175,12 +175,24 @@ board is a single tab stop. Each tile's accessible name gives its number,
 row and column, and its orientation. Results are announced in a polite live
 region: moves, swaps, rotations, placements, illegal moves and completion.
 
-Jigsaw pieces are the exported PNGs on a world plane in source pixels. Each
-piece's outline path is both its hit area and its focus ring, so
-interlocking, hexagonal and triangular pieces are grabbed by their real
+Jigsaw pieces are the exported piece images on a world plane in source
+pixels. Each piece's outline path is both its hit area and its focus ring,
+so interlocking, hexagonal and triangular pieces are grabbed by their real
 shape. Board slots are drawn from the same paths. Zoom (1× to 4×) enlarges
 the stage inside a scrollable viewport, which provides panning. World
 coordinates are independent of zoom, resize and device-pixel ratio.
+
+When the definition lists piece images (`media.resolutions`, `media.atlas`,
+see [EXPORT.md](EXPORT.md#piece-images-for-the-player)), the player uses
+them without changing any geometry:
+
+- **Atlas**: the atlas is loaded once and each frame is drawn into a
+  `<canvas class="piece-image">` the size of the piece.
+- **Resolution sets**: each piece is an `<img>` with a `srcset` listing the
+  full piece and every set (as width descriptors) and a `sizes` value set
+  from the measured board width (`ResizeObserver`) times 1.5, so the browser
+  picks a set dense enough for the screen and does not upscale a smaller one.
+  Without `ResizeObserver` it estimates `sizes` from the viewport.
 
 Piece grouping (moving connected unplaced pieces together) is not
 implemented: pieces lock individually onto the board. This keeps every move

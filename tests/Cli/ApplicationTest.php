@@ -6,6 +6,8 @@ use ImagePuzzle\Cli\Application;
 use ImagePuzzle\Cli\Arguments;
 use ImagePuzzle\Cli\UsageException;
 use ImagePuzzle\Export\BundleExporter;
+use ImagePuzzle\Game\GameKind;
+use ImagePuzzle\Game\Modes;
 use ImagePuzzle\ResourceLimits;
 use ImagePuzzle\Tests\Support\Fixtures;
 
@@ -158,6 +160,18 @@ describe('generate', function (): void {
             ->and(is_file($out . '/definition.json'))->toBeTrue()
             ->and(is_file($out . '/atlas.webp'))->toBeTrue()
             ->and(Fixtures::glob($out . '/pieces-small/*.webp'))->toHaveCount(6);
+    });
+
+    it('builds every mode it advertises', function (): void {
+        [, $json] = cli(['capabilities', '--json']);
+        $modes = cliJson($json)['modes'];
+        expect($modes)->toBe(array_map(static fn (GameKind $kind): string => $kind->value, Modes::available()));
+        foreach (argvList($modes) as $mode) {
+            $out = cliDir() . '/' . $mode;
+            [$code, $result, $err] = cli(['generate', cliImage(), $out, '--kind=' . $mode, '--preset=easy', '--json']);
+            expect($code)->toBe(0, "{$mode}: {$err}")->and(cliJson($result)['kind'])->toBe($mode);
+            expect(cli(['validate', $out])[0])->toBe(0);
+        }
     });
 
     it('builds grid modes with presets and JSON parameters', function (): void {

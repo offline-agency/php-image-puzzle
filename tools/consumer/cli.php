@@ -16,7 +16,11 @@ $bin = getcwd() . '/vendor/bin/image-puzzle';
 $package = getcwd() . '/vendor/offline-agency/image-puzzle';
 $work = sys_get_temp_dir() . '/image-puzzle-cli-' . bin2hex(random_bytes(6));
 mkdir($work, 0o700);
-$failures = 0;
+
+final class Checks
+{
+    public static int $failures = 0;
+}
 
 /**
  * @param list<string> $args
@@ -40,11 +44,10 @@ function run(string $bin, array $args): array
  */
 function check(string $label, string $bin, array $args, int $code, string $contains = ''): string
 {
-    global $failures;
     [$actual, $out, $err] = run($bin, $args);
     if ($actual !== $code || ($contains !== '' && !str_contains($out . $err, $contains))) {
         fwrite(STDERR, "FAIL  {$label}: exit {$actual} (expected {$code})" . ($contains !== '' ? ", expected output containing \"{$contains}\"" : '') . "\n{$out}{$err}\n");
-        $failures++;
+        Checks::$failures++;
     } else {
         echo "ok    {$label}\n";
     }
@@ -72,7 +75,7 @@ try {
 
     if (!is_file("{$package}/resources/dist/image-puzzle-player.iife.js")) {
         fwrite(STDERR, "FAIL  the installed package has no resources/dist/image-puzzle-player.iife.js\n");
-        $failures++;
+        Checks::$failures++;
     }
     check('--version reports the installed version', $bin, ['--version'], 0, 'image-puzzle 2.99.99');
     check('help lists the commands', $bin, ['help'], 0, 'bundle');
@@ -81,12 +84,24 @@ try {
     check('generate --dry-run', $bin, ['generate', "{$work}/photo.png", "{$work}/puzzle", '--rows=3', '--cols=4', '--dry-run'], 0, '12 tiles');
     if (file_exists("{$work}/puzzle")) {
         fwrite(STDERR, "FAIL  --dry-run created the output directory\n");
-        $failures++;
+        Checks::$failures++;
     }
     check('generate', $bin, ['generate', "{$work}/photo.png", "{$work}/puzzle", '--rows=3', '--cols=4', '--seed=7', '--resolutions=small:160', '--atlas=small'], 0, 'Built jigsaw puzzle');
     file_put_contents("{$work}/build.json", '{"format":"image-puzzle/build-config","version":1,"kind":"sliding","preset":"easy","seed":2}');
     check('generate --config', $bin, ['generate', "{$work}/photo.png", "{$work}/sliding", "--config={$work}/build.json"], 0, 'Built sliding puzzle');
     check('validate', $bin, ['validate', "{$work}/puzzle"], 0, 'Valid jigsaw definition');
+    // Every mode the installed CLI advertises can be generated and validated.
+    $capabilities = json_decode(run($bin, ['capabilities', '--json'])[1], true);
+    $modes = is_array($capabilities) && is_array($capabilities['modes'] ?? null) ? $capabilities['modes'] : [];
+    if ($modes === []) {
+        fwrite(STDERR, "FAIL  capabilities --json lists no modes\n");
+        Checks::$failures++;
+    }
+    foreach ($modes as $mode) {
+        $mode = is_string($mode) ? $mode : '';
+        check("generate --kind={$mode}", $bin, ['generate', "{$work}/photo.png", "{$work}/mode-{$mode}", "--kind={$mode}", '--preset=easy'], 0, "Built {$mode} puzzle");
+        check("validate {$mode}", $bin, ['validate', "{$work}/mode-{$mode}"], 0, "Valid {$mode} definition");
+    }
     check('inspect', $bin, ['inspect', "{$work}/puzzle"], 0, 'all present');
     check('reconstruct', $bin, ['reconstruct', "{$work}/puzzle", "{$work}/board.png"], 0, 'Wrote');
     check('svg', $bin, ['svg', "{$work}/puzzle", "{$work}/puzzle.svg", '--image=embed'], 0, 'Wrote');
@@ -98,7 +113,7 @@ try {
         $player = $zip->getFromName('image-puzzle/player/image-puzzle-player.iife.js');
         if ($player !== file_get_contents("{$package}/resources/dist/image-puzzle-player.iife.js")) {
             fwrite(STDERR, "FAIL  the bundle does not hold the installed player script\n");
-            $failures++;
+            Checks::$failures++;
         }
         $zip->close();
         $keep = getenv('BUNDLE_OUT');
@@ -134,8 +149,8 @@ try {
     removeTree($work);
 }
 
-if ($failures > 0) {
-    fwrite(STDERR, "{$failures} CLI check(s) failed\n");
+if (Checks::$failures > 0) {
+    fwrite(STDERR, Checks::$failures . " CLI check(s) failed\n");
     exit(1);
 }
 echo "installed CLI checks passed\n";

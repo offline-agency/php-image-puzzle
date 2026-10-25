@@ -596,6 +596,7 @@ final class Application
         $gd = extension_loaded('gd');
         $info = [
             'php' => PHP_VERSION,
+            'modes' => array_map(static fn (GameKind $kind): string => $kind->value, Modes::available()),
             'gd' => $gd,
             'decode' => $gd ? ImageLoader::decoders() : [],
             'encode' => $gd ? ImageEncoder::capabilities() : [],
@@ -616,6 +617,7 @@ final class Application
 
         return $this->print(implode("\n", [
             'PHP:          ' . PHP_VERSION,
+            'Modes:        ' . implode(', ', $info['modes']),
             'GD:           ' . $yes($gd),
             'Decode:       ' . $list($info['decode']),
             'Encode:       ' . $list($info['encode']),
