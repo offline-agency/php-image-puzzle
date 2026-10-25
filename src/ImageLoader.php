@@ -41,6 +41,7 @@ final class ImageLoader implements ImageLoaderInterface
     public function __construct(
         ?ResourceLimits $limits = null,
         private readonly bool $applyExifOrientation = false,
+        private readonly bool $allowAnimatedFirstFrame = false,
     ) {
         if (!extension_loaded('gd')) {
             throw new GdNotAvailableException('The GD extension is required but not loaded.');
@@ -111,7 +112,8 @@ final class ImageLoader implements ImageLoaderInterface
             }
         }
 
-        $info = new ImageInfo($type, $size[0], $size[1], $bytes, $frames, $orientation);
+        $applied = $this->applyExifOrientation && $orientation !== null && $orientation !== 1;
+        $info = new ImageInfo($type, $size[0], $size[1], $bytes, $frames, $orientation, $applied);
         $this->limits->assertDimensions($info->width, $info->height, 'Image');
 
         return $info;
@@ -120,6 +122,11 @@ final class ImageLoader implements ImageLoaderInterface
     public function loadFromFile(string $path): GdImage
     {
         $info = $this->inspect($path);
+        if ($info->isAnimated() && !$this->allowAnimatedFirstFrame) {
+            throw new UnsupportedImageTypeException(
+                "Animated GIF with {$info->frames} frames is not supported: {$path}. Pass allowAnimatedFirstFrame: true to use the first frame.",
+            );
+        }
         if (!(self::decoders()[$info->type] ?? false)) {
             throw new CapabilityUnavailableException("This GD build cannot decode {$info->type} images.");
         }
@@ -145,7 +152,7 @@ final class ImageLoader implements ImageLoaderInterface
         }
         imagesavealpha($image, true);
 
-        if ($this->applyExifOrientation && $info->orientation !== null && $info->orientation !== 1) {
+        if ($info->orientationApplied && $info->orientation !== null) {
             $image = self::orient($image, $info->orientation);
         }
 

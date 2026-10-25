@@ -91,7 +91,7 @@ final class PuzzleGenerator
         $this->preflight($rows, $cols);
         $loader = $this->imageLoader ?? new ImageLoader($this->limits);
         $info = $loader->inspect($path);
-        Grid::assertGrid($info->orientationSwapsAxes() ? $info->height : $info->width, $info->orientationSwapsAxes() ? $info->width : $info->height, $rows, $cols);
+        Grid::assertGrid($info->outputWidth(), $info->outputHeight(), $rows, $cols);
         $image = $loader->loadFromFile($path);
 
         return $this->buildPuzzle($image, $rows, $cols, basename($path));

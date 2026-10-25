@@ -119,11 +119,11 @@ final class Exporter implements ExporterInterface
         $limits->assertPieceCount($rows, $cols);
 
         $info = $loader->inspect($sourcePath);
-        $width = $info->width;
-        $height = $info->height;
+        $width = $info->outputWidth();
+        $height = $info->outputHeight();
         $layout = $generator->layout($width, $height, $rows, $cols);
         $capacity = $limits->workerCapacity($workers, count($layout->cells), $width, $height);
-        if ($capacity < 2 || !$this->process->isAvailable() || $info->orientationSwapsAxes()) {
+        if ($capacity < 2 || !$this->process->isAvailable()) {
             return $this->export($generator->generateFromFile($sourcePath, $rows, $cols), $directory, $options, $baseDirectory);
         }
 
