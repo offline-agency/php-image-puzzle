@@ -226,6 +226,36 @@
       }
     },
     {
+      "if": { "properties": { "kind": { "const": "tangram" } } },
+      "then": {
+        "properties": {
+          "actions": { "const": ["pose"] },
+          "board": { "properties": { "rows": { "const": 4 }, "cols": { "const": 4 } } },
+          "tiles": {
+            "minItems": 7,
+            "maxItems": 7,
+            "items": {
+              "required": ["shape", "path"],
+              "properties": { "shape": { "enum": ["large", "medium", "small", "square", "parallelogram"] } }
+            }
+          },
+          "rules": {
+            "type": "object",
+            "required": ["target", "unit", "snap", "area", "tray"],
+            "properties": {
+              "target": { "enum": ["square", "arrow", "chevron"], "description": "A target from the validated library; other silhouettes are not recognised." },
+              "unit": { "type": "integer", "minimum": 12, "multipleOf": 6, "description": "A quarter of the square side, in source pixels." },
+              "snap": { "type": "integer", "minimum": 1, "maximum": 256 },
+              "area": { "$ref": "#/$defs/rect" },
+              "tray": { "$ref": "#/$defs/rect" }
+            },
+            "additionalProperties": false
+          },
+          "initial": { "$ref": "board.schema.json#/$defs/tangram" }
+        }
+      }
+    },
+    {
       "if": { "properties": { "kind": { "const": "nonogram" } } },
       "then": {
         "properties": {
@@ -286,7 +316,8 @@
         "path": { "type": "string", "pattern": "^M[-0-9. LZ]+$" },
         "pair": { "type": "string" },
         "face": { "type": "string" },
-        "text": { "type": "string" }
+        "text": { "type": "string" },
+        "shape": { "type": "string" }
       },
       "additionalProperties": false
     }

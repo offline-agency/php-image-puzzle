@@ -125,10 +125,12 @@ test('rejects unknown custom jigsaw keys and custom keys without the custom pres
         ->toThrow(InvalidArgumentException::class, 'custom');
 });
 
-test('rejects modes without rules', function (): void {
+test('builds a tangram from the largest centred square', function (): void {
     [$dir, $source] = builderWorkspace();
-    expect(fn () => (new DefinitionBuilder())->build($source, $dir . '/m', GameKind::Tangram))
-        ->toThrow(InvalidArgumentException::class, 'tangram');
+    $result = (new DefinitionBuilder())->build($source, $dir . '/t', GameKind::Tangram, 'easy', seed: 4);
+    expect($result->definition->crop->toArray())->toBe(['x' => 20, 'y' => 0, 'width' => 120, 'height' => 120])
+        ->and($result->definition->rules['unit'])->toBe(30)
+        ->and($result->files)->toBe(['definition.json', 'source.png']);
 });
 
 test('re-encodes an EXIF-rotated JPEG upright so browsers show the same pixels', function (): void {

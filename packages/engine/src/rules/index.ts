@@ -7,6 +7,7 @@ import { rotationRules } from './rotation.js';
 import { slidingRules } from './sliding.js';
 import { stripsRules } from './strips.js';
 import { swapRules } from './swap.js';
+import { tangramRules } from './tangram.js';
 import type { ModeRules } from './types.js';
 
 const RULES: Partial<Record<GameKind, ModeRules>> = {
@@ -17,6 +18,7 @@ const RULES: Partial<Record<GameKind, ModeRules>> = {
   jigsaw: jigsawRules,
   nonogram: nonogramRules,
   memory: memoryRules,
+  tangram: tangramRules,
 };
 
 /** Rules for a kind, or an `unsupported` error for kinds this version does not ship. */

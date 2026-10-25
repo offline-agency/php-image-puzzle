@@ -109,7 +109,19 @@ export interface MemoryBoard {
   readonly revealed: readonly string[];
 }
 
-export type Board = SlidingBoard | SwapBoard | RotationBoard | StripsBoard | JigsawBoard | NonogramBoard | MemoryBoard;
+/** Tangram piece pose: centroid at (x, y), mirrored first when flipped, then turned clockwise by rotation x 45 degrees. */
+export interface TangramPose {
+  readonly x: number;
+  readonly y: number;
+  readonly rotation: number;
+  readonly flipped: boolean;
+}
+export interface TangramBoard {
+  /** One pose per piece, in tile order. */
+  readonly pieces: readonly TangramPose[];
+}
+
+export type Board = SlidingBoard | SwapBoard | RotationBoard | StripsBoard | JigsawBoard | NonogramBoard | MemoryBoard | TangramBoard;
 
 export type NonogramMark = 'filled' | 'crossed' | 'unknown';
 
@@ -120,7 +132,8 @@ export type Action =
   | { readonly type: 'move'; readonly strip: string; readonly to: number }
   | { readonly type: 'place'; readonly piece: string; readonly x: number; readonly y: number }
   | { readonly type: 'mark'; readonly cell: number; readonly state: NonogramMark }
-  | { readonly type: 'flip'; readonly card: string };
+  | { readonly type: 'flip'; readonly card: string }
+  | ({ readonly type: 'pose'; readonly piece: string } & TangramPose);
 
 /** Exported state document (docs/schemas/game/v1/state.schema.json). */
 export interface GameStateDocument {

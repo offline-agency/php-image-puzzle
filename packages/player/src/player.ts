@@ -16,6 +16,7 @@ import { styles } from './styles.js';
 import { createGridView } from './views/grid.js';
 import { createJigsawView } from './views/jigsaw.js';
 import { createMemoryView } from './views/memory.js';
+import { createTangramView } from './views/tangram.js';
 import { createNonogramView } from './views/nonogram.js';
 import type { ModeView, ViewContext } from './views/types.js';
 
@@ -24,6 +25,7 @@ const VIEWS: Partial<Record<string, (context: ViewContext) => ModeView>> = {
   jigsaw: createJigsawView,
   nonogram: createNonogramView,
   memory: createMemoryView,
+  tangram: createTangramView,
 };
 
 /** Largest definition document fetched from `src` (matches the PHP GameDefinition::MAX_JSON_BYTES). */

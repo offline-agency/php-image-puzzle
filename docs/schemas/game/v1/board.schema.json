@@ -57,6 +57,25 @@
       },
       "additionalProperties": false
     },
+    "tangram": {
+      "type": "object",
+      "required": ["pieces"],
+      "properties": {
+        "pieces": {
+          "type": "array",
+          "minItems": 7,
+          "maxItems": 7,
+          "description": "Pose of each piece in tile order: centroid at integer pixels (x, y), mirrored first when flipped, then turned clockwise by rotation x 45 degrees.",
+          "items": {
+            "type": "object",
+            "required": ["x", "y", "rotation", "flipped"],
+            "properties": { "x": { "type": "integer" }, "y": { "type": "integer" }, "rotation": { "type": "integer", "minimum": 0, "maximum": 7 }, "flipped": { "type": "boolean" } },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    },
     "nonogram": {
       "type": "object",
       "required": ["cells"],
@@ -71,6 +90,7 @@
         { "$ref": "#/$defs/strips" },
         { "$ref": "#/$defs/jigsaw" },
         { "$ref": "#/$defs/memory" },
+        { "$ref": "#/$defs/tangram" },
         { "$ref": "#/$defs/nonogram" }
       ]
     }

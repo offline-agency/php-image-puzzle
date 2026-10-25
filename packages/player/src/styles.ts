@@ -113,6 +113,19 @@ button:focus-visible { outline: 3px solid var(--ipp-focus); outline-offset: 2px;
 .nonogram:not(.is-complete) .nonogram-picture { opacity: 0.85; }
 .nonogram[data-loading='true'] .nonogram-picture { visibility: hidden; }
 
+.tangram-tools { display: flex; gap: 0.25rem; flex-wrap: wrap; }
+.tangram { display: block; width: 100%; height: auto; background: var(--ipp-tray); border-radius: var(--ipp-radius); user-select: none; -webkit-user-select: none; touch-action: none; }
+.tangram .target path { fill: var(--ipp-surface); stroke: var(--ipp-border); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.tangram .preview { opacity: 0.4; pointer-events: none; }
+.tangram .ghost { fill: none; stroke: var(--ipp-hint); stroke-width: 3; stroke-dasharray: 6 4; vector-effect: non-scaling-stroke; pointer-events: none; }
+.tangram .piece { cursor: grab; outline: none; }
+.tangram .piece.is-dragging { cursor: grabbing; }
+.tangram .piece .outline { fill: transparent; stroke: var(--ipp-border); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.tangram .piece:focus-visible .outline, .tangram .piece.is-selected:focus .outline { stroke: var(--ipp-focus); stroke-width: 3; }
+.tangram .piece.is-placed.highlight .outline { stroke: var(--ipp-correct); stroke-width: 2; }
+.tangram .piece.is-hint .outline { stroke: var(--ipp-hint); stroke-width: 3; animation: ipp-hint 1s ease 2; }
+.tangram[data-loading='true'] .piece image { visibility: hidden; }
+
 @keyframes ipp-hint { 50% { opacity: 0.5; } }
 @media (prefers-reduced-motion: reduce) {
   :host(:not([data-motion='full'])) .tile, :host(:not([data-motion='full'])) .piece, :host(:not([data-motion='full'])) .card { transition: none; }
@@ -126,5 +139,6 @@ button:focus-visible { outline: 3px solid var(--ipp-focus); outline-offset: 2px;
   .card[data-state='down'] { background-image: none; background-color: GrayText; }
   .cell[data-state='crossed']::before, .cell[data-state='crossed']::after { background: GrayText; }
   .piece:focus-visible .outline { stroke: Highlight; }
+  .tangram .target path { fill: Canvas; stroke: CanvasText; }
 }
 `;

@@ -11,6 +11,8 @@ use ImagePuzzle\Game\Nonogram\NonogramGenerator;
 use ImagePuzzle\Game\Nonogram\NonogramSolver;
 use ImagePuzzle\Game\Rules\JigsawRules;
 use ImagePuzzle\Game\Rules\MemoryRules;
+use ImagePuzzle\Game\Rules\TangramRules;
+use ImagePuzzle\Game\Tangram\Tangram;
 use ImagePuzzle\Geometry\Bounds;
 
 /**
@@ -31,6 +33,7 @@ final class GameFactory
         'strips' => ['count', 'axis'],
         'nonogram' => ['rows', 'cols', 'threshold', 'invert', 'requireUnique'],
         'memory' => ['rows', 'cols', 'labels'],
+        'tangram' => ['target', 'snap'],
     ];
 
     /**
@@ -56,7 +59,7 @@ final class GameFactory
             GameKind::Rotation => $this->rotation($source, $image, $preset, $seed, $params, $assistance),
             GameKind::Strips => $this->strips($source, $image, $preset, $seed, $params, $assistance),
             GameKind::Memory => $this->memory($source, $image, $preset, $seed, $params, $assistance),
-            default => throw new InvalidArgumentException("The {$kind->value} mode has its own factory."),
+            GameKind::Tangram => $this->tangram($source, $image, $preset, $seed, $params, $assistance),
         };
     }
 
@@ -287,6 +290,46 @@ final class GameFactory
         }
 
         return GameDefinition::create(GameKind::Memory, $seed, $preset, Presets::VERSION, $source->width, $source->height, $source->sha256, $image, $rows, $cols, $crop, $tiles, ['regions' => ['rows' => $regionRows, 'cols' => $regionCols]], $assistance);
+    }
+
+    /**
+     * Tangram: the largest centred square whose side is a multiple of 24 (so
+     * the unit, a quarter of the side, is a multiple of 6 and every solved
+     * vertex and centroid is an integer pixel), cut into the seven pieces.
+     * "snap" is a percentage of the unit.
+     *
+     * @param array<string, mixed> $params
+     * @param array{preview: bool, numbers: bool, highlightCorrect: bool} $assistance
+     */
+    private function tangram(SourceImage $source, string $image, string $preset, int $seed, array $params, array $assistance): GameDefinition
+    {
+        $target = Doc::string($params, 'target', 'parameters', 32);
+        Tangram::target($target);
+        $percent = self::side($params, 'snap', 1, 90);
+        $side = intdiv(min($source->width, $source->height), 24) * 24;
+        if ($side < 4 * TangramRules::MIN_UNIT) {
+            throw new InvalidArgumentException("A {$source->width}x{$source->height} image is too small for a tangram (needs at least 48x48).");
+        }
+        $unit = intdiv($side, 4);
+        $crop = new Bounds(intdiv($source->width - $side, 2), intdiv($source->height - $side, 2), Doc::positiveValue($side, 'crop width'), Doc::positiveValue($side, 'crop height'));
+        $tiles = [];
+        foreach (Tangram::ids() as $index => $id) {
+            [$x, $y, $w, $h] = Tangram::homeBox($id, $crop->x, $crop->y, $unit);
+            $tiles[] = new Tile($id, $index, new Bounds($x, $y, Doc::positiveValue($w, 'piece width'), Doc::positiveValue($h, 'piece height')), [
+                'shape' => Tangram::PIECES[$id]['shape'],
+                'path' => TangramRules::path(Tangram::home($id, $crop->x, $crop->y, $unit)),
+            ]);
+        }
+        $layout = TangramRules::layout($target, $crop, $unit);
+        $rules = [
+            'target' => $target,
+            'unit' => $unit,
+            'snap' => max(1, intdiv($unit * $percent, 100)),
+            'area' => $layout['area']->toArray(),
+            'tray' => $layout['tray']->toArray(),
+        ];
+
+        return GameDefinition::create(GameKind::Tangram, $seed, $preset, Presets::VERSION, $source->width, $source->height, $source->sha256, $image, 4, 4, $crop, $tiles, $rules, $assistance);
     }
 
     /**

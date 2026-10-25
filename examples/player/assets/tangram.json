@@ -1,0 +1,197 @@
+{
+    "id": "gd1-abce672ea1038080302b7ba3a40515d6680888187ded42b39b96ab249d045ef0",
+    "$schema": "https://raw.githubusercontent.com/offline-agency/php-image-puzzle/HEAD/docs/schemas/game/v1/definition.schema.json",
+    "format": "image-puzzle/game-definition",
+    "version": 1,
+    "kind": "tangram",
+    "generator": {
+        "algorithm": 1
+    },
+    "seed": 9,
+    "preset": {
+        "name": "easy",
+        "version": 1
+    },
+    "source": {
+        "width": 640,
+        "height": 480,
+        "sha256": "ddeb783c0a5e5bc2927c98903abcebdbaa01ccae446c8337c2278a8f3901b80d"
+    },
+    "media": {
+        "image": "picture.png"
+    },
+    "board": {
+        "rows": 4,
+        "cols": 4,
+        "crop": {
+            "x": 80,
+            "y": 0,
+            "width": 480,
+            "height": 480
+        }
+    },
+    "tiles": [
+        {
+            "id": "large-a",
+            "home": 0,
+            "rect": {
+                "x": 80,
+                "y": 0,
+                "width": 480,
+                "height": 240
+            },
+            "shape": "large",
+            "path": "M 80 0 L 560 0 L 320 240 Z"
+        },
+        {
+            "id": "large-b",
+            "home": 1,
+            "rect": {
+                "x": 80,
+                "y": 0,
+                "width": 240,
+                "height": 480
+            },
+            "shape": "large",
+            "path": "M 80 0 L 320 240 L 80 480 Z"
+        },
+        {
+            "id": "medium",
+            "home": 2,
+            "rect": {
+                "x": 320,
+                "y": 240,
+                "width": 240,
+                "height": 240
+            },
+            "shape": "medium",
+            "path": "M 560 240 L 560 480 L 320 480 Z"
+        },
+        {
+            "id": "small-a",
+            "home": 3,
+            "rect": {
+                "x": 440,
+                "y": 0,
+                "width": 120,
+                "height": 240
+            },
+            "shape": "small",
+            "path": "M 560 0 L 560 240 L 440 120 Z"
+        },
+        {
+            "id": "small-b",
+            "home": 4,
+            "rect": {
+                "x": 200,
+                "y": 240,
+                "width": 240,
+                "height": 120
+            },
+            "shape": "small",
+            "path": "M 320 240 L 440 360 L 200 360 Z"
+        },
+        {
+            "id": "square",
+            "home": 5,
+            "rect": {
+                "x": 320,
+                "y": 120,
+                "width": 240,
+                "height": 240
+            },
+            "shape": "square",
+            "path": "M 320 240 L 440 120 L 560 240 L 440 360 Z"
+        },
+        {
+            "id": "parallelogram",
+            "home": 6,
+            "rect": {
+                "x": 80,
+                "y": 360,
+                "width": 360,
+                "height": 120
+            },
+            "shape": "parallelogram",
+            "path": "M 80 480 L 200 360 L 440 360 L 320 480 Z"
+        }
+    ],
+    "rules": {
+        "target": "square",
+        "unit": 120,
+        "snap": 60,
+        "area": {
+            "x": -520,
+            "y": -120,
+            "width": 1680,
+            "height": 1560
+        },
+        "tray": {
+            "x": -400,
+            "y": 600,
+            "width": 1440,
+            "height": 720
+        }
+    },
+    "actions": [
+        "pose"
+    ],
+    "capabilities": {
+        "undo": true,
+        "redo": true,
+        "reset": true,
+        "shuffle": true,
+        "hint": true
+    },
+    "assistance": {
+        "preview": true,
+        "numbers": false,
+        "highlightCorrect": true
+    },
+    "initial": {
+        "pieces": [
+            {
+                "x": 860,
+                "y": 780,
+                "rotation": 6,
+                "flipped": false
+            },
+            {
+                "x": 500,
+                "y": 1140,
+                "rotation": 1,
+                "flipped": true
+            },
+            {
+                "x": 500,
+                "y": 780,
+                "rotation": 4,
+                "flipped": false
+            },
+            {
+                "x": -220,
+                "y": 780,
+                "rotation": 4,
+                "flipped": false
+            },
+            {
+                "x": 140,
+                "y": 1140,
+                "rotation": 4,
+                "flipped": false
+            },
+            {
+                "x": 140,
+                "y": 780,
+                "rotation": 5,
+                "flipped": false
+            },
+            {
+                "x": 860,
+                "y": 1140,
+                "rotation": 0,
+                "flipped": true
+            }
+        ]
+    }
+}

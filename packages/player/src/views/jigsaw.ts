@@ -1,5 +1,5 @@
 import { playArea, renderedRect, resolutionImage, resolutionLength } from '@offline-agency/image-puzzle-engine';
-import type { Action, Board, JigsawPiece, Rect, Tile } from '@offline-agency/image-puzzle-engine';
+import type { Action, Board, JigsawBoard, JigsawPiece, Rect, Tile } from '@offline-agency/image-puzzle-engine';
 import { el, pct } from '../dom.js';
 import { format } from '../messages.js';
 import { backgroundFor, loadImage } from './media.js';
@@ -228,7 +228,7 @@ export function createJigsawView(ctx: ViewContext): ModeView {
   }
 
   function currentPieces(value: Board): readonly JigsawPiece[] {
-    if (!('pieces' in value)) throw new Error('Board does not match the jigsaw mode');
+    if (!isJigsawBoard(value)) throw new Error('Board does not match the jigsaw mode');
     return value.pieces;
   }
 
@@ -426,4 +426,8 @@ export function createJigsawView(ctx: ViewContext): ModeView {
       element.remove();
     },
   };
+}
+
+function isJigsawBoard(value: Board): value is JigsawBoard {
+  return 'pieces' in value && value.pieces.every((piece) => 'placed' in piece);
 }

@@ -122,7 +122,7 @@ test.describe('plain JavaScript player (examples/player/index.html)', () => {
     expect(after.indexOf(String(order[0]))).toBe(2);
   });
 
-  for (const mode of ['jigsaw', 'jigsaw-hex', ...ASSET_BUILDS] as const) {
+  for (const mode of ['jigsaw', 'jigsaw-hex', 'jigsaw-triangle', ...ASSET_BUILDS] as const) {
     test(`${mode}: drag a piece by its outline onto its slot`, async ({ page, isMobile }) => {
       test.skip(isMobile, 'Playwright cannot synthesise touch drags; touch dragging is in the manual matrix');
       await openPlain(page, mode);
@@ -140,9 +140,14 @@ test.describe('plain JavaScript player (examples/player/index.html)', () => {
         const stage = host?.querySelector('.stage')?.getBoundingClientRect();
         const piece = host?.querySelector(`[data-piece="${tile.id}"]`)?.getBoundingClientRect();
         if (!stage || !piece) throw new Error('no layout');
-        // Grab the centre of the logical cell, which is always inside the outline.
-        const cx = tile.rect.x + tile.rect.width / 2;
-        const cy = tile.rect.y + tile.rect.height / 2;
+        // Grab the mean of the outline's vertices: inside the piece for every topology
+        // (a triangular piece does not cover the centre of its bounding cell).
+        const points = [...String(tile.attributes['path']).matchAll(/[ML](-?[0-9.]+) (-?[0-9.]+)/g)].map((m) => [
+          Number(m[1]),
+          Number(m[2]),
+        ]);
+        const cx = points.reduce((sum, [x = 0]) => sum + x, 0) / points.length;
+        const cy = points.reduce((sum, [, y = 0]) => sum + y, 0) / points.length;
         const scale = stage.width / area.width;
         return {
           index,

@@ -54,6 +54,8 @@ final class ConformanceFixtures
             'jigsaw-hex' => self::jigsaw($factory, 'hex', 2, 2),
             'memory' => $factory->create(GameKind::Memory, $source, 'source.png', 'easy', [], 18),
             'memory-labels' => $factory->create(GameKind::Memory, $source, 'source.png', 'custom', ['rows' => 2, 'cols' => 3, 'labels' => ['one', 'two', 'drei']], 19),
+            'tangram' => $factory->create(GameKind::Tangram, $source, 'source.png', 'easy', [], 20),
+            'tangram-arrow' => $factory->create(GameKind::Tangram, $source, 'source.png', 'custom', ['target' => 'arrow', 'snap' => 30], 21),
             'nonogram' => self::nonogram($factory, ['..##..', '.####.', '######', '##..##', '#....#', '######']),
             // Two diagonals: the clues also fit the mirrored picture.
             'nonogram-ambiguous' => self::nonogram($factory, ['#...', '.#..', '..#.', '...#']),
@@ -151,6 +153,7 @@ final class ConformanceFixtures
             [...$base, 'version' => '1'],
             [...$base, 'extra' => true],
             [...$base, 'kind' => 'memory'],
+            [...$base, 'kind' => 'tangram', 'preset' => 'custom', 'custom' => ['target' => 'chevron', 'snap' => 40]],
             [...$base, 'kind' => 7],
             [...$base, 'preset' => 'expert'],
             [...$base, 'custom' => ['rows' => 2]],
@@ -352,6 +355,7 @@ final class ConformanceFixtures
 
                 return ['pieces' => $pieces];
             })(),
+            GameKind::Tangram => ['pieces' => self::replaceAt($solved['pieces'], 0, self::asList($definition->initial['pieces'])[0])],
             GameKind::Memory => (static function () use ($solved): array {
                 $ids = self::asList($solved['cards']);
                 $last = array_slice($ids, -2);
@@ -422,6 +426,24 @@ final class ConformanceFixtures
                 ['type' => 'conceal'],
                 ['type' => 'flip', 'card' => 'P0-A'],
             ],
+            GameKind::Tangram => (static function () use ($definition, $first): array {
+                $pose = self::asList($definition->initial['pieces'])[0];
+                $area = $definition->rules['area'];
+                if (!is_array($pose) || !is_array($area)) {
+                    throw new \LogicException('Malformed tangram definition.');
+                }
+
+                return [
+                    ['type' => 'pose', 'piece' => 'zz', 'x' => 0, 'y' => 0, 'rotation' => 0, 'flipped' => false],
+                    ['type' => 'pose', 'piece' => $first, 'x' => $pose['x'] ?? null, 'y' => $pose['y'] ?? null, 'rotation' => $pose['rotation'] ?? null, 'flipped' => $pose['flipped'] ?? null],
+                    ['type' => 'pose', 'piece' => $first, 'x' => $area['x'], 'y' => $area['y'], 'rotation' => 0, 'flipped' => false],
+                    ['type' => 'pose', 'piece' => $first, 'x' => 1.5, 'y' => 0, 'rotation' => 0, 'flipped' => false],
+                    ['type' => 'pose', 'piece' => $first, 'x' => 0, 'y' => 0, 'rotation' => 8, 'flipped' => false],
+                    ['type' => 'pose', 'piece' => $first, 'x' => 0, 'y' => 0, 'rotation' => 0, 'flipped' => 'no'],
+                    ['type' => 'pose', 'piece' => $first, 'x' => 0, 'y' => 0, 'rotation' => 0],
+                    ['type' => 'pose', 'piece' => $first, 'x' => 0, 'y' => 0, 'rotation' => 0, 'flipped' => false, 'extra' => 1],
+                ];
+            })(),
             GameKind::Nonogram => [
                 ['type' => 'mark', 'cell' => 0, 'state' => 'unknown'],
                 ['type' => 'mark', 'cell' => $definition->rows * $definition->cols, 'state' => 'filled'],
@@ -430,7 +452,6 @@ final class ConformanceFixtures
                 ['type' => 'mark', 'cell' => 0, 'state' => 'grey'],
                 ['type' => 'mark', 'cell' => 0, 'state' => 'filled', 'extra' => 1],
             ],
-            default => [],
         }];
     }
 
@@ -515,6 +536,14 @@ final class ConformanceFixtures
                 ['name' => 'three face up', 'board' => ['cards' => $solved['cards'], 'matched' => [], 'revealed' => ['p0-a', 'p1-a', 'p2-a']]],
                 ['name' => 'repeated card', 'board' => ['cards' => self::replace($solved['cards'], 'p1-a', 'p0-a'), 'matched' => [], 'revealed' => []]],
             ],
+            GameKind::Tangram => [
+                ['name' => 'partly assembled', 'board' => ['pieces' => self::replaceAt($solved['pieces'], 2, self::asList($initial['pieces'])[2])]],
+                ['name' => 'two pieces on one slot', 'board' => ['pieces' => self::replaceAt($solved['pieces'], 1, self::asList($solved['pieces'])[0])]],
+                ['name' => 'outside area', 'board' => ['pieces' => self::replaceAt($solved['pieces'], 0, ['x' => -99999, 'y' => 0, 'rotation' => 0, 'flipped' => false])]],
+                ['name' => 'eighth turn out of range', 'board' => ['pieces' => self::replaceAt($solved['pieces'], 0, ['x' => 0, 'y' => 0, 'rotation' => 8, 'flipped' => false])]],
+                ['name' => 'fractional position', 'board' => ['pieces' => self::replaceAt($solved['pieces'], 0, ['x' => 0.5, 'y' => 0, 'rotation' => 0, 'flipped' => false])]],
+                ['name' => 'missing piece', 'board' => ['pieces' => self::drop($solved['pieces'])]],
+            ],
             GameKind::Nonogram => [
                 ['name' => 'partly marked', 'board' => ['cells' => '1x' . str_repeat('.', $cells - 2)]],
                 ['name' => 'wrong but well formed', 'board' => ['cells' => str_repeat('1', $cells)]],
@@ -522,7 +551,6 @@ final class ConformanceFixtures
                 ['name' => 'unknown symbol', 'board' => ['cells' => '0' . str_repeat('.', $cells - 1)]],
                 ['name' => 'list of cells', 'board' => ['cells' => array_fill(0, $cells, '.')]],
             ],
-            default => [],
         }];
 
         $out = [];

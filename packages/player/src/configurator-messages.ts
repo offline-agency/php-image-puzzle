@@ -25,6 +25,7 @@ export interface ConfiguratorMessages {
   readonly preview: string;
   readonly gridSummary: string;
   readonly stripsSummary: string;
+  readonly tangramSummary: string;
   readonly approximate: string;
   readonly range: string;
   readonly required: string;
@@ -44,6 +45,7 @@ export const configuratorEn: ConfiguratorMessages = {
     jigsaw: 'Jigsaw',
     nonogram: 'Nonogram',
     memory: 'Memory',
+    tangram: 'Tangram',
   },
   preset: 'Difficulty',
   presets: { easy: 'Easy', medium: 'Medium', hard: 'Hard', custom: 'Custom' },
@@ -62,6 +64,8 @@ export const configuratorEn: ConfiguratorMessages = {
     invert: 'Fill the light areas',
     requireUnique: 'Only accept a proven unique solution',
     labels: 'Card labels, one per pair and line (the second card of each pair shows the label)',
+    target: 'Target shape',
+    'tangram.snap': 'Snap distance (% of a quarter of the side)',
   },
   choices: {
     horizontal: 'Horizontal',
@@ -75,6 +79,9 @@ export const configuratorEn: ConfiguratorMessages = {
     half_circle: 'Half circle',
     sinus: 'Wave',
     no_edge: 'None',
+    square: 'Square (the picture)',
+    arrow: 'Arrow',
+    chevron: 'Chevron',
   },
   optional: '(optional)',
   seed: 'Seed',
@@ -93,6 +100,7 @@ export const configuratorEn: ConfiguratorMessages = {
   preview: 'Preview',
   gridSummary: '{rows} × {cols} board, tiles of about {width} × {height} px',
   stripsSummary: '{count} {axis} strips of about {size} px',
+  tangramSummary: 'Seven tangram pieces from a {size} px square; target: {target}',
   approximate: 'Piece outlines are drawn when the puzzle is generated; the preview shows the grid.',
   range: '{field} must be a whole number from {min} to {max}.',
   required: '{field} is required.',
@@ -112,6 +120,7 @@ export const configuratorIt: ConfiguratorMessages = {
     jigsaw: 'Jigsaw',
     nonogram: 'Nonogramma',
     memory: 'Memory',
+    tangram: 'Tangram',
   },
   preset: 'Difficoltà',
   presets: { easy: 'Facile', medium: 'Media', hard: 'Difficile', custom: 'Personalizzata' },
@@ -130,6 +139,8 @@ export const configuratorIt: ConfiguratorMessages = {
     invert: 'Riempi le zone chiare',
     requireUnique: 'Accetta solo una soluzione unica dimostrata',
     labels: "Etichette delle carte, una per coppia e per riga (la seconda carta di ogni coppia mostra l'etichetta)",
+    target: 'Figura da comporre',
+    'tangram.snap': 'Distanza di aggancio (% di un quarto del lato)',
   },
   choices: {
     horizontal: 'Orizzontali',
@@ -143,6 +154,9 @@ export const configuratorIt: ConfiguratorMessages = {
     half_circle: 'Semicerchio',
     sinus: 'Onda',
     no_edge: 'Nessuno',
+    square: "Quadrato (l'immagine)",
+    arrow: 'Freccia',
+    chevron: 'Chevron',
   },
   optional: '(facoltativo)',
   seed: 'Seme',
@@ -161,6 +175,7 @@ export const configuratorIt: ConfiguratorMessages = {
   preview: 'Anteprima',
   gridSummary: 'Griglia {rows} × {cols}, tessere di circa {width} × {height} px',
   stripsSummary: '{count} strisce {axis} di circa {size} px',
+  tangramSummary: 'Sette pezzi del tangram da un quadrato di {size} px; figura: {target}',
   approximate: "I contorni dei pezzi vengono disegnati durante la generazione; l'anteprima mostra la griglia.",
   range: '{field} deve essere un numero intero da {min} a {max}.',
   required: '{field} è obbligatorio.',

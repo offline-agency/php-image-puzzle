@@ -54,6 +54,24 @@ final class GenerationTest extends TestCase
         self::assertSame([], $definition['tiles']);
     }
 
+    public function testGeneratesMemoryAndTangramDefinitions(): void
+    {
+        [$team] = $this->signIn();
+        foreach (['memory' => 12, 'tangram' => 7] as $kind => $tiles) {
+            $puzzle = $this->puzzleFor($team, ['kind' => $kind, 'crop' => ['x' => 10, 'y' => 0, 'width' => 100, 'height' => 90]]);
+
+            app(PuzzleGeneration::class)->generate($puzzle);
+
+            $puzzle->refresh();
+            self::assertSame(PuzzleRecord::STATUS_READY, $puzzle->imagePuzzleStatus(), (string) $puzzle->imagePuzzleError());
+            $definition = json_decode((string) file_get_contents((string) $puzzle->imagePuzzleDefinitionPath()), true, 64, JSON_THROW_ON_ERROR);
+            self::assertIsArray($definition);
+            self::assertSame($kind, $definition['kind']);
+            self::assertIsArray($definition['tiles']);
+            self::assertCount($tiles, $definition['tiles']);
+        }
+    }
+
     public function testRegeneratingReplacesThePreviousGenerationOnly(): void
     {
         [$team] = $this->signIn();

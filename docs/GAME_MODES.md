@@ -14,13 +14,13 @@ lives in a separate **state** document. Both are versioned JSON validated by
 | `jigsaw` | `{"type":"place","piece":id,"x":int,"y":int}` | `{"pieces":[{"x","y","placed"},…]}` per tile | yes | Pieces from an export manifest; any topology |
 | `memory` | `{"type":"flip","card":id}` | `{"cards":[id,…],"matched":[id,…],"revealed":[id,…]}` | no | Pairs of cards; see [Memory](#memory) |
 | `nonogram` | `{"type":"mark","cell":index,"state":"filled"\|"crossed"\|"unknown"}` | `{"cells":"1x.…"}` one character per cell | yes | Generated from the image pixels; see [Nonogram](#nonogram) |
+| `tangram` | `{"type":"pose","piece":id,"x":int,"y":int,"rotation":0-7,"flipped":bool}` | `{"pieces":[{"x","y","rotation","flipped"},…]}` per piece | yes | Seven pieces of a square image; see [Tangram](#tangram) |
 
-The grid modes and jigsaw support undo, redo, reset and shuffle; a nonogram
+The grid modes, jigsaw and tangram support undo, redo, reset and shuffle; a nonogram
 has no shuffle (its start is always the empty grid) and memory has no undo,
 redo or hint (they would reveal hidden cards). The `capabilities` of
 each definition are authoritative and players hide controls whose capability
-is `false`. `Modes::rules()` reports a kind that this version does not ship
-(tangram) instead of mapping it to another game.
+is `false`. Every `GameKind` ships with rules (`Modes::available()`).
 
 ## Creating definitions
 
@@ -63,6 +63,7 @@ measure of solution length.
 | jigsaw | 3×4, snap 25 % of the smallest cell | 6×8, 15 % | 10×12, 8 % | `snap` argument |
 | memory | 3×4 cards (6 pairs) | 4×4 (8 pairs) | 4×6 (12 pairs), no highlight | `rows`, `cols` (2–8, even product), `labels` |
 | nonogram | 10×10, highlight solved lines | 15×15, highlight | 20×20, no highlight | `rows`, `cols` (2–30), `threshold`, `invert`, `requireUnique` |
+| tangram | `square` target, snap 50 % of the unit, highlight | `square`, 30 % | `square`, 15 %, no preview | `target` (`square`, `arrow`, `chevron`), `snap` (1–90 % of the unit) |
 
 All custom presets also accept `assistance` (`preview`, `numbers`,
 `highlightCorrect` booleans). The full table is exported by
@@ -124,6 +125,74 @@ label in the DOM, and face-up picture cards are announced as "picture N" so
 the game can be played with a screen reader. A determined player can still
 read the layout from the definition or the saved state in the browser: memory
 in the browser is a game, not a secure test.
+
+## Tangram
+
+The standard seven-piece tangram cut from the largest centred square of the
+image whose side is a multiple of 24 pixels (at least 48), so the **unit**
+`u` (a quarter of the side, `rules.unit`) is a multiple of 6 and every solved
+vertex and centroid is a whole pixel. `GameFactory::create(GameKind::Tangram, …)`.
+
+**Coordinate convention:** x to the right, y down (image coordinates), in
+units of the square of side 4 with the origin at its top-left corner. Tiles,
+in this order, with their solved vertices:
+
+| Tile ID | Shape | Vertices (units) |
+| --- | --- | --- |
+| `large-a` | large triangle | (0,0) (4,0) (2,2) |
+| `large-b` | large triangle | (0,0) (2,2) (0,4) |
+| `medium` | medium triangle | (4,2) (4,4) (2,4) |
+| `small-a` | small triangle | (4,0) (4,2) (3,1) |
+| `small-b` | small triangle | (2,2) (3,3) (1,3) |
+| `square` | square | (2,2) (3,1) (4,2) (3,3) |
+| `parallelogram` | parallelogram | (0,4) (1,3) (3,3) (2,4) |
+
+Each tile records its `shape`, the solved bounding box as `rect` and the
+solved outline as `path`, so the SVG and PDF exporters print and cut the seven
+pieces like jigsaw pieces (the image is never re-cut in the browser).
+
+**Pose:** a piece's centroid (vertex mean) sits at integer world pixels
+`(x, y)`; `flipped` mirrors it across the vertical axis through the centroid,
+then `rotation` turns it clockwise by `rotation × 45°`. Rotations use exact
+cosine/sine values (1, 0, √½) in the same order of operations in PHP and
+TypeScript (`Tangram::polygon()`, `tangramPolygon()`), so both compute
+identical doubles; the conformance fixtures check every result.
+
+**Targets:** `rules.target` names a target from a small validated library
+(`Tangram::TARGETS`); anything else is rejected with the list of supported
+targets.
+
+| Target | Kind | Arrangement |
+| --- | --- | --- |
+| `square` | picture | the solved square: each slot takes only its own piece in its solved orientation, so the image is reassembled |
+| `arrow` | silhouette | `large-b` moved 4 units right: an arrow pointing right |
+| `chevron` | silhouette | `large-a` moved 4 units down: an arrow pointing down |
+
+A silhouette slot accepts any piece of the same shape in any of the eight
+rotations, mirrored or not (both large triangles fit both large slots). Each
+target is checked by `Tangram::validate()` (and the test suite, at several
+units): seven pieces, pairwise overlap no larger than `1e-6 × u` by a
+separating-axis test, total area 16 u². **Only the library's arrangement of a
+silhouette is recognised:** a different tiling that happens to cover the same
+outline is not accepted, and the documentation never claims otherwise.
+
+**Rules:** `rules.tray` (4 × 2 cells of 3 u, below the target) is where the
+scramble puts each piece, at a random rotation and side; `rules.area`
+bounds every vertex of every piece. A `pose` moves, turns and/or mirrors one
+piece and must keep it inside the area. When every vertex of the posed piece
+lies within `rules.snap` pixels of a free slot that it fits, the piece snaps
+exactly onto the slot (keeping its own orientation when that orientation
+fits, so the picture does not suddenly mirror); a pose that changes nothing
+after snapping is illegal. The puzzle is complete when every piece lies on a
+distinct slot it fits, vertex for vertex within **1e-6 px**: overlaps,
+gaps and a piece off by one pixel are never complete. Progress is the number
+of pieces on such slots out of 7.
+
+**Players:** the bundled player draws the target outline, clips the source
+image to each piece's solved outline and moves it with its pose. Pieces are
+focusable: arrow keys move (Shift for larger steps) and Enter drops, R / Shift+R
+turn by 45°, F mirrors; pointer users drag pieces and use the turn and mirror
+buttons on the last piece they touched.
 
 ## Nonogram
 

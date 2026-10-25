@@ -55,6 +55,12 @@ final class Presets
             'medium' => ['rows' => 4, 'cols' => 4, 'assistance' => ['preview' => true, 'numbers' => false, 'highlightCorrect' => true]],
             'hard' => ['rows' => 4, 'cols' => 6, 'assistance' => ['preview' => false, 'numbers' => false, 'highlightCorrect' => false]],
         ],
+        // snap: percent of the tangram unit (a quarter of the square side).
+        'tangram' => [
+            'easy' => ['target' => 'square', 'snap' => 50, 'assistance' => ['preview' => true, 'numbers' => false, 'highlightCorrect' => true]],
+            'medium' => ['target' => 'square', 'snap' => 30, 'assistance' => ['preview' => true, 'numbers' => false, 'highlightCorrect' => false]],
+            'hard' => ['target' => 'square', 'snap' => 15, 'assistance' => ['preview' => false, 'numbers' => false, 'highlightCorrect' => false]],
+        ],
     ];
 
     /**

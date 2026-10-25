@@ -117,10 +117,12 @@ test('quarter turns on non-square cells are rejected on import', function (): vo
         ->toThrow(InvalidDefinitionException::class, 'Quarter turns need square cells');
 });
 
-test('modes not shipped in this version are reported, not silently mapped', function (): void {
-    expect(fn () => Modes::rules(GameKind::Tangram))->toThrow(InvalidDefinitionException::class, 'not available');
+test('every game kind ships with rules', function (): void {
     expect(array_map(static fn (GameKind $kind): string => $kind->value, Modes::available()))
-        ->toBe(['sliding', 'swap', 'rotation', 'strips', 'jigsaw', 'nonogram', 'memory']);
+        ->toBe(['sliding', 'swap', 'rotation', 'strips', 'jigsaw', 'nonogram', 'memory', 'tangram']);
+    foreach (GameKind::cases() as $kind) {
+        expect(Modes::rules($kind)->kind())->toBe($kind);
+    }
 });
 
 test('the schema rejects documents that contradict their kind', function (): void {

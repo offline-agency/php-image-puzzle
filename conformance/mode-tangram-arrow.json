@@ -1,0 +1,1816 @@
+{
+    "name": "tangram-arrow",
+    "definition": {
+        "id": "gd1-f20fd2549cbaf102a60dece3cc117d46376fbfee778b852710c57850b37ff516",
+        "$schema": "https://raw.githubusercontent.com/offline-agency/php-image-puzzle/HEAD/docs/schemas/game/v1/definition.schema.json",
+        "format": "image-puzzle/game-definition",
+        "version": 1,
+        "kind": "tangram",
+        "generator": {
+            "algorithm": 1
+        },
+        "seed": 21,
+        "preset": {
+            "name": "custom",
+            "version": 1
+        },
+        "source": {
+            "width": 640,
+            "height": 480,
+            "sha256": "4d6255a6c425d543f7f9167565e0c111596081fe6a2e6eb6f238296e9b24e704"
+        },
+        "media": {
+            "image": "source.png"
+        },
+        "board": {
+            "rows": 4,
+            "cols": 4,
+            "crop": {
+                "x": 80,
+                "y": 0,
+                "width": 480,
+                "height": 480
+            }
+        },
+        "tiles": [
+            {
+                "id": "large-a",
+                "home": 0,
+                "rect": {
+                    "x": 80,
+                    "y": 0,
+                    "width": 480,
+                    "height": 240
+                },
+                "shape": "large",
+                "path": "M 80 0 L 560 0 L 320 240 Z"
+            },
+            {
+                "id": "large-b",
+                "home": 1,
+                "rect": {
+                    "x": 80,
+                    "y": 0,
+                    "width": 240,
+                    "height": 480
+                },
+                "shape": "large",
+                "path": "M 80 0 L 320 240 L 80 480 Z"
+            },
+            {
+                "id": "medium",
+                "home": 2,
+                "rect": {
+                    "x": 320,
+                    "y": 240,
+                    "width": 240,
+                    "height": 240
+                },
+                "shape": "medium",
+                "path": "M 560 240 L 560 480 L 320 480 Z"
+            },
+            {
+                "id": "small-a",
+                "home": 3,
+                "rect": {
+                    "x": 440,
+                    "y": 0,
+                    "width": 120,
+                    "height": 240
+                },
+                "shape": "small",
+                "path": "M 560 0 L 560 240 L 440 120 Z"
+            },
+            {
+                "id": "small-b",
+                "home": 4,
+                "rect": {
+                    "x": 200,
+                    "y": 240,
+                    "width": 240,
+                    "height": 120
+                },
+                "shape": "small",
+                "path": "M 320 240 L 440 360 L 200 360 Z"
+            },
+            {
+                "id": "square",
+                "home": 5,
+                "rect": {
+                    "x": 320,
+                    "y": 120,
+                    "width": 240,
+                    "height": 240
+                },
+                "shape": "square",
+                "path": "M 320 240 L 440 120 L 560 240 L 440 360 Z"
+            },
+            {
+                "id": "parallelogram",
+                "home": 6,
+                "rect": {
+                    "x": 80,
+                    "y": 360,
+                    "width": 360,
+                    "height": 120
+                },
+                "shape": "parallelogram",
+                "path": "M 80 480 L 200 360 L 440 360 L 320 480 Z"
+            }
+        ],
+        "rules": {
+            "target": "arrow",
+            "unit": 120,
+            "snap": 36,
+            "area": {
+                "x": -400,
+                "y": -120,
+                "width": 1680,
+                "height": 1560
+            },
+            "tray": {
+                "x": -280,
+                "y": 600,
+                "width": 1440,
+                "height": 720
+            }
+        },
+        "actions": [
+            "pose"
+        ],
+        "capabilities": {
+            "undo": true,
+            "redo": true,
+            "reset": true,
+            "shuffle": true,
+            "hint": true
+        },
+        "assistance": {
+            "preview": true,
+            "numbers": false,
+            "highlightCorrect": false
+        },
+        "initial": {
+            "pieces": [
+                {
+                    "x": 260,
+                    "y": 1140,
+                    "rotation": 5,
+                    "flipped": true
+                },
+                {
+                    "x": -100,
+                    "y": 780,
+                    "rotation": 2,
+                    "flipped": false
+                },
+                {
+                    "x": 980,
+                    "y": 1140,
+                    "rotation": 2,
+                    "flipped": false
+                },
+                {
+                    "x": -100,
+                    "y": 1140,
+                    "rotation": 3,
+                    "flipped": false
+                },
+                {
+                    "x": 980,
+                    "y": 780,
+                    "rotation": 6,
+                    "flipped": false
+                },
+                {
+                    "x": 620,
+                    "y": 1140,
+                    "rotation": 7,
+                    "flipped": true
+                },
+                {
+                    "x": 260,
+                    "y": 780,
+                    "rotation": 2,
+                    "flipped": true
+                }
+            ]
+        }
+    },
+    "solved": {
+        "pieces": [
+            {
+                "x": 320,
+                "y": 80,
+                "rotation": 0,
+                "flipped": false
+            },
+            {
+                "x": 640,
+                "y": 240,
+                "rotation": 0,
+                "flipped": false
+            },
+            {
+                "x": 480,
+                "y": 400,
+                "rotation": 0,
+                "flipped": false
+            },
+            {
+                "x": 520,
+                "y": 120,
+                "rotation": 0,
+                "flipped": false
+            },
+            {
+                "x": 320,
+                "y": 320,
+                "rotation": 0,
+                "flipped": false
+            },
+            {
+                "x": 440,
+                "y": 240,
+                "rotation": 0,
+                "flipped": false
+            },
+            {
+                "x": 260,
+                "y": 420,
+                "rotation": 0,
+                "flipped": false
+            }
+        ]
+    },
+    "scrambles": [
+        {
+            "seed": 0,
+            "board": {
+                "pieces": [
+                    {
+                        "x": 260,
+                        "y": 1140,
+                        "rotation": 4,
+                        "flipped": false
+                    },
+                    {
+                        "x": 980,
+                        "y": 780,
+                        "rotation": 7,
+                        "flipped": true
+                    },
+                    {
+                        "x": 980,
+                        "y": 1140,
+                        "rotation": 5,
+                        "flipped": false
+                    },
+                    {
+                        "x": 620,
+                        "y": 780,
+                        "rotation": 5,
+                        "flipped": true
+                    },
+                    {
+                        "x": -100,
+                        "y": 1140,
+                        "rotation": 5,
+                        "flipped": false
+                    },
+                    {
+                        "x": 260,
+                        "y": 780,
+                        "rotation": 1,
+                        "flipped": true
+                    },
+                    {
+                        "x": 620,
+                        "y": 1140,
+                        "rotation": 0,
+                        "flipped": true
+                    }
+                ]
+            }
+        },
+        {
+            "seed": 1,
+            "board": {
+                "pieces": [
+                    {
+                        "x": 620,
+                        "y": 780,
+                        "rotation": 3,
+                        "flipped": true
+                    },
+                    {
+                        "x": 620,
+                        "y": 1140,
+                        "rotation": 0,
+                        "flipped": true
+                    },
+                    {
+                        "x": -100,
+                        "y": 780,
+                        "rotation": 4,
+                        "flipped": false
+                    },
+                    {
+                        "x": 980,
+                        "y": 1140,
+                        "rotation": 1,
+                        "flipped": true
+                    },
+                    {
+                        "x": 980,
+                        "y": 780,
+                        "rotation": 4,
+                        "flipped": true
+                    },
+                    {
+                        "x": 260,
+                        "y": 1140,
+                        "rotation": 2,
+                        "flipped": true
+                    },
+                    {
+                        "x": -100,
+                        "y": 1140,
+                        "rotation": 4,
+                        "flipped": true
+                    }
+                ]
+            }
+        },
+        {
+            "seed": 2,
+            "board": {
+                "pieces": [
+                    {
+                        "x": -100,
+                        "y": 780,
+                        "rotation": 5,
+                        "flipped": true
+                    },
+                    {
+                        "x": 980,
+                        "y": 780,
+                        "rotation": 2,
+                        "flipped": true
+                    },
+                    {
+                        "x": 260,
+                        "y": 1140,
+                        "rotation": 7,
+                        "flipped": false
+                    },
+                    {
+                        "x": 620,
+                        "y": 780,
+                        "rotation": 3,
+                        "flipped": true
+                    },
+                    {
+                        "x": 620,
+                        "y": 1140,
+                        "rotation": 6,
+                        "flipped": true
+                    },
+                    {
+                        "x": 980,
+                        "y": 1140,
+                        "rotation": 2,
+                        "flipped": true
+                    },
+                    {
+                        "x": 260,
+                        "y": 780,
+                        "rotation": 0,
+                        "flipped": true
+                    }
+                ]
+            }
+        },
+        {
+            "seed": 99,
+            "board": {
+                "pieces": [
+                    {
+                        "x": 980,
+                        "y": 780,
+                        "rotation": 0,
+                        "flipped": false
+                    },
+                    {
+                        "x": 620,
+                        "y": 780,
+                        "rotation": 3,
+                        "flipped": true
+                    },
+                    {
+                        "x": 260,
+                        "y": 1140,
+                        "rotation": 6,
+                        "flipped": true
+                    },
+                    {
+                        "x": 620,
+                        "y": 1140,
+                        "rotation": 1,
+                        "flipped": true
+                    },
+                    {
+                        "x": 260,
+                        "y": 780,
+                        "rotation": 5,
+                        "flipped": true
+                    },
+                    {
+                        "x": -100,
+                        "y": 780,
+                        "rotation": 0,
+                        "flipped": false
+                    },
+                    {
+                        "x": 980,
+                        "y": 1140,
+                        "rotation": 5,
+                        "flipped": false
+                    }
+                ]
+            }
+        },
+        {
+            "seed": 4294967295,
+            "board": {
+                "pieces": [
+                    {
+                        "x": 260,
+                        "y": 1140,
+                        "rotation": 7,
+                        "flipped": false
+                    },
+                    {
+                        "x": -100,
+                        "y": 780,
+                        "rotation": 6,
+                        "flipped": true
+                    },
+                    {
+                        "x": 260,
+                        "y": 780,
+                        "rotation": 6,
+                        "flipped": true
+                    },
+                    {
+                        "x": 620,
+                        "y": 780,
+                        "rotation": 2,
+                        "flipped": true
+                    },
+                    {
+                        "x": 980,
+                        "y": 1140,
+                        "rotation": 2,
+                        "flipped": true
+                    },
+                    {
+                        "x": 620,
+                        "y": 1140,
+                        "rotation": 7,
+                        "flipped": false
+                    },
+                    {
+                        "x": -100,
+                        "y": 1140,
+                        "rotation": 5,
+                        "flipped": true
+                    }
+                ]
+            }
+        }
+    ],
+    "legalActions": [
+        {
+            "type": "pose",
+            "piece": "large-a",
+            "x": 320,
+            "y": 80,
+            "rotation": 0,
+            "flipped": false
+        },
+        {
+            "type": "pose",
+            "piece": "large-a",
+            "x": 640,
+            "y": 240,
+            "rotation": 6,
+            "flipped": false
+        },
+        {
+            "type": "pose",
+            "piece": "large-b",
+            "x": 320,
+            "y": 80,
+            "rotation": 2,
+            "flipped": false
+        },
+        {
+            "type": "pose",
+            "piece": "large-b",
+            "x": 640,
+            "y": 240,
+            "rotation": 0,
+            "flipped": false
+        },
+        {
+            "type": "pose",
+            "piece": "medium",
+            "x": 480,
+            "y": 400,
+            "rotation": 0,
+            "flipped": false
+        },
+        {
+            "type": "pose",
+            "piece": "small-a",
+            "x": 520,
+            "y": 120,
+            "rotation": 0,
+            "flipped": false
+        },
+        {
+            "type": "pose",
+            "piece": "small-a",
+            "x": 320,
+            "y": 320,
+            "rotation": 2,
+            "flipped": false
+        },
+        {
+            "type": "pose",
+            "piece": "small-b",
+            "x": 520,
+            "y": 120,
+            "rotation": 6,
+            "flipped": false
+        },
+        {
+            "type": "pose",
+            "piece": "small-b",
+            "x": 320,
+            "y": 320,
+            "rotation": 0,
+            "flipped": false
+        },
+        {
+            "type": "pose",
+            "piece": "square",
+            "x": 440,
+            "y": 240,
+            "rotation": 0,
+            "flipped": false
+        },
+        {
+            "type": "pose",
+            "piece": "parallelogram",
+            "x": 260,
+            "y": 420,
+            "rotation": 0,
+            "flipped": false
+        }
+    ],
+    "cases": [
+        {
+            "name": "play from initial",
+            "board": {
+                "pieces": [
+                    {
+                        "x": 260,
+                        "y": 1140,
+                        "rotation": 5,
+                        "flipped": true
+                    },
+                    {
+                        "x": -100,
+                        "y": 780,
+                        "rotation": 2,
+                        "flipped": false
+                    },
+                    {
+                        "x": 980,
+                        "y": 1140,
+                        "rotation": 2,
+                        "flipped": false
+                    },
+                    {
+                        "x": -100,
+                        "y": 1140,
+                        "rotation": 3,
+                        "flipped": false
+                    },
+                    {
+                        "x": 980,
+                        "y": 780,
+                        "rotation": 6,
+                        "flipped": false
+                    },
+                    {
+                        "x": 620,
+                        "y": 1140,
+                        "rotation": 7,
+                        "flipped": true
+                    },
+                    {
+                        "x": 260,
+                        "y": 780,
+                        "rotation": 2,
+                        "flipped": true
+                    }
+                ]
+            },
+            "steps": [
+                {
+                    "action": {
+                        "type": "pose",
+                        "piece": "large-a",
+                        "x": 320,
+                        "y": 80,
+                        "rotation": 0,
+                        "flipped": false
+                    },
+                    "result": "ok",
+                    "board": {
+                        "pieces": [
+                            {
+                                "x": 320,
+                                "y": 80,
+                                "rotation": 0,
+                                "flipped": false
+                            },
+                            {
+                                "x": -100,
+                                "y": 780,
+                                "rotation": 2,
+                                "flipped": false
+                            },
+                            {
+                                "x": 980,
+                                "y": 1140,
+                                "rotation": 2,
+                                "flipped": false
+                            },
+                            {
+                                "x": -100,
+                                "y": 1140,
+                                "rotation": 3,
+                                "flipped": false
+                            },
+                            {
+                                "x": 980,
+                                "y": 780,
+                                "rotation": 6,
+                                "flipped": false
+                            },
+                            {
+                                "x": 620,
+                                "y": 1140,
+                                "rotation": 7,
+                                "flipped": true
+                            },
+                            {
+                                "x": 260,
+                                "y": 780,
+                                "rotation": 2,
+                                "flipped": true
+                            }
+                        ]
+                    },
+                    "complete": false,
+                    "progress": 0.14285714285714285,
+                    "hint": {
+                        "type": "pose",
+                        "piece": "large-b",
+                        "x": 640,
+                        "y": 240,
+                        "rotation": 0,
+                        "flipped": false
+                    }
+                },
+                {
+                    "action": {
+                        "type": "pose",
+                        "piece": "large-b",
+                        "x": 640,
+                        "y": 240,
+                        "rotation": 0,
+                        "flipped": false
+                    },
+                    "result": "ok",
+                    "board": {
+                        "pieces": [
+                            {
+                                "x": 320,
+                                "y": 80,
+                                "rotation": 0,
+                                "flipped": false
+                            },
+                            {
+                                "x": 640,
+                                "y": 240,
+                                "rotation": 0,
+                                "flipped": false
+                            },
+                            {
+                                "x": 980,
+                                "y": 1140,
+                                "rotation": 2,
+                                "flipped": false
+                            },
+                            {
+                                "x": -100,
+                                "y": 1140,
+                                "rotation": 3,
+                                "flipped": false
+                            },
+                            {
+                                "x": 980,
+                                "y": 780,
+                                "rotation": 6,
+                                "flipped": false
+                            },
+                            {
+                                "x": 620,
+                                "y": 1140,
+                                "rotation": 7,
+                                "flipped": true
+                            },
+                            {
+                                "x": 260,
+                                "y": 780,
+                                "rotation": 2,
+                                "flipped": true
+                            }
+                        ]
+                    },
+                    "complete": false,
+                    "progress": 0.2857142857142857,
+                    "hint": {
+                        "type": "pose",
+                        "piece": "medium",
+                        "x": 480,
+                        "y": 400,
+                        "rotation": 0,
+                        "flipped": false
+                    }
+                },
+                {
+                    "action": {
+                        "type": "pose",
+                        "piece": "medium",
+                        "x": 480,
+                        "y": 400,
+                        "rotation": 0,
+                        "flipped": false
+                    },
+                    "result": "ok",
+                    "board": {
+                        "pieces": [
+                            {
+                                "x": 320,
+                                "y": 80,
+                                "rotation": 0,
+                                "flipped": false
+                            },
+                            {
+                                "x": 640,
+                                "y": 240,
+                                "rotation": 0,
+                                "flipped": false
+                            },
+                            {
+                                "x": 480,
+                                "y": 400,
+                                "rotation": 0,
+                                "flipped": false
+                            },
+                            {
+                                "x": -100,
+                                "y": 1140,
+                                "rotation": 3,
+                                "flipped": false
+                            },
+                            {
+                                "x": 980,
+                                "y": 780,
+                                "rotation": 6,
+                                "flipped": false
+                            },
+                            {
+                                "x": 620,
+                                "y": 1140,
+                                "rotation": 7,
+                                "flipped": true
+                            },
+                            {
+                                "x": 260,
+                                "y": 780,
+                                "rotation": 2,
+                                "flipped": true
+                            }
+                        ]
+                    },
+                    "complete": false,
+                    "progress": 0.42857142857142855,
+                    "hint": {
+                        "type": "pose",
+                        "piece": "small-a",
+                        "x": 520,
+                        "y": 120,
+                        "rotation": 0,
+                        "flipped": false
+                    }
+                },
+                {
+                    "action": {
+                        "type": "pose",
+                        "piece": "small-a",
+                        "x": 520,
+                        "y": 120,
+                        "rotation": 0,
+                        "flipped": false
+                    },
+                    "result": "ok",
+                    "board": {
+                        "pieces": [
+                            {
+                                "x": 320,
+                                "y": 80,
+                                "rotation": 0,
+                                "flipped": false
+                            },
+                            {
+                                "x": 640,
+                                "y": 240,
+                                "rotation": 0,
+                                "flipped": false
+                            },
+                            {
+                                "x": 480,
+                                "y": 400,
+                                "rotation": 0,
+                                "flipped": false
+                            },
+                            {
+                                "x": 520,
+                                "y": 120,
+                                "rotation": 0,
+                                "flipped": false
+                            },
+                            {
+                                "x": 980,
+                                "y": 780,
+                                "rotation": 6,
+                                "flipped": false
+                            },
+                            {
+                                "x": 620,
+                                "y": 1140,
+                                "rotation": 7,
+                                "flipped": true
+                            },
+                            {
+                                "x": 260,
+                                "y": 780,
+                                "rotation": 2,
+                                "flipped": true
+                            }
+                        ]
+                    },
+                    "complete": false,
+                    "progress": 0.5714285714285714,
+                    "hint": {
+                        "type": "pose",
+                        "piece": "small-b",
+                        "x": 320,
+                        "y": 320,
+                        "rotation": 0,
+                        "flipped": false
+                    }
+                },
+                {
+                    "action": {
+                        "type": "pose",
+                        "piece": "small-b",
+                        "x": 320,
+                        "y": 320,
+                        "rotation": 0,
+                        "flipped": false
+                    },
+                    "result": "ok",
+                    "board": {
+                        "pieces": [
+                            {
+                                "x": 320,
+                                "y": 80,
+                                "rotation": 0,
+                                "flipped": false
+                            },
+                            {
+                                "x": 640,
+                                "y": 240,
+                                "rotation": 0,
+                                "flipped": false
+                            },
+                            {
+                                "x": 480,
+                                "y": 400,
+                                "rotation": 0,
+                                "flipped": false
+                            },
+                            {
+                                "x": 520,
+                                "y": 120,
+                                "rotation": 0,
+                                "flipped": false
+                            },
+                            {
+                                "x": 320,
+                                "y": 320,
+                                "rotation": 0,
+                                "flipped": false
+                            },
+                            {
+                                "x": 620,
+                                "y": 1140,
+                                "rotation": 7,
+                                "flipped": true
+                            },
+                            {
+                                "x": 260,
+                                "y": 780,
+                                "rotation": 2,
+                                "flipped": true
+                            }
+                        ]
+                    },
+                    "complete": false,
+                    "progress": 0.7142857142857143,
+                    "hint": {
+                        "type": "pose",
+                        "piece": "square",
+                        "x": 440,
+                        "y": 240,
+                        "rotation": 0,
+                        "flipped": false
+                    }
+                },
+                {
+                    "action": {
+                        "type": "pose",
+                        "piece": "square",
+                        "x": 440,
+                        "y": 240,
+                        "rotation": 0,
+                        "flipped": false
+                    },
+                    "result": "ok",
+                    "board": {
+                        "pieces": [
+                            {
+                                "x": 320,
+                                "y": 80,
+                                "rotation": 0,
+                                "flipped": false
+                            },
+                            {
+                                "x": 640,
+                                "y": 240,
+                                "rotation": 0,
+                                "flipped": false
+                            },
+                            {
+                                "x": 480,
+                                "y": 400,
+                                "rotation": 0,
+                                "flipped": false
+                            },
+                            {
+                                "x": 520,
+                                "y": 120,
+                                "rotation": 0,
+                                "flipped": false
+                            },
+                            {
+                                "x": 320,
+                                "y": 320,
+                                "rotation": 0,
+                                "flipped": false
+                            },
+                            {
+                                "x": 440,
+                                "y": 240,
+                                "rotation": 0,
+                                "flipped": false
+                            },
+                            {
+                                "x": 260,
+                                "y": 780,
+                                "rotation": 2,
+                                "flipped": true
+                            }
+                        ]
+                    },
+                    "complete": false,
+                    "progress": 0.8571428571428571,
+                    "hint": {
+                        "type": "pose",
+                        "piece": "parallelogram",
+                        "x": 260,
+                        "y": 420,
+                        "rotation": 0,
+                        "flipped": false
+                    }
+                },
+                {
+                    "action": {
+                        "type": "pose",
+                        "piece": "parallelogram",
+                        "x": 260,
+                        "y": 420,
+                        "rotation": 0,
+                        "flipped": false
+                    },
+                    "result": "ok",
+                    "board": {
+                        "pieces": [
+                            {
+                                "x": 320,
+                                "y": 80,
+                                "rotation": 0,
+                                "flipped": false
+                            },
+                            {
+                                "x": 640,
+                                "y": 240,
+                                "rotation": 0,
+                                "flipped": false
+                            },
+                            {
+                                "x": 480,
+                                "y": 400,
+                                "rotation": 0,
+                                "flipped": false
+                            },
+                            {
+                                "x": 520,
+                                "y": 120,
+                                "rotation": 0,
+                                "flipped": false
+                            },
+                            {
+                                "x": 320,
+                                "y": 320,
+                                "rotation": 0,
+                                "flipped": false
+                            },
+                            {
+                                "x": 440,
+                                "y": 240,
+                                "rotation": 0,
+                                "flipped": false
+                            },
+                            {
+                                "x": 260,
+                                "y": 420,
+                                "rotation": 0,
+                                "flipped": false
+                            }
+                        ]
+                    },
+                    "complete": true,
+                    "progress": 1,
+                    "hint": null
+                }
+            ]
+        },
+        {
+            "name": "last move completes",
+            "board": {
+                "pieces": [
+                    {
+                        "x": 260,
+                        "y": 1140,
+                        "rotation": 5,
+                        "flipped": true
+                    },
+                    {
+                        "x": 640,
+                        "y": 240,
+                        "rotation": 0,
+                        "flipped": false
+                    },
+                    {
+                        "x": 480,
+                        "y": 400,
+                        "rotation": 0,
+                        "flipped": false
+                    },
+                    {
+                        "x": 520,
+                        "y": 120,
+                        "rotation": 0,
+                        "flipped": false
+                    },
+                    {
+                        "x": 320,
+                        "y": 320,
+                        "rotation": 0,
+                        "flipped": false
+                    },
+                    {
+                        "x": 440,
+                        "y": 240,
+                        "rotation": 0,
+                        "flipped": false
+                    },
+                    {
+                        "x": 260,
+                        "y": 420,
+                        "rotation": 0,
+                        "flipped": false
+                    }
+                ]
+            },
+            "steps": [
+                {
+                    "action": {
+                        "type": "pose",
+                        "piece": "large-a",
+                        "x": 320,
+                        "y": 80,
+                        "rotation": 0,
+                        "flipped": false
+                    },
+                    "result": "ok",
+                    "board": {
+                        "pieces": [
+                            {
+                                "x": 320,
+                                "y": 80,
+                                "rotation": 0,
+                                "flipped": false
+                            },
+                            {
+                                "x": 640,
+                                "y": 240,
+                                "rotation": 0,
+                                "flipped": false
+                            },
+                            {
+                                "x": 480,
+                                "y": 400,
+                                "rotation": 0,
+                                "flipped": false
+                            },
+                            {
+                                "x": 520,
+                                "y": 120,
+                                "rotation": 0,
+                                "flipped": false
+                            },
+                            {
+                                "x": 320,
+                                "y": 320,
+                                "rotation": 0,
+                                "flipped": false
+                            },
+                            {
+                                "x": 440,
+                                "y": 240,
+                                "rotation": 0,
+                                "flipped": false
+                            },
+                            {
+                                "x": 260,
+                                "y": 420,
+                                "rotation": 0,
+                                "flipped": false
+                            }
+                        ]
+                    },
+                    "complete": true,
+                    "progress": 1,
+                    "hint": null
+                }
+            ]
+        },
+        {
+            "name": "rejected actions",
+            "board": {
+                "pieces": [
+                    {
+                        "x": 260,
+                        "y": 1140,
+                        "rotation": 5,
+                        "flipped": true
+                    },
+                    {
+                        "x": -100,
+                        "y": 780,
+                        "rotation": 2,
+                        "flipped": false
+                    },
+                    {
+                        "x": 980,
+                        "y": 1140,
+                        "rotation": 2,
+                        "flipped": false
+                    },
+                    {
+                        "x": -100,
+                        "y": 1140,
+                        "rotation": 3,
+                        "flipped": false
+                    },
+                    {
+                        "x": 980,
+                        "y": 780,
+                        "rotation": 6,
+                        "flipped": false
+                    },
+                    {
+                        "x": 620,
+                        "y": 1140,
+                        "rotation": 7,
+                        "flipped": true
+                    },
+                    {
+                        "x": 260,
+                        "y": 780,
+                        "rotation": 2,
+                        "flipped": true
+                    }
+                ]
+            },
+            "steps": [
+                {
+                    "action": {
+                        "type": "teleport",
+                        "tile": "large-a"
+                    },
+                    "result": "illegal"
+                },
+                {
+                    "action": {
+                        "type": "pose"
+                    },
+                    "result": "invalid"
+                },
+                {
+                    "action": {
+                        "type": "pose",
+                        "piece": "zz",
+                        "x": 0,
+                        "y": 0,
+                        "rotation": 0,
+                        "flipped": false
+                    },
+                    "result": "illegal"
+                },
+                {
+                    "action": {
+                        "type": "pose",
+                        "piece": "large-a",
+                        "x": 260,
+                        "y": 1140,
+                        "rotation": 5,
+                        "flipped": true
+                    },
+                    "result": "illegal"
+                },
+                {
+                    "action": {
+                        "type": "pose",
+                        "piece": "large-a",
+                        "x": -400,
+                        "y": -120,
+                        "rotation": 0,
+                        "flipped": false
+                    },
+                    "result": "illegal"
+                },
+                {
+                    "action": {
+                        "type": "pose",
+                        "piece": "large-a",
+                        "x": 1.5,
+                        "y": 0,
+                        "rotation": 0,
+                        "flipped": false
+                    },
+                    "result": "invalid"
+                },
+                {
+                    "action": {
+                        "type": "pose",
+                        "piece": "large-a",
+                        "x": 0,
+                        "y": 0,
+                        "rotation": 8,
+                        "flipped": false
+                    },
+                    "result": "invalid"
+                },
+                {
+                    "action": {
+                        "type": "pose",
+                        "piece": "large-a",
+                        "x": 0,
+                        "y": 0,
+                        "rotation": 0,
+                        "flipped": "no"
+                    },
+                    "result": "invalid"
+                },
+                {
+                    "action": {
+                        "type": "pose",
+                        "piece": "large-a",
+                        "x": 0,
+                        "y": 0,
+                        "rotation": 0
+                    },
+                    "result": "invalid"
+                },
+                {
+                    "action": {
+                        "type": "pose",
+                        "piece": "large-a",
+                        "x": 0,
+                        "y": 0,
+                        "rotation": 0,
+                        "flipped": false,
+                        "extra": 1
+                    },
+                    "result": "invalid"
+                }
+            ]
+        }
+    ],
+    "imports": [
+        {
+            "name": "initial",
+            "board": {
+                "pieces": [
+                    {
+                        "x": 260,
+                        "y": 1140,
+                        "rotation": 5,
+                        "flipped": true
+                    },
+                    {
+                        "x": -100,
+                        "y": 780,
+                        "rotation": 2,
+                        "flipped": false
+                    },
+                    {
+                        "x": 980,
+                        "y": 1140,
+                        "rotation": 2,
+                        "flipped": false
+                    },
+                    {
+                        "x": -100,
+                        "y": 1140,
+                        "rotation": 3,
+                        "flipped": false
+                    },
+                    {
+                        "x": 980,
+                        "y": 780,
+                        "rotation": 6,
+                        "flipped": false
+                    },
+                    {
+                        "x": 620,
+                        "y": 1140,
+                        "rotation": 7,
+                        "flipped": true
+                    },
+                    {
+                        "x": 260,
+                        "y": 780,
+                        "rotation": 2,
+                        "flipped": true
+                    }
+                ]
+            },
+            "valid": true
+        },
+        {
+            "name": "solved",
+            "board": {
+                "pieces": [
+                    {
+                        "x": 320,
+                        "y": 80,
+                        "rotation": 0,
+                        "flipped": false
+                    },
+                    {
+                        "x": 640,
+                        "y": 240,
+                        "rotation": 0,
+                        "flipped": false
+                    },
+                    {
+                        "x": 480,
+                        "y": 400,
+                        "rotation": 0,
+                        "flipped": false
+                    },
+                    {
+                        "x": 520,
+                        "y": 120,
+                        "rotation": 0,
+                        "flipped": false
+                    },
+                    {
+                        "x": 320,
+                        "y": 320,
+                        "rotation": 0,
+                        "flipped": false
+                    },
+                    {
+                        "x": 440,
+                        "y": 240,
+                        "rotation": 0,
+                        "flipped": false
+                    },
+                    {
+                        "x": 260,
+                        "y": 420,
+                        "rotation": 0,
+                        "flipped": false
+                    }
+                ]
+            },
+            "valid": true
+        },
+        {
+            "name": "not an object",
+            "board": [
+                1,
+                2
+            ],
+            "valid": false
+        },
+        {
+            "name": "unknown field",
+            "board": {
+                "pieces": [
+                    {
+                        "x": 260,
+                        "y": 1140,
+                        "rotation": 5,
+                        "flipped": true
+                    },
+                    {
+                        "x": -100,
+                        "y": 780,
+                        "rotation": 2,
+                        "flipped": false
+                    },
+                    {
+                        "x": 980,
+                        "y": 1140,
+                        "rotation": 2,
+                        "flipped": false
+                    },
+                    {
+                        "x": -100,
+                        "y": 1140,
+                        "rotation": 3,
+                        "flipped": false
+                    },
+                    {
+                        "x": 980,
+                        "y": 780,
+                        "rotation": 6,
+                        "flipped": false
+                    },
+                    {
+                        "x": 620,
+                        "y": 1140,
+                        "rotation": 7,
+                        "flipped": true
+                    },
+                    {
+                        "x": 260,
+                        "y": 780,
+                        "rotation": 2,
+                        "flipped": true
+                    }
+                ],
+                "cheat": true
+            },
+            "valid": false
+        },
+        {
+            "name": "partly assembled",
+            "board": {
+                "pieces": [
+                    {
+                        "x": 320,
+                        "y": 80,
+                        "rotation": 0,
+                        "flipped": false
+                    },
+                    {
+                        "x": 640,
+                        "y": 240,
+                        "rotation": 0,
+                        "flipped": false
+                    },
+                    {
+                        "x": 980,
+                        "y": 1140,
+                        "rotation": 2,
+                        "flipped": false
+                    },
+                    {
+                        "x": 520,
+                        "y": 120,
+                        "rotation": 0,
+                        "flipped": false
+                    },
+                    {
+                        "x": 320,
+                        "y": 320,
+                        "rotation": 0,
+                        "flipped": false
+                    },
+                    {
+                        "x": 440,
+                        "y": 240,
+                        "rotation": 0,
+                        "flipped": false
+                    },
+                    {
+                        "x": 260,
+                        "y": 420,
+                        "rotation": 0,
+                        "flipped": false
+                    }
+                ]
+            },
+            "valid": true
+        },
+        {
+            "name": "two pieces on one slot",
+            "board": {
+                "pieces": [
+                    {
+                        "x": 320,
+                        "y": 80,
+                        "rotation": 0,
+                        "flipped": false
+                    },
+                    {
+                        "x": 320,
+                        "y": 80,
+                        "rotation": 0,
+                        "flipped": false
+                    },
+                    {
+                        "x": 480,
+                        "y": 400,
+                        "rotation": 0,
+                        "flipped": false
+                    },
+                    {
+                        "x": 520,
+                        "y": 120,
+                        "rotation": 0,
+                        "flipped": false
+                    },
+                    {
+                        "x": 320,
+                        "y": 320,
+                        "rotation": 0,
+                        "flipped": false
+                    },
+                    {
+                        "x": 440,
+                        "y": 240,
+                        "rotation": 0,
+                        "flipped": false
+                    },
+                    {
+                        "x": 260,
+                        "y": 420,
+                        "rotation": 0,
+                        "flipped": false
+                    }
+                ]
+            },
+            "valid": false
+        },
+        {
+            "name": "outside area",
+            "board": {
+                "pieces": [
+                    {
+                        "x": -99999,
+                        "y": 0,
+                        "rotation": 0,
+                        "flipped": false
+                    },
+                    {
+                        "x": 640,
+                        "y": 240,
+                        "rotation": 0,
+                        "flipped": false
+                    },
+                    {
+                        "x": 480,
+                        "y": 400,
+                        "rotation": 0,
+                        "flipped": false
+                    },
+                    {
+                        "x": 520,
+                        "y": 120,
+                        "rotation": 0,
+                        "flipped": false
+                    },
+                    {
+                        "x": 320,
+                        "y": 320,
+                        "rotation": 0,
+                        "flipped": false
+                    },
+                    {
+                        "x": 440,
+                        "y": 240,
+                        "rotation": 0,
+                        "flipped": false
+                    },
+                    {
+                        "x": 260,
+                        "y": 420,
+                        "rotation": 0,
+                        "flipped": false
+                    }
+                ]
+            },
+            "valid": false
+        },
+        {
+            "name": "eighth turn out of range",
+            "board": {
+                "pieces": [
+                    {
+                        "x": 0,
+                        "y": 0,
+                        "rotation": 8,
+                        "flipped": false
+                    },
+                    {
+                        "x": 640,
+                        "y": 240,
+                        "rotation": 0,
+                        "flipped": false
+                    },
+                    {
+                        "x": 480,
+                        "y": 400,
+                        "rotation": 0,
+                        "flipped": false
+                    },
+                    {
+                        "x": 520,
+                        "y": 120,
+                        "rotation": 0,
+                        "flipped": false
+                    },
+                    {
+                        "x": 320,
+                        "y": 320,
+                        "rotation": 0,
+                        "flipped": false
+                    },
+                    {
+                        "x": 440,
+                        "y": 240,
+                        "rotation": 0,
+                        "flipped": false
+                    },
+                    {
+                        "x": 260,
+                        "y": 420,
+                        "rotation": 0,
+                        "flipped": false
+                    }
+                ]
+            },
+            "valid": false
+        },
+        {
+            "name": "fractional position",
+            "board": {
+                "pieces": [
+                    {
+                        "x": 0.5,
+                        "y": 0,
+                        "rotation": 0,
+                        "flipped": false
+                    },
+                    {
+                        "x": 640,
+                        "y": 240,
+                        "rotation": 0,
+                        "flipped": false
+                    },
+                    {
+                        "x": 480,
+                        "y": 400,
+                        "rotation": 0,
+                        "flipped": false
+                    },
+                    {
+                        "x": 520,
+                        "y": 120,
+                        "rotation": 0,
+                        "flipped": false
+                    },
+                    {
+                        "x": 320,
+                        "y": 320,
+                        "rotation": 0,
+                        "flipped": false
+                    },
+                    {
+                        "x": 440,
+                        "y": 240,
+                        "rotation": 0,
+                        "flipped": false
+                    },
+                    {
+                        "x": 260,
+                        "y": 420,
+                        "rotation": 0,
+                        "flipped": false
+                    }
+                ]
+            },
+            "valid": false
+        },
+        {
+            "name": "missing piece",
+            "board": {
+                "pieces": [
+                    {
+                        "x": 320,
+                        "y": 80,
+                        "rotation": 0,
+                        "flipped": false
+                    },
+                    {
+                        "x": 640,
+                        "y": 240,
+                        "rotation": 0,
+                        "flipped": false
+                    },
+                    {
+                        "x": 480,
+                        "y": 400,
+                        "rotation": 0,
+                        "flipped": false
+                    },
+                    {
+                        "x": 520,
+                        "y": 120,
+                        "rotation": 0,
+                        "flipped": false
+                    },
+                    {
+                        "x": 320,
+                        "y": 320,
+                        "rotation": 0,
+                        "flipped": false
+                    },
+                    {
+                        "x": 440,
+                        "y": 240,
+                        "rotation": 0,
+                        "flipped": false
+                    }
+                ]
+            },
+            "valid": false
+        }
+    ]
+}

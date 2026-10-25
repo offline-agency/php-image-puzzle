@@ -74,9 +74,11 @@ $definitions = [
     'nonogram' => $factory->nonogram($source, $image, 'picture.png', 'easy', seed: 6),
     'memory' => $factory->create(GameKind::Memory, $source, 'picture.png', 'easy', seed: 7),
     'memory-labels' => $factory->create(GameKind::Memory, $source, 'picture.png', 'custom', ['rows' => 2, 'cols' => 4, 'labels' => ['Yellow', 'Green', 'Purple', 'Red']], seed: 8),
+    'tangram' => $factory->create(GameKind::Tangram, $source, 'picture.png', 'easy', seed: 9),
+    'tangram-arrow' => $factory->create(GameKind::Tangram, $source, 'picture.png', 'custom', ['target' => 'arrow', 'snap' => 30], seed: 10),
 ];
 
-foreach (['rect' => 'jigsaw', 'hex' => 'jigsaw-hex'] as $topology => $name) {
+foreach (['rect' => 'jigsaw', 'hex' => 'jigsaw-hex', 'triangle' => 'jigsaw-triangle'] as $topology => $name) {
     $out = $assets . '/' . $name;
     $stale = glob($out . '/*');
     foreach ($stale === false ? [] : $stale as $file) {

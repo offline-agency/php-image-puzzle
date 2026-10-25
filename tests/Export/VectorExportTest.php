@@ -14,6 +14,7 @@ use ImagePuzzle\Game\DefinitionBuilder;
 use ImagePuzzle\Game\GameDefinition;
 use ImagePuzzle\Game\GameKind;
 use ImagePuzzle\Game\PuzzleDirectory;
+use ImagePuzzle\Game\Tangram\Tangram;
 use ImagePuzzle\Game\Tile;
 use ImagePuzzle\Tests\Support\Fixtures;
 
@@ -603,4 +604,23 @@ describe('modes without cut pieces', function (): void {
             ->and(fn () => (new PdfExporter())->render($puzzle))->toThrow(InvalidArgumentException::class, 'no pieces to cut')
             ->and(fn () => (new PdfExporter())->layout($puzzle))->toThrow(InvalidArgumentException::class, 'no pieces to cut');
     })->with([GameKind::Nonogram, GameKind::Memory]);
+});
+
+describe('tangram', function (): void {
+    it('prints the seven pieces cut along their solved outlines', function (): void {
+        $puzzle = vectorPuzzle(GameKind::Tangram);
+        $definition = $puzzle->definition;
+        $xpath = svgDocument((new SvgExporter())->render($puzzle));
+        expect(svgCount($xpath, '//s:g[@id="outlines"]/s:path'))->toBe(7);
+        $area = 0.0;
+        foreach ($definition->tiles as $tile) {
+            $points = svgPoints(svgOne($xpath, "//s:path[@id='outline-{$tile->id}']")->getAttribute('d'));
+            $home = Tangram::home($tile->id, $definition->crop->x, $definition->crop->y, intdiv($definition->crop->width, 4));
+            expect($points)->toBe(array_map(static fn (array $v): array => [(float) $v[0], (float) $v[1]], $home));
+            $area += abs(Tangram::doubleArea($points)) / 2;
+        }
+        // The outlines tile the cropped square exactly.
+        expect($area)->toBe((float) ($definition->crop->width * $definition->crop->height));
+        expect((new PdfExporter())->render($puzzle))->toStartWith('%PDF-');
+    });
 });

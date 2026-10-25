@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace ImagePuzzle\Game;
 
-use ImagePuzzle\Exception\InvalidDefinitionException;
 use ImagePuzzle\Game\Rules\JigsawRules;
 use ImagePuzzle\Game\Rules\MemoryRules;
 use ImagePuzzle\Game\Rules\ModeRules;
@@ -13,6 +12,7 @@ use ImagePuzzle\Game\Rules\RotationRules;
 use ImagePuzzle\Game\Rules\SlidingRules;
 use ImagePuzzle\Game\Rules\StripsRules;
 use ImagePuzzle\Game\Rules\SwapRules;
+use ImagePuzzle\Game\Rules\TangramRules;
 
 /**
  * Registry of the rule modules shipped with the library.
@@ -32,7 +32,7 @@ final class Modes
             GameKind::Jigsaw => new JigsawRules(),
             GameKind::Nonogram => new NonogramRules(),
             GameKind::Memory => new MemoryRules(),
-            default => throw new InvalidDefinitionException("The {$kind->value} mode is not available in this version."),
+            GameKind::Tangram => new TangramRules(),
         };
     }
 
@@ -41,6 +41,6 @@ final class Modes
      */
     public static function available(): array
     {
-        return [GameKind::Sliding, GameKind::Swap, GameKind::Rotation, GameKind::Strips, GameKind::Jigsaw, GameKind::Nonogram, GameKind::Memory];
+        return [GameKind::Sliding, GameKind::Swap, GameKind::Rotation, GameKind::Strips, GameKind::Jigsaw, GameKind::Nonogram, GameKind::Memory, GameKind::Tangram];
     }
 }

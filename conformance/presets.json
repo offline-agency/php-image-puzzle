@@ -237,6 +237,35 @@
                     "highlightCorrect": false
                 }
             }
+        },
+        "tangram": {
+            "easy": {
+                "target": "square",
+                "snap": 50,
+                "assistance": {
+                    "preview": true,
+                    "numbers": false,
+                    "highlightCorrect": true
+                }
+            },
+            "medium": {
+                "target": "square",
+                "snap": 30,
+                "assistance": {
+                    "preview": true,
+                    "numbers": false,
+                    "highlightCorrect": false
+                }
+            },
+            "hard": {
+                "target": "square",
+                "snap": 15,
+                "assistance": {
+                    "preview": false,
+                    "numbers": false,
+                    "highlightCorrect": false
+                }
+            }
         }
     }
 }

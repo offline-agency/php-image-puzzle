@@ -33,6 +33,26 @@ export { playArea, renderedRect, snapDistance, trayRect } from './rules/jigsaw.j
 export { cellRect, cellSize } from './rules/grid.js';
 export { MEMORY_MAX_SIDE, MEMORY_MAX_TEXT_BYTES, MEMORY_MIN_SIDE, memoryPair, memoryText } from './rules/memory.js';
 export {
+  TANGRAM_EPSILON,
+  TANGRAM_MIN_UNIT,
+  TANGRAM_PIECES,
+  TANGRAM_TARGETS,
+  tangramAssignment,
+  tangramDistance,
+  tangramExtent,
+  tangramFit,
+  tangramHome,
+  tangramIds,
+  tangramLayout,
+  tangramPath,
+  tangramPolygon,
+  tangramSlots,
+  tangramSlotsOf,
+  tangramTarget,
+  tangramUnit,
+} from './rules/tangram.js';
+export type { TangramShape, TangramSlot } from './rules/tangram.js';
+export {
   NONOGRAM_MAX_SIDE,
   NONOGRAM_MIN_SIDE,
   NONOGRAM_STATES,
@@ -74,6 +94,8 @@ export type {
   MemoryBoard,
   NonogramBoard,
   NonogramMark,
+  TangramBoard,
+  TangramPose,
   Media,
   PieceAtlas,
   PieceResolution,

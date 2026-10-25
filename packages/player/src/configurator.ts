@@ -8,10 +8,15 @@ import {
   PRESET_NAMES,
   PRESET_SHAPES,
   PuzzleError,
+  TANGRAM_MIN_UNIT,
+  TANGRAM_TARGETS,
   buildConfigDocument,
   buildShape,
   createBuildConfig,
   parseBuildConfig,
+  tangramHome,
+  tangramIds,
+  tangramPath,
 } from '@offline-agency/image-puzzle-engine';
 import type { BuildConfig, BuildConfigDocument, BuildKind, CropRect } from '@offline-agency/image-puzzle-engine';
 import { resolveConfiguratorMessages } from './configurator-messages.js';
@@ -115,6 +120,10 @@ const FIELDS: Readonly<Record<BuildKind, readonly FieldSpec[]>> = {
     { key: 'rows', type: 'int', min: 2, max: 8 },
     { key: 'cols', type: 'int', min: 2, max: 8 },
     { key: 'labels', type: 'lines' },
+  ],
+  tangram: [
+    { key: 'target', type: 'choice', options: Object.keys(TANGRAM_TARGETS) },
+    { key: 'snap', type: 'int', min: 1, max: 90 },
   ],
 };
 
@@ -313,7 +322,8 @@ export function createConfigurator(target: HTMLElement | ShadowRoot, options: Co
     select.value = values.includes(selected) ? selected : (values[0] ?? '');
   };
 
-  const fieldLabel = (key: string): string => messages.fields[key] ?? key;
+  // A mode-specific label ("tangram.snap") wins over the shared one.
+  const fieldLabel = (key: string): string => messages.fields[`${draft.kind}.${key}`] ?? messages.fields[key] ?? key;
 
   const intOf = (input: HTMLInputElement): number | null => {
     const raw = input.value.trim();
@@ -529,7 +539,13 @@ export function createConfigurator(target: HTMLElement | ShadowRoot, options: Co
       if (area !== null) {
         const shape = buildShape(config);
         const [rows, cols] =
-          shape.type === 'grid' ? [shape.rows, shape.cols] : shape.axis === 'vertical' ? [1, shape.count] : [shape.count, 1];
+          shape.type === 'grid'
+            ? [shape.rows, shape.cols]
+            : shape.type === 'tangram'
+              ? [4 * TANGRAM_MIN_UNIT, 4 * TANGRAM_MIN_UNIT]
+              : shape.axis === 'vertical'
+                ? [1, shape.count]
+                : [shape.count, 1];
         if (Math.floor(area.width / cols) < 1 || Math.floor(area.height / rows) < 1) {
           return { config: null, message: messages.tooSmall, field: 'crop' };
         }
@@ -601,6 +617,21 @@ export function createConfigurator(target: HTMLElement | ShadowRoot, options: Co
       node.setAttribute('y2', String(y2));
       grid.append(node);
     };
+    if (shape.type === 'tangram') {
+      // Same square as GameFactory: the largest centred one whose side is a multiple of 24.
+      const side = Math.floor(Math.min(area.width, area.height) / 24) * 24;
+      const ox = area.x + Math.floor((area.width - side) / 2);
+      const oy = area.y + Math.floor((area.height - side) / 2);
+      for (const id of tangramIds()) {
+        const outline = doc.createElementNS(SVG, 'path');
+        outline.setAttribute('d', tangramPath(tangramHome(id, ox, oy, side / 4)));
+        outline.setAttribute('fill', 'none');
+        grid.append(outline);
+      }
+      const target = messages.choices[shape.target] ?? shape.target;
+      summary.textContent = format(messages.tangramSummary, { target: target.toLocaleLowerCase(), size: side });
+      return;
+    }
     if (shape.type === 'strips') {
       const vertical = shape.axis === 'vertical';
       const span = vertical ? area.width : area.height;

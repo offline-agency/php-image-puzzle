@@ -46,6 +46,11 @@
             "cols",
             "labels",
             "assistance"
+        ],
+        "tangram": [
+            "target",
+            "snap",
+            "assistance"
         ]
     },
     "cases": [
@@ -221,6 +226,31 @@
                 "version": 1,
                 "kind": "memory",
                 "preset": "easy",
+                "seed": 0
+            }
+        },
+        {
+            "document": {
+                "format": "image-puzzle/build-config",
+                "version": 1,
+                "kind": "tangram",
+                "preset": "custom",
+                "seed": 0,
+                "custom": {
+                    "target": "chevron",
+                    "snap": 40
+                }
+            },
+            "valid": true,
+            "normalized": {
+                "format": "image-puzzle/build-config",
+                "version": 1,
+                "kind": "tangram",
+                "preset": "custom",
+                "custom": {
+                    "target": "chevron",
+                    "snap": 40
+                },
                 "seed": 0
             }
         },

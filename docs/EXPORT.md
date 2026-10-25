@@ -190,7 +190,8 @@ ratio was 1.21×, for the atlas in desktop WebKit at 300 px.
 `ImagePuzzle\Export\SvgExporter` draws a built puzzle from its definition.
 SVG and PDF need pieces cut from one sheet. They refuse a nonogram, whose
 picture is its solution, and memory, whose cards come in pairs that one sheet
-cannot hold, with `InvalidArgumentException` (CLI exit code 3). Bundles and
+cannot hold, with `InvalidArgumentException` (CLI exit code 3). A tangram
+prints its seven pieces cut along their solved outlines. Bundles and
 reconstruction work for every mode.
 
 ```php

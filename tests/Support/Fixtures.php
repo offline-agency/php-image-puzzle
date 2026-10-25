@@ -152,6 +152,18 @@ final class Fixtures
     }
 
     /**
+     * @return list<mixed>
+     */
+    public static function listOf(mixed $value, string $what = 'value'): array
+    {
+        if (!is_array($value) || !array_is_list($value)) {
+            throw new RuntimeException("{$what} is not a JSON array");
+        }
+
+        return $value;
+    }
+
+    /**
      * Piece records of a decoded manifest, shape-checked.
      *
      * @param array<string, mixed> $manifest
