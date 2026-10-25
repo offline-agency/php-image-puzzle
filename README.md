@@ -94,6 +94,7 @@ When the image size is not evenly divisible by rows/cols, **remainder pixels are
 - [docs/USAGE.md](docs/USAGE.md) – Step-by-step usage
 - [docs/EXPORT.md](docs/EXPORT.md) – Image formats, piece images (WebP, resolution sets, atlases), SVG, printable PDF and offline ZIP bundles
 - [docs/CLI.md](docs/CLI.md) – The `image-puzzle` command: generate, validate, inspect, export and bundle puzzles
+- [docs/BATCH.md](docs/BATCH.md) – Batch builds (progress, cancellation, resume, concurrency), the asset cache, publishing to filesystems or S3-compatible storage, and the Laravel queue job
 - [docs/EDGE_STYLES.md](docs/EDGE_STYLES.md) – Edge styles and config-driven style (JSON schema, `EdgeStyleFactory`)
 - [docs/EDGE_EXAMPLES.md](docs/EDGE_EXAMPLES.md) – Example image for every edge type
 - [docs/SPLIT_STRATEGY.md](docs/SPLIT_STRATEGY.md) – Customizing grid split strategy

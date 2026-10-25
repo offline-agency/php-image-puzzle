@@ -12,8 +12,10 @@
     },
     "require": {
         "php": "~8.4.0 || ~8.5.0",
+        "illuminate/bus": "^13.35",
         "illuminate/contracts": "^13.35",
         "illuminate/http": "^13.35",
+        "illuminate/queue": "^13.35",
         "illuminate/routing": "^13.35",
         "illuminate/support": "^13.35",
         "livewire/livewire": "^4.4.8",

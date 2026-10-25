@@ -5,6 +5,14 @@ declare(strict_types=1);
 namespace ImagePuzzle\Cli;
 
 use Composer\InstalledVersions;
+use ImagePuzzle\Batch\BatchEvent;
+use ImagePuzzle\Batch\BatchManifest;
+use ImagePuzzle\Batch\BatchOptions;
+use ImagePuzzle\Batch\BatchResult;
+use ImagePuzzle\Batch\BatchRunner;
+use ImagePuzzle\Batch\CancellationToken;
+use ImagePuzzle\Batch\ItemResult;
+use ImagePuzzle\Cache\AssetCache;
 use ImagePuzzle\Exception\CapabilityUnavailableException;
 use ImagePuzzle\Exception\GdNotAvailableException;
 use ImagePuzzle\Exception\ImagePuzzleException;
@@ -57,6 +65,7 @@ final class Application
         'svg' => 'Export the puzzle as SVG with vector piece outlines.',
         'pdf' => 'Export a printable PDF (A4/A3, cut lines, reference page).',
         'bundle' => 'Package the puzzle as a self-contained, offline ZIP.',
+        'batch' => 'Build many puzzles from a batch file, with resume, cache and cancellation.',
         'capabilities' => 'Show which image formats and optional features are available.',
         'help' => 'Show help for a command.',
     ];
@@ -68,7 +77,8 @@ final class Application
             Builds definition.json and its assets into <output-dir>, which must be
             new or empty.
 
-              --kind=KIND            jigsaw (default), sliding, swap, rotation, strips
+              --kind=KIND            jigsaw (default), sliding, swap, rotation, strips,
+                                     nonogram, memory or tangram
               --preset=NAME          easy, medium (default), hard or custom
               --rows=N, --cols=N     custom grid size (implies --preset=custom)
               --param=KEY=VALUE      other custom parameter; VALUE is JSON when it
@@ -141,6 +151,26 @@ final class Application
 
             Needs ext-zip. Open index.html from the extracted folder (file:// works).
             TXT,
+        'batch' => <<<'TXT'
+            Usage: image-puzzle batch <batch.json> [options]
+
+            Builds every item of an image-puzzle/batch v1 file into its own new or
+            empty output directory. Relative paths are resolved against the batch
+            file. A failed or cancelled item leaves no output behind.
+
+              --concurrency=N        build up to N items at once in worker
+                                     processes (1-32, default 1; needs ext-pcntl)
+              --fail-fast            stop at the first failed item
+              --checkpoint=FILE      record finished items; a rerun with the same
+                                     file skips items whose output still verifies
+              --cache=DIR            reuse identical builds from a local cache
+              --cache-max-mb=N       cache size bound (default 1024)
+              --cancel-file=FILE     cancel when FILE appears (Ctrl+C also cancels)
+              --json                 print the result as JSON
+
+            Progress goes to stderr. Exit code 0 only when every item is built;
+            1 when the batch is partial, failed or cancelled.
+            TXT,
         'capabilities' => <<<'TXT'
             Usage: image-puzzle capabilities [--json]
             TXT,
@@ -186,6 +216,7 @@ final class Application
                 'svg' => $this->svg($rest),
                 'pdf' => $this->pdf($rest),
                 'bundle' => $this->bundle($rest),
+                'batch' => $this->batch($rest),
                 'capabilities' => $this->capabilities($rest),
                 default => throw new UsageException("Unknown command \"{$command}\". Run \"image-puzzle help\" for the list."),
             };
@@ -584,6 +615,63 @@ final class Application
         return $args->flag('json')
             ? $this->json(['output' => $target, 'entries' => $names])
             : $this->print(sprintf('Wrote %s (%d entries). Extract it and open %s/index.html.', $target, count($names), $folder));
+    }
+
+    /**
+     * @param list<string> $argv
+     */
+    private function batch(array $argv): int
+    {
+        if (in_array('--help', $argv, true)) {
+            return $this->print(self::HELP['batch']);
+        }
+        $args = Arguments::parse($argv, ['concurrency', 'checkpoint', 'cache', 'cache-max-mb', 'cancel-file'], ['fail-fast', 'json']);
+        [$file] = $args->expect(1, 1, 'batch <batch.json> [options]');
+        $manifest = BatchManifest::fromJson(self::readLimited($file, BatchManifest::MAX_JSON_BYTES, 'batch'), dirname($file));
+        $options = new BatchOptions($args->flag('fail-fast'), $args->int('concurrency', 1, BatchOptions::MAX_CONCURRENCY) ?? 1, $args->value('checkpoint'));
+        $cacheDir = $args->value('cache');
+        $cache = $cacheDir === null ? null : new AssetCache($cacheDir, ($args->int('cache-max-mb', 1, 1 << 20) ?? 1024) * 1024 * 1024);
+        $cancelFile = $args->value('cancel-file');
+        if ($cancelFile !== null && file_exists($cancelFile)) {
+            throw new InvalidArgumentException("The cancel file {$cancelFile} already exists; remove it to start the batch.");
+        }
+        $token = new CancellationToken($cancelFile);
+        $err = $this->err;
+        $listener = static function (BatchEvent $event) use ($err): void {
+            if ($event->type === 'item-end') {
+                fwrite($err, sprintf("[%d/%d] %s %s%s\n", $event->completed, $event->total, (string) $event->item, (string) $event->status, $event->error === null ? '' : ': ' . $event->error));
+            }
+        };
+        $signals = PHP_SAPI === 'cli' && function_exists('pcntl_signal') && function_exists('pcntl_async_signals') && defined('SIGINT');
+        if ($signals) {
+            pcntl_async_signals(true);
+            pcntl_signal(SIGINT, static function () use ($token): void {
+                $token->cancel();
+            });
+        }
+        try {
+            $result = (new BatchRunner(new DefinitionBuilder(limits: $this->limits), $cache))->run($manifest->items, $options, $listener, $token);
+        } finally {
+            if ($signals) {
+                pcntl_signal(SIGINT, SIG_DFL);
+            }
+        }
+        $counts = $result->counts();
+        if ($args->flag('json')) {
+            $this->json($result->toArray());
+        } else {
+            $this->print(sprintf(
+                'Batch %s: %d built, %d resumed, %d failed, %d cancelled, %d pending.',
+                $result->status,
+                $counts[ItemResult::DONE],
+                $counts[ItemResult::RESUMED],
+                $counts[ItemResult::FAILED],
+                $counts[ItemResult::CANCELED],
+                $counts[ItemResult::PENDING],
+            ));
+        }
+
+        return $result->status === BatchResult::COMPLETE ? self::EXIT_OK : self::EXIT_FAILURE;
     }
 
     /**

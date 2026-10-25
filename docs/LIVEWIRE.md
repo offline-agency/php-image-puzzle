@@ -52,6 +52,11 @@ $result->definitionPath(); // storage/app/puzzles/autumn/definition.json
 The output directory must be new or empty. On failure it is emptied (and
 removed if the builder created it).
 
+To build on a queue, dispatch `ImagePuzzle\Livewire\Jobs\BuildPuzzle` with a
+`BatchItem` (alone or in `Bus::batch()`). It fails the job when the build
+fails, honours a cancelled Bus batch and dispatches `PuzzleBuilt` when the
+output is verified. See [BATCH.md](BATCH.md#one-item-at-a-time-queues).
+
 ## Register puzzles
 
 The default repository reads `config/image-puzzle.php`:

@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "eea06156384ac9e6f4d87fb0a454de16",
+    "content-hash": "d154f1fa3e321d311567448f5822606d",
     "packages": [
         {
             "name": "brick/math",
@@ -2507,7 +2507,7 @@
             "dist": {
                 "type": "path",
                 "url": "../..",
-                "reference": "35103b6de4270120b9e96b4a96373a48b1dad246"
+                "reference": "a77ef737fd157a4ff813147f0479041822ee1a5c"
             },
             "require": {
                 "ext-gd": "*",
@@ -2516,6 +2516,8 @@
             },
             "require-dev": {
                 "laravel/pint": "^1.32.1",
+                "league/flysystem": "^3.29",
+                "league/flysystem-memory": "^3.29",
                 "opis/json-schema": "^2.6",
                 "pestphp/pest": "^5.3.3",
                 "phpstan/phpstan": "^2.3.2",
@@ -2525,8 +2527,12 @@
             "suggest": {
                 "ext-exif": "Not required: type detection falls back to getimagesize(). Needed only for EXIF orientation metadata reading.",
                 "ext-pcntl": "Parallel export in CLI processes (Linux/macOS).",
-                "ext-zip": "Self-contained ZIP bundles (image-puzzle bundle)."
+                "ext-zip": "Self-contained offline ZIP bundles (image-puzzle bundle, BundleExporter).",
+                "league/flysystem": "Publish puzzles to any Flysystem 3 filesystem, including S3-compatible storage (Storage\\FlysystemTarget)."
             },
+            "bin": [
+                "bin/image-puzzle"
+            ],
             "type": "library",
             "autoload": {
                 "psr-4": {

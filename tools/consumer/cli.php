@@ -106,6 +106,14 @@ try {
     check('reconstruct', $bin, ['reconstruct', "{$work}/puzzle", "{$work}/board.png"], 0, 'Wrote');
     check('svg', $bin, ['svg', "{$work}/puzzle", "{$work}/puzzle.svg", '--image=embed'], 0, 'Wrote');
     check('pdf', $bin, ['pdf', "{$work}/puzzle", "{$work}/puzzle.pdf", '--paper=a4'], 0, '2 page(s)');
+    // A batch with worker processes (sequential without ext-pcntl), then a resume.
+    $items = [];
+    foreach (['swap', 'memory', 'tangram'] as $index => $mode) {
+        $items[] = ['id' => $mode, 'source' => 'photo.png', 'output' => "batch/{$mode}", 'build' => ['format' => 'image-puzzle/build-config', 'version' => 1, 'kind' => $mode, 'preset' => 'easy', 'seed' => $index]];
+    }
+    file_put_contents("{$work}/batch.json", json_encode(['format' => 'image-puzzle/batch', 'version' => 1, 'items' => $items]));
+    check('batch', $bin, ['batch', "{$work}/batch.json", '--concurrency=2', "--checkpoint={$work}/batch.checkpoint.json", "--cache={$work}/cache"], 0, 'Batch complete: 3 built');
+    check('batch resume', $bin, ['batch', "{$work}/batch.json", "--checkpoint={$work}/batch.checkpoint.json"], 0, '0 built, 3 resumed');
     if (in_array('nonogram', $modes, true)) {
         // Printing a nonogram's picture would print its solution.
         check('svg refuses a nonogram', $bin, ['svg', "{$work}/mode-nonogram", "{$work}/nonogram.svg"], 3, 'no pieces to cut');

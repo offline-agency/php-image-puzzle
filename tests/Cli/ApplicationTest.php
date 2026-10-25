@@ -123,7 +123,7 @@ describe('help and usage', function (): void {
     it('lists commands and exit codes', function (): void {
         [$code, $out] = cli([]);
         expect($code)->toBe(0)
-            ->and($out)->toContain('generate')->toContain('bundle')->toContain('Exit codes: 0 ok');
+            ->and($out)->toContain('generate')->toContain('bundle')->toContain('batch')->toContain('Exit codes: 0 ok');
         [$code, $out] = cli(['help', 'pdf']);
         expect($code)->toBe(0)->and($out)->toContain('--no-cut-lines');
         [$code, $out] = cli(['svg', '--help']);
@@ -340,6 +340,103 @@ describe('puzzle commands', function (): void {
             ->and(Fixtures::object($info['encode'])['png'])->toBeTrue()
             ->and($info['zip'])->toBe(BundleExporter::supported());
     });
+});
+
+describe('batch', function (): void {
+    /**
+     * A batch file next to photo.png with one item per seed; a null seed
+     * gives an item whose source is missing.
+     *
+     * @param list<int|null> $seeds
+     */
+    function batchFile(array $seeds): string
+    {
+        $dir = dirname(cliImage());
+        $items = [];
+        foreach ($seeds as $index => $seed) {
+            $items[] = [
+                'id' => "item-{$index}",
+                'source' => $seed === null ? 'missing.png' : 'photo.png',
+                'output' => "out/item-{$index}",
+                'build' => ['format' => 'image-puzzle/build-config', 'version' => 1, 'kind' => 'swap', 'preset' => 'easy', 'seed' => $seed ?? 0],
+                'assets' => ['format' => 'jpeg', 'quality' => 80],
+            ];
+        }
+        file_put_contents($dir . '/batch.json', json_encode(['format' => 'image-puzzle/batch', 'version' => 1, 'items' => $items], JSON_THROW_ON_ERROR));
+
+        return $dir . '/batch.json';
+    }
+
+    it('builds every item relative to the batch file', function (): void {
+        $file = batchFile([1, 2]);
+        [$code, $out, $err] = cli(['batch', $file]);
+        expect($code)->toBe(0)
+            ->and($out)->toContain('Batch complete: 2 built, 0 resumed, 0 failed, 0 cancelled, 0 pending.')
+            ->and($err)->toContain('[1/2] item-0 done')->toContain('[2/2] item-1 done')
+            ->and(file_exists(dirname($file) . '/out/item-1/definition.json'))->toBeTrue()
+            ->and(glob(dirname($file) . '/out/item-0/*.jpg'))->not->toBe([]);
+    });
+
+    it('exits with 1 on a partial batch and resumes from a checkpoint', function (): void {
+        $file = batchFile([1, null]);
+        $checkpoint = dirname($file) . '/run.checkpoint.json';
+        [$code, $json, $err] = cli(['batch', $file, '--checkpoint=' . $checkpoint, '--json']);
+        $result = cliJson($json);
+        expect($code)->toBe(Application::EXIT_FAILURE)
+            ->and($result['status'])->toBe('partial')
+            ->and($result['counts'])->toMatchArray(['done' => 1, 'failed' => 1])
+            ->and($err)->toContain('item-1 failed: ')->toContain('missing.png');
+        copy(dirname($file) . '/photo.png', dirname($file) . '/missing.png');
+        [$code, $out] = cli(['batch', $file, '--checkpoint=' . $checkpoint]);
+        expect($code)->toBe(0)->and($out)->toContain('1 built, 1 resumed');
+    });
+
+    it('stops at the first failure with --fail-fast and reuses the cache', function (): void {
+        $file = batchFile([null, 1]);
+        [$code, $out] = cli(['batch', $file, '--fail-fast']);
+        expect($code)->toBe(Application::EXIT_FAILURE)->and($out)->toContain('Batch failed: 0 built, 0 resumed, 1 failed, 0 cancelled, 1 pending.');
+
+        $cached = batchFile([3]);
+        $cache = dirname($cached) . '/cache';
+        expect(cli(['batch', $cached, '--cache=' . $cache])[0])->toBe(0);
+        Fixtures::removeDir(dirname($cached) . '/out');
+        [, $json] = cli(['batch', $cached, '--cache=' . $cache, '--json']);
+        expect(Fixtures::object(Fixtures::listOf(cliJson($json)['items'])[0])['fromCache'])->toBeTrue();
+    });
+
+    it('rejects invalid batch files and options', function (Closure $args, int $code, string $message): void {
+        $file = batchFile([1]);
+        [$actual, , $err] = cli(argvList($args($file)));
+        expect($actual)->toBe($code)->and($err)->toContain($message);
+    })->with([
+        'missing file' => [static fn (string $file): array => ['batch', dirname($file) . '/none.json'], Application::EXIT_INVALID, 'No batch file'],
+        'wrong format' => [static function (string $file): array {
+            file_put_contents($file, '{"format":"other","version":1,"items":[]}');
+
+            return ['batch', $file];
+        }, Application::EXIT_INVALID, 'batch.format must be'],
+        'not JSON' => [static function (string $file): array {
+            file_put_contents($file, '{');
+
+            return ['batch', $file];
+        }, Application::EXIT_INVALID, 'not valid JSON'],
+        'unknown item field' => [static function (string $file): array {
+            file_put_contents($file, '{"format":"image-puzzle/batch","version":1,"items":[{"id":"a","source":"p.png","output":"o","build":{},"extra":1}]}');
+
+            return ['batch', $file];
+        }, Application::EXIT_INVALID, 'unknown field(s): extra'],
+        'empty batch' => [static function (string $file): array {
+            file_put_contents($file, '{"format":"image-puzzle/batch","version":1,"items":[]}');
+
+            return ['batch', $file];
+        }, Application::EXIT_INVALID, 'at least one item'],
+        'concurrency' => [static fn (string $file): array => ['batch', $file, '--concurrency=40'], Application::EXIT_USAGE, 'concurrency'],
+        'stale cancel file' => [static function (string $file): array {
+            touch(dirname($file) . '/stop');
+
+            return ['batch', $file, '--cancel-file=' . dirname($file) . '/stop'];
+        }, Application::EXIT_INVALID, 'already exists'],
+    ]);
 });
 
 describe('bin/image-puzzle', function (): void {

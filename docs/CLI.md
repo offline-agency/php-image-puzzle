@@ -20,6 +20,7 @@ It needs PHP 8.4+ with ext-gd. `bundle` also needs ext-zip.
 | `svg <puzzle-dir> <out.svg>` | Vector outlines and clipped pieces |
 | `pdf <puzzle-dir> <out.pdf>` | Printable A4/A3 PDF with cut lines and a reference page |
 | `bundle <puzzle-dir> <out.zip>` | Self-contained ZIP that plays offline, also from `file://` |
+| `batch <batch.json>` | Builds many puzzles from a batch file with progress, resume, cache and cancellation ([BATCH.md](BATCH.md)) |
 | `capabilities` | Modes it can build, image formats GD can decode and encode, optional extensions |
 | `help [command]`, `--version` | Help and the installed version |
 
@@ -82,6 +83,19 @@ vendor/bin/image-puzzle reconstruct out board.png
 
 See [EXPORT.md](EXPORT.md) for what each export contains, how the PDF is
 laid out and how to open a bundle.
+
+## batch
+
+```bash
+vendor/bin/image-puzzle batch batch.json                       # sequential
+vendor/bin/image-puzzle batch batch.json --concurrency=4 \
+    --checkpoint=batch.checkpoint.json --cache=.puzzle-cache   # parallel, resumable, cached
+vendor/bin/image-puzzle batch batch.json --fail-fast --json
+```
+
+The batch file format, what a checkpoint resumes and how the cache is
+bounded are described in [BATCH.md](BATCH.md). The exit code is 0 only when
+every item was built or resumed, 1 for a partial, failed or cancelled batch.
 
 ## Exit codes
 
