@@ -1,0 +1,40 @@
+name: Release policy
+
+# Pre-merge check of the release classification of a pull request: one known
+# release label at most, never lower than its Conventional Commit metadata,
+# and a label for runtime requirement or published schema changes. Make it a
+# required check on master (docs/release/RUNBOOK.md) so contradictions are
+# rejected before the merge rather than at release time.
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, labeled, unlabeled, reopened]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-policy-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  classify:
+    name: Release classification
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      # The base branch revision of the tooling and policy, not the head.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          persist-credentials: false
+      - uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
+        with:
+          php-version: '8.5'
+          coverage: none
+          tools: none
+      - env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: php tools/release/check-pr.php --payload="$GITHUB_EVENT_PATH"

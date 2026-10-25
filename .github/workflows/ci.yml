@@ -8,12 +8,20 @@ on:
     branches: [master, main]
   pull_request:
   workflow_dispatch:
+  # The release workflow runs this suite for the exact commit it is about to
+  # release when no push run validated that commit.
+  workflow_call:
+    inputs:
+      sha:
+        description: Full commit SHA to check out and validate
+        type: string
+        required: true
 
 permissions:
   contents: read
 
 concurrency:
-  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
+  group: ci-${{ github.workflow }}-${{ inputs.sha || github.event.pull_request.number || github.sha }}
   cancel-in-progress: true
 
 env:
@@ -28,6 +36,8 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          # Empty except when the release workflow validates one exact commit.
+          ref: ${{ inputs.sha }}
       - uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
         with:
           php-version: '8.5'
@@ -61,6 +71,8 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          # Empty except when the release workflow validates one exact commit.
+          ref: ${{ inputs.sha }}
       - uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
         with:
           php-version: ${{ matrix.php }}
@@ -87,6 +99,8 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          # Empty except when the release workflow validates one exact commit.
+          ref: ${{ inputs.sha }}
       - uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
         with:
           php-version: '8.4'
@@ -109,6 +123,8 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          # Empty except when the release workflow validates one exact commit.
+          ref: ${{ inputs.sha }}
       - uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
         with:
           php-version: '8.5'
@@ -118,7 +134,7 @@ jobs:
       - run: composer install --no-progress --prefer-dist
       - run: mkdir -p build && vendor/bin/pest --coverage --min=85 --coverage-clover=build/coverage.xml
       - name: Upload coverage to Codecov
-        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+        if: (!inputs.sha) && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
         uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
         with:
           files: build/coverage.xml
@@ -132,6 +148,8 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          # Empty except when the release workflow validates one exact commit.
+          ref: ${{ inputs.sha }}
       - uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
         with:
           php-version: '8.5'
@@ -152,6 +170,8 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          # Empty except when the release workflow validates one exact commit.
+          ref: ${{ inputs.sha }}
       - uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
         with:
           php-version: ${{ matrix.php }}
@@ -167,6 +187,8 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          # Empty except when the release workflow validates one exact commit.
+          ref: ${{ inputs.sha }}
       - uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
         with:
           php-version: '8.4'
@@ -182,6 +204,8 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          # Empty except when the release workflow validates one exact commit.
+          ref: ${{ inputs.sha }}
       - run: docker compose build --build-arg UID="$(id -u)" --build-arg GID="$(id -g)" php84 minimal
       - run: docker compose run --rm php84 sh -c 'composer install --no-progress && vendor/bin/pest'
       - run: docker compose run --rm minimal sh -c 'composer install --no-progress && vendor/bin/pest'
@@ -193,6 +217,8 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          # Empty except when the release workflow validates one exact commit.
+          ref: ${{ inputs.sha }}
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: '24'
@@ -214,6 +240,8 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          # Empty except when the release workflow validates one exact commit.
+          ref: ${{ inputs.sha }}
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: '24'
@@ -246,6 +274,8 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          # Empty except when the release workflow validates one exact commit.
+          ref: ${{ inputs.sha }}
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: '24'
@@ -261,6 +291,8 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          # Empty except when the release workflow validates one exact commit.
+          ref: ${{ inputs.sha }}
       - uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
         with:
           php-version: '8.5'
@@ -291,6 +323,8 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          # Empty except when the release workflow validates one exact commit.
+          ref: ${{ inputs.sha }}
       - uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
         with:
           php-version: ${{ matrix.php }}
@@ -323,6 +357,8 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          # Empty except when the release workflow validates one exact commit.
+          ref: ${{ inputs.sha }}
       - uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
         with:
           php-version: '8.5'
@@ -347,10 +383,37 @@ jobs:
           path: integrations/${{ matrix.package }}/playwright-report
           retention-days: 7
 
+  release-artifacts:
+    name: Release artifacts build from this commit
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          # Empty except when the release workflow validates one exact commit.
+          ref: ${{ inputs.sha }}
+      - uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
+        with:
+          php-version: '8.5'
+          extensions: gd
+          coverage: none
+          tools: composer:v2
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24'
+          cache: npm
+      - run: composer install --no-progress --prefer-dist --no-dev
+      - run: npm ci --no-fund --no-audit
+      - run: npm run build
+      # The same builder the release workflow runs, with a placeholder version:
+      # committed browser assets, npm tarballs, integration archives, checksums.
+      - run: php tools/release/build-artifacts.php --sha="$(git rev-parse HEAD)" --version=0.0.0 --out="$RUNNER_TEMP/release-artifacts"
+      - run: tools/release/smoke-artifacts.sh "$RUNNER_TEMP/release-artifacts" 0.0.0
+
   gate:
     name: CI gate
     if: always()
-    needs: [quality, tests, minimal-extensions, coverage, mutation, consumer, codeigniter, docker, js, browser, js-consumer, conformance, integrations, integrations-browser]
+    needs: [quality, tests, minimal-extensions, coverage, mutation, consumer, codeigniter, docker, js, browser, js-consumer, conformance, integrations, integrations-browser, release-artifacts]
     runs-on: ubuntu-24.04
     steps:
       - name: Every required job succeeded

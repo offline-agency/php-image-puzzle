@@ -1,0 +1,242 @@
+name: Release
+
+# Tags and publishes a GitHub Release for every pull request merged into
+# master, in master order, once the exact accepted commit passed CI.
+# docs/release/RUNBOOK.md describes activation, recovery and the scenarios.
+#
+# Safety rules of this file:
+# - the code that runs is always the trusted master revision (tools/release),
+#   never the pull request head; contributor text (titles, bodies, labels,
+#   commit messages) is read by the PHP tooling as data, never interpolated
+#   into a shell command;
+# - only the publish job can write, and it installs or runs no dependency or
+#   package script; artifacts are built read-only and verified by checksum;
+# - actions are pinned to full commit SHAs.
+
+on:
+  pull_request_target:
+    types: [closed]
+    branches: [master]
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+    branches: [master]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: "Merged master PR to reconcile or recover"
+        required: true
+        type: string
+      dry_run:
+        description: "Plan and validate without creating tags or releases"
+        required: true
+        default: true
+        type: boolean
+
+permissions:
+  contents: read
+
+# One release run at a time, in event order. queue: max keeps pending runs
+# instead of replacing them (GitHub keeps up to 100); reconciliation makes a
+# lost run harmless, because the next run releases every pending pull request
+# in master order.
+concurrency:
+  group: release-master
+  cancel-in-progress: false
+  queue: max
+
+jobs:
+  plan:
+    name: Plan
+    # A dispatch must run the workflow and tooling of master.
+    if: github.event_name != 'workflow_dispatch' || github.ref == 'refs/heads/master'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      pull-requests: read
+      actions: read
+      checks: read
+    outputs:
+      decision: ${{ steps.plan.outputs.decision }}
+      pr: ${{ steps.plan.outputs.pr }}
+      sha: ${{ steps.plan.outputs.sha }}
+      version: ${{ steps.plan.outputs.version }}
+      resume: ${{ steps.plan.outputs.resume }}
+      tooling: ${{ steps.tooling.outputs.sha }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: master
+          persist-credentials: false
+      - uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
+        with:
+          php-version: '8.5'
+          coverage: none
+          tools: none
+      - id: tooling
+        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+      - id: plan
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          EVENT_NAME: ${{ github.event_name }}
+          DISPATCH_PR: ${{ inputs.pr_number }}
+          TOOLING_SHA: ${{ steps.tooling.outputs.sha }}
+        run: php tools/release/plan.php --event="$EVENT_NAME" --payload="$GITHUB_EVENT_PATH" --tooling-sha="$TOOLING_SHA" --out=plan.json
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: release-plan
+          path: plan.json
+          if-no-files-found: error
+          retention-days: 30
+
+  validate:
+    name: Validate the accepted commit
+    needs: plan
+    if: needs.plan.outputs.decision == 'needs-validation' && !(github.event_name == 'workflow_dispatch' && inputs.dry_run)
+    permissions:
+      contents: read
+    uses: ./.github/workflows/ci.yml
+    with:
+      sha: ${{ needs.plan.outputs.sha }}
+
+  artifacts:
+    name: Build artifacts (read-only)
+    needs: [plan, validate]
+    if: >-
+      always() && needs.plan.result == 'success'
+      && !(github.event_name == 'workflow_dispatch' && inputs.dry_run)
+      && (needs.plan.outputs.decision == 'publish'
+        || (needs.plan.outputs.decision == 'needs-validation' && needs.validate.result == 'success'))
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - name: Check out the trusted tooling
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ needs.plan.outputs.tooling }}
+          path: tooling
+          persist-credentials: false
+      - name: Check out the accepted commit
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ needs.plan.outputs.sha }}
+          path: source
+          persist-credentials: false
+      - uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
+        with:
+          php-version: '8.5'
+          extensions: gd
+          coverage: none
+          tools: composer:v2
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: source/package-lock.json
+      - run: composer install --no-progress --prefer-dist --no-dev
+        working-directory: source
+      - run: npm ci --no-fund --no-audit
+        working-directory: source
+      - run: npm run build
+        working-directory: source
+      - env:
+          SHA: ${{ needs.plan.outputs.sha }}
+          VERSION: ${{ needs.plan.outputs.version }}
+        run: php tooling/tools/release/build-artifacts.php --root="$GITHUB_WORKSPACE/source" --sha="$SHA" --version="$VERSION" --out="$RUNNER_TEMP/release-artifacts"
+      - env:
+          VERSION: ${{ needs.plan.outputs.version }}
+        run: tooling/tools/release/smoke-artifacts.sh "$RUNNER_TEMP/release-artifacts" "$VERSION"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: release-artifacts-${{ needs.plan.outputs.sha }}
+          path: ${{ runner.temp }}/release-artifacts
+          if-no-files-found: error
+          retention-days: 30
+
+  publish:
+    name: Tag and publish
+    needs: [plan, validate, artifacts]
+    if: always() && needs.artifacts.result == 'success'
+    runs-on: ubuntu-24.04
+    # The only job that can write: no dependency installation, no package
+    # scripts, only the trusted tooling and the verified artifacts.
+    permissions:
+      contents: write
+    outputs:
+      version: ${{ steps.publish.outputs.version }}
+      next_pr: ${{ steps.publish.outputs.next_pr }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ needs.plan.outputs.tooling }}
+          persist-credentials: false
+      - uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
+        with:
+          php-version: '8.5'
+          coverage: none
+          tools: none
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: release-plan
+          path: ${{ runner.temp }}/plan
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: release-artifacts-${{ needs.plan.outputs.sha }}
+          path: ${{ runner.temp }}/release-artifacts
+      - id: publish
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          TOOLING_SHA: ${{ needs.plan.outputs.tooling }}
+          VALIDATED: ${{ needs.validate.result }}
+        run: |
+          set -- --plan="$RUNNER_TEMP/plan/plan.json" --artifacts="$RUNNER_TEMP/release-artifacts" --tooling-sha="$TOOLING_SHA"
+          if [ "$VALIDATED" = success ]; then
+            set -- "$@" --validated
+          fi
+          php tools/release/publish.php "$@"
+
+  continue:
+    name: Continue with the next pull request
+    needs: publish
+    if: needs.publish.outputs.next_pr != ''
+    runs-on: ubuntu-24.04
+    # workflow_dispatch is the one event a GITHUB_TOKEN may start; tags
+    # created with that token start no other workflow.
+    permissions:
+      actions: write
+    steps:
+      - env:
+          GH_TOKEN: ${{ github.token }}
+          NEXT: ${{ needs.publish.outputs.next_pr }}
+        run: |
+          case "$NEXT" in
+            ''|*[!0-9]*) echo "unexpected pull request number" >&2; exit 1 ;;
+          esac
+          gh workflow run release-on-merge.yml --repo "$GITHUB_REPOSITORY" --ref master -f pr_number="$NEXT" -f dry_run=false
+
+  verify-distribution:
+    name: Verify the Composer distribution
+    needs: [plan, publish]
+    if: needs.publish.result == 'success'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ needs.plan.outputs.tooling }}
+          persist-credentials: false
+      - uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
+        with:
+          php-version: '8.5'
+          extensions: gd
+          coverage: none
+          tools: composer:v2
+      # Waits with bounded backoff for Packagist, then installs exactly this
+      # version in a fresh project. A failure leaves the release in place;
+      # re-run this job or the command in the run summary.
+      - env:
+          VERSION: ${{ needs.publish.outputs.version }}
+          SHA: ${{ needs.plan.outputs.sha }}
+        run: php tools/release/verify-packagist.php --version="$VERSION" --sha="$SHA"

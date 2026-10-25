@@ -63,6 +63,7 @@
     "autoload-dev": {
         "psr-4": {
             "ImagePuzzle\\Tests\\": "tests/",
+            "ImagePuzzle\\Release\\": "tools/release/src/",
             "ImagePuzzle\\Tools\\": "tools/src/"
         }
     },

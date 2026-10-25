@@ -51,6 +51,13 @@ for upgrading from 1.x.
   builder (`examples/demo/build.php`), a tutorial, operations, migration and
   API guides, `AGENTS.md` and `llms.txt`. Documentation code blocks and links
   are checked by the test suite.
+- Release automation: every pull request merged into `master` is tagged and
+  published as a GitHub Release at its accepted commit, in `master` order,
+  after CI passed for that commit. Versions come from `release:*` labels and
+  Conventional Commits. The release attaches the browser bundles, npm
+  tarballs and integration archives with checksums, then verifies the
+  Packagist install ([docs/release/RUNBOOK.md](docs/release/RUNBOOK.md)).
+  Not active until the default branch is `master`.
 
 ### Fixed
 
