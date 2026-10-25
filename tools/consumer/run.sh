@@ -2,7 +2,8 @@
 # Installs the package into a fresh consumer project from the dist archive
 # that GitHub/Packagist would serve for the current commit (git archive, so
 # .gitattributes export-ignore rules apply), without dev dependencies, and
-# runs a smoke test through the public API.
+# runs a smoke test through the public API and the installed CLI
+# (vendor/bin/image-puzzle). BUNDLE_OUT=<dir> keeps the CLI-made bundle.zip.
 #   tools/consumer/run.sh [--prefer-lowest] [ref]
 set -eu
 
@@ -49,3 +50,4 @@ php -r '
 composer update --no-dev --no-interaction --no-progress $lowest
 
 php "$repo/tools/consumer/smoke.php"
+php "$repo/tools/consumer/cli.php"

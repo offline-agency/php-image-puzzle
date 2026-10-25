@@ -140,7 +140,11 @@ foreach ($fixtures === false ? [] : $fixtures as $file) {
 }
 
 // Example definitions played by the browser player (examples/player).
-$examples = array_merge(glob($root . '/examples/player/assets/*.json') ?: [], glob($root . '/examples/player/assets/*/definition.json') ?: []);
+$examples = [];
+foreach (['/examples/player/assets/*.json', '/examples/player/assets/*/definition.json'] as $pattern) {
+    $matches = glob($root . $pattern);
+    $examples = [...$examples, ...($matches === false ? [] : $matches)];
+}
 foreach ($examples as $file) {
     $name = substr($file, strlen($root) + 1);
     $json = (string) file_get_contents($file);

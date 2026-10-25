@@ -53,7 +53,11 @@ jobs:
     env:
       # The forked-worker suite must run here; a missing pcntl fails the job.
       REQUIRE_PCNTL: '1'
+      # SVG/PDF exports are rendered and inspected; a missing tool fails the job.
+      REQUIRE_RENDERERS: '1'
     steps:
+      - name: Install SVG and PDF renderers
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends poppler-utils qpdf librsvg2-bin
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
@@ -184,7 +188,8 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
-      # The PHP integrations ship a copy of the bundle: it must match this build.
+      # The PHP packages ship copies of the player (integrations: ES module,
+      # core resources/dist: IIFE for ZIP bundles); they must match this build.
       - run: node tools/sync-player-bundle.mjs --check
 
   browser:
@@ -198,6 +203,14 @@ jobs:
         with:
           node-version: '24'
           cache: npm
+      # PHP builds the ZIP bundles that e2e/bundle.spec.ts extracts and opens.
+      - uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
+        with:
+          php-version: '8.5'
+          extensions: gd, zip
+          coverage: none
+          tools: composer:v2
+      - run: composer install --no-progress --prefer-dist
       - run: npm ci --no-fund --no-audit
       - run: npm run build
       # Browser builds matching the locked @playwright/test version.

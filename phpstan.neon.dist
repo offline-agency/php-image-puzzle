@@ -10,6 +10,7 @@ parameters:
         - tests
         - tools
         - examples
+        - bin/image-puzzle
     tmpDir: build/phpstan
     treatPhpDocTypesAsCertain: false
     reportUnmatchedIgnoredErrors: true

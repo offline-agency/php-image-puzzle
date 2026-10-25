@@ -34,7 +34,7 @@
     },
     "suggest": {
         "ext-pcntl": "Parallel export in CLI processes (Linux/macOS).",
-        "ext-zip": "Self-contained ZIP bundles (image-puzzle bundle).",
+        "ext-zip": "Self-contained offline ZIP bundles (image-puzzle bundle, BundleExporter).",
         "ext-exif": "Not required: type detection falls back to getimagesize(). Needed only for EXIF orientation metadata reading."
     },
     "require-dev": {
@@ -45,6 +45,9 @@
         "phpstan/phpstan-strict-rules": "^2.0",
         "phpunit/phpunit": "^13.4.3"
     },
+    "bin": [
+        "bin/image-puzzle"
+    ],
     "autoload": {
         "psr-4": {
             "ImagePuzzle\\": "src/"
