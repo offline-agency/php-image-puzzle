@@ -2,8 +2,12 @@
 
 declare(strict_types=1);
 
+use ImagePuzzle\EdgeStyle\JigsawStyle;
 use ImagePuzzle\Exception\InvalidArgumentException;
 use ImagePuzzle\Exception\UnsupportedImageTypeException;
+use ImagePuzzle\ImageInfo;
+use ImagePuzzle\ImageLoader;
+use ImagePuzzle\ImageLoaderInterface;
 use ImagePuzzle\Puzzle;
 use ImagePuzzle\PuzzleGenerator;
 use ImagePuzzle\Tests\Support\Fixtures;
@@ -262,3 +266,58 @@ test('generateAndExport produces same result as three-step flow', function (): v
     @rmdir($outDirOneShot);
     @rmdir($outDirThree);
 });
+
+test('an injected ImageLoaderInterface does the inspection and the decoding', function (): void {
+    $loader = new class () implements ImageLoaderInterface {
+        public int $inspected = 0;
+        public int $loaded = 0;
+
+        public function inspect(string $path): ImageInfo
+        {
+            $this->inspected++;
+
+            return (new ImageLoader())->inspect($path);
+        }
+
+        public function loadFromFile(string $path): GdImage
+        {
+            $this->loaded++;
+            [$width, $height] = Fixtures::size($path);
+            $image = Fixtures::canvas($width, $height);
+            imagefilledrectangle($image, 0, 0, $width - 1, $height - 1, Fixtures::color($image, 10, 200, 30));
+
+            return $image;
+        }
+    };
+    $puzzle = (new PuzzleGenerator(imageLoader: $loader))->generateFromFile(__DIR__ . '/fixtures/sample.png', 2, 2);
+    $piece = $puzzle->getPiece(1, 1)->toGdImage();
+
+    expect([$loader->inspected, $loader->loaded])->toBe([1, 1]);
+    expect(Fixtures::rgba($piece, 0, 0))->toBe(['r' => 10, 'g' => 200, 'b' => 30, 'a' => 0]);
+});
+
+test('generateFromGd reads the caller image without modifying or destroying it', function (): void {
+    $image = Fixtures::coordinateImage(48, 36);
+    $before = pixelDigest($image);
+    $puzzle = (new PuzzleGenerator(new JigsawStyle()))->generateFromGd($image, 3, 4);
+    foreach ($puzzle->getPieces() as $piece) {
+        $piece->toGdImage();
+    }
+    unset($puzzle, $piece);
+    gc_collect_cycles();
+
+    expect(imagesx($image))->toBe(48);
+    expect(pixelDigest($image))->toBe($before);
+});
+
+function pixelDigest(GdImage $image): string
+{
+    $pixels = '';
+    for ($y = 0; $y < imagesy($image); $y++) {
+        for ($x = 0; $x < imagesx($image); $x++) {
+            $pixels .= pack('N', Fixtures::pixel($image, $x, $y));
+        }
+    }
+
+    return hash('sha256', $pixels);
+}
