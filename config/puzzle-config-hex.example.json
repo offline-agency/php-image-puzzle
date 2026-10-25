@@ -1,0 +1,20 @@
+{
+  "$schema": "https://raw.githubusercontent.com/offline-agency/php-image-puzzle/HEAD/docs/schemas/v2/puzzle-config.schema.json",
+  "configVersion": 2,
+  "rows": 5,
+  "cols": 4,
+  "edge": {
+    "type": "jigsaw"
+  },
+  "geometry": {
+    "seed": 7,
+    "samples": 4,
+    "topology": "hex"
+  },
+  "output": {
+    "format": "webp",
+    "quality": 80,
+    "filenamePattern": "piece_{id}.webp",
+    "publishMode": "generation"
+  }
+}

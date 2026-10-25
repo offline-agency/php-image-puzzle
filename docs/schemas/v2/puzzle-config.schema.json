@@ -25,15 +25,17 @@
       "type": "object",
       "properties": {
         "directory": { "type": "string", "minLength": 1 },
-        "manifestFilename": { "type": "string", "pattern": "^[^/\\\\\\u0000-\\u001f]+\\.json$" },
-        "filenamePattern": { "type": "string", "pattern": "^[^/\\\\\\u0000-\\u001f]+$" },
+        "manifestFilename": { "type": "string", "pattern": "^[^/\\\\\\x00-\\x1f]+\\.json$" },
+        "filenamePattern": { "type": "string", "pattern": "^[^/\\\\\\x00-\\x1f]+$" },
         "format": { "enum": ["png", "jpeg", "webp"] },
         "quality": { "type": "integer", "minimum": 0, "maximum": 100, "description": "PNG: compression 0..9; JPEG/WebP: quality 0..100." },
         "overwrite": { "type": "boolean" },
         "publishMode": { "enum": ["in_place", "generation"] },
         "includePaths": { "type": "boolean" }
       },
-      "additionalProperties": false
+      "additionalProperties": false,
+      "if": { "anyOf": [{ "not": { "required": ["format"] } }, { "properties": { "format": { "const": "png" } } }] },
+      "then": { "properties": { "quality": { "maximum": 9 } } }
     }
   },
   "additionalProperties": false

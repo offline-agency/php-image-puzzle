@@ -31,8 +31,8 @@ final class ExportOptions
     public const DEFAULT_JPEG_QUALITY = 85;
     public const DEFAULT_WEBP_QUALITY = 80;
 
-    private const DEFAULT_PATTERN = 'piece_{row}_{col}.png';
-    private const DEFAULT_MANIFEST_FILENAME = 'manifest.json';
+    public const DEFAULT_PATTERN = 'piece_{row}_{col}.png';
+    public const DEFAULT_MANIFEST_FILENAME = 'manifest.json';
 
     private const EXTENSIONS = [
         self::FORMAT_PNG => ['png'],
