@@ -7,12 +7,15 @@ namespace ImagePuzzle\Tools;
 use ImagePuzzle\Config\PuzzleConfig;
 use ImagePuzzle\Exception\IllegalActionException;
 use ImagePuzzle\Exception\InvalidDefinitionException;
+use ImagePuzzle\Game\BuildConfiguration;
 use ImagePuzzle\Game\GameDefinition;
 use ImagePuzzle\Game\GameFactory;
 use ImagePuzzle\Game\GameKind;
+use ImagePuzzle\Game\Modes;
 use ImagePuzzle\Game\Presets;
 use ImagePuzzle\Game\Prng;
 use ImagePuzzle\Game\SourceImage;
+use ImagePuzzle\GeometryOptions;
 use ImagePuzzle\PuzzleGenerator;
 
 /**
@@ -30,6 +33,7 @@ final class ConformanceFixtures
         $files = [
             'prng.json' => self::prng(),
             'presets.json' => Presets::export(),
+            'build-config.json' => self::buildConfig(),
         ];
         $factory = new GameFactory();
         $source = new SourceImage(640, 480, hash('sha256', 'conformance-source'));
@@ -49,6 +53,59 @@ final class ConformanceFixtures
         }
 
         return $files;
+    }
+
+    /**
+     * Accepted and rejected build configurations with the PHP verdict; the
+     * TypeScript configurator validates the same documents identically.
+     *
+     * @return array<string, mixed>
+     */
+    private static function buildConfig(): array
+    {
+        $base = ['format' => BuildConfiguration::FORMAT, 'version' => BuildConfiguration::VERSION, 'kind' => 'swap', 'preset' => 'easy', 'seed' => 0];
+        $documents = [
+            $base,
+            ['format' => BuildConfiguration::FORMAT, 'version' => 1, 'kind' => 'jigsaw', 'preset' => 'custom', 'custom' => ['rows' => 3, 'cols' => 5, 'topology' => 'hex', 'edge' => 'jigsaw', 'snap' => 12], 'seed' => 2147483647, 'crop' => ['x' => 0, 'y' => 4, 'width' => 300, 'height' => 200]],
+            ['format' => BuildConfiguration::FORMAT, 'version' => 1, 'kind' => 'strips', 'preset' => 'custom', 'custom' => ['count' => 6, 'axis' => 'vertical'], 'seed' => 9],
+            ['$schema' => 'https://example.test/x.json', ...$base],
+            'not an object',
+            [],
+            [...$base, 'format' => 'image-puzzle/game-state'],
+            [...$base, 'version' => 2],
+            [...$base, 'version' => '1'],
+            [...$base, 'extra' => true],
+            [...$base, 'kind' => 'memory'],
+            [...$base, 'kind' => 7],
+            [...$base, 'preset' => 'expert'],
+            [...$base, 'custom' => ['rows' => 2]],
+            [...$base, 'preset' => 'custom'],
+            [...$base, 'preset' => 'custom', 'custom' => ['count' => 3]],
+            [...$base, 'preset' => 'custom', 'custom' => [1, 2]],
+            [...$base, 'seed' => -1],
+            [...$base, 'seed' => 4294967296],
+            [...$base, 'seed' => 1.5],
+            [...$base, 'seed' => 4294967295],
+            [...$base, 'kind' => 'jigsaw', 'seed' => 2147483648],
+            [...$base, 'crop' => ['x' => 0, 'y' => 0, 'width' => 10]],
+            [...$base, 'crop' => ['x' => -1, 'y' => 0, 'width' => 10, 'height' => 10]],
+            [...$base, 'crop' => ['x' => 0, 'y' => 0, 'width' => 0, 'height' => 10]],
+            [...$base, 'crop' => ['x' => 0, 'y' => 0, 'width' => 10, 'height' => 10, 'unit' => 'px']],
+        ];
+        $cases = [];
+        foreach ($documents as $document) {
+            try {
+                $cases[] = ['document' => $document, 'valid' => true, 'normalized' => BuildConfiguration::fromArray($document)->toArray()];
+            } catch (InvalidDefinitionException $e) {
+                $cases[] = ['document' => $document, 'valid' => false, 'error' => $e->getMessage()];
+            }
+        }
+        $customKeys = [];
+        foreach (Modes::available() as $kind) {
+            $customKeys[$kind->value] = GameFactory::customKeys($kind);
+        }
+
+        return ['format' => BuildConfiguration::FORMAT, 'version' => BuildConfiguration::VERSION, 'maxSeed' => Prng::MAX_SEED, 'maxJigsawSeed' => GeometryOptions::MAX_SEED, 'customKeys' => $customKeys, 'cases' => $cases];
     }
 
     /**

@@ -7,8 +7,10 @@ namespace ImagePuzzle\Livewire;
 use ImagePuzzle\Game\GameDefinition;
 
 /**
- * A resolved puzzle: its reference key, validated definition and the local
- * directory its relative asset paths are read from.
+ * A resolved puzzle: its reference key, validated definition, the local
+ * directory its relative asset paths are read from and, for puzzles stored on
+ * a host record, that record. The default gate requires the "view" ability
+ * on the subject, so record policies (and their tenant checks) apply.
  */
 final readonly class StoredPuzzle
 {
@@ -16,6 +18,7 @@ final readonly class StoredPuzzle
         public string $key,
         public GameDefinition $definition,
         public string $directory,
+        public ?object $subject = null,
     ) {
     }
 

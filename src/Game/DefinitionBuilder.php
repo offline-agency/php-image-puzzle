@@ -7,6 +7,7 @@ namespace ImagePuzzle\Game;
 use ImagePuzzle\Config\PuzzleConfig;
 use ImagePuzzle\Exception\ExportFailedException;
 use ImagePuzzle\Exception\InvalidArgumentException;
+use ImagePuzzle\Geometry\Bounds;
 use ImagePuzzle\ImageLoader;
 use ImagePuzzle\PuzzleGenerator;
 use ImagePuzzle\ResourceLimits;
@@ -42,13 +43,32 @@ final class DefinitionBuilder
      */
     public function build(string $sourcePath, string $outputDir, GameKind $kind, string $preset = 'medium', array $custom = [], int $seed = 0): BuildResult
     {
+        return $this->run($sourcePath, $outputDir, $kind, $preset, $custom, $seed, null);
+    }
+
+    /**
+     * Builds from a saved, versioned configuration, cropping the upright
+     * source to its crop rectangle first.
+     */
+    public function buildConfigured(string $sourcePath, string $outputDir, BuildConfiguration $config): BuildResult
+    {
+        return $this->run($sourcePath, $outputDir, $config->kind, $config->preset, $config->custom, $config->seed, $config->crop);
+    }
+
+    /**
+     * @param array<string, mixed> $custom
+     */
+    private function run(string $sourcePath, string $outputDir, GameKind $kind, string $preset, array $custom, int $seed, ?Bounds $crop): BuildResult
+    {
         if (!in_array($kind, Modes::available(), true)) {
             throw new InvalidArgumentException("The {$kind->value} mode cannot be built yet.");
         }
         $info = (new ImageLoader($this->limits))->inspect($sourcePath);
         $created = $this->prepare($outputDir);
         try {
-            $image = $this->writeSource($sourcePath, $outputDir, $info->type, $info->orientation);
+            $image = $crop === null
+                ? $this->writeSource($sourcePath, $outputDir, $info->type, $info->orientation)
+                : $this->writeCropped($sourcePath, $outputDir, $crop);
             $source = SourceImage::fromFile($outputDir . '/' . $image, new ImageLoader($this->limits));
             $definition = $kind === GameKind::Jigsaw
                 ? $this->jigsaw($outputDir, $image, $source, $preset, $custom, $seed)
@@ -136,6 +156,29 @@ final class DefinitionBuilder
         }
 
         return $name;
+    }
+
+    /** Writes the crop window of the upright source as source.png. */
+    private function writeCropped(string $sourcePath, string $outputDir, Bounds $crop): string
+    {
+        $gd = (new ImageLoader($this->limits, applyExifOrientation: true))->loadFromFile($sourcePath);
+        $width = imagesx($gd);
+        $height = imagesy($gd);
+        if (!(new Bounds(0, 0, max(1, $width), max(1, $height)))->contains($crop)) {
+            throw new InvalidArgumentException("The crop {$crop->width}x{$crop->height} at {$crop->x},{$crop->y} is outside the {$width}x{$height} image.");
+        }
+        $window = imagecrop($gd, $crop->toArray());
+        if ($window === false) {
+            throw new ExportFailedException('Cannot crop the source image.');
+        }
+        imagealphablending($window, false);
+        imagesavealpha($window, true);
+        $target = $outputDir . '/source.png';
+        if (!ErrorCapture::run(static fn (): bool => imagepng($window, $target, 6))) {
+            throw new ExportFailedException("Cannot write {$target}.");
+        }
+
+        return 'source.png';
     }
 
     /** Returns true when the directory was created by this build. */

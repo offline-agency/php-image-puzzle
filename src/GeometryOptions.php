@@ -23,6 +23,7 @@ final readonly class GeometryOptions
     public const DEFAULT_SEED = 1;
     public const DEFAULT_SAMPLES = 4;
     public const VERSION = 2;
+    public const MAX_SEED = 2_147_483_647;
 
     public TopologyInterface $topology;
 
@@ -34,7 +35,7 @@ final readonly class GeometryOptions
         if ($samples < 1 || $samples > 16) {
             throw new InvalidArgumentException('Geometry samples must be between 1 (exact) and 16.');
         }
-        if ($seed < 0 || $seed > 2_147_483_647) {
+        if ($seed < 0 || $seed > self::MAX_SEED) {
             throw new InvalidArgumentException('Geometry seed must be between 0 and 2147483647.');
         }
         $this->topology = $topology ?? new RectangularTopology();

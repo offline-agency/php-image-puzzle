@@ -1,24 +1,11 @@
+import { themeTokens } from './theme.js';
+
 /**
  * Shadow-root stylesheet. Everything is scoped to the player's shadow tree;
  * hosts customise it through the --ipp-* custom properties and ::part().
  */
-export const styles: string = `
+export const styles: string = `${themeTokens}
 :host {
-  --ipp-font: system-ui, sans-serif;
-  --ipp-fg: #1d232b;
-  --ipp-muted: #55606e;
-  --ipp-bg: #ffffff;
-  --ipp-surface: #eef1f5;
-  --ipp-border: #c4ccd6;
-  --ipp-accent: #1f5fbf;
-  --ipp-accent-fg: #ffffff;
-  --ipp-focus: #d1006a;
-  --ipp-correct: #1b7f3b;
-  --ipp-hint: #b35c00;
-  --ipp-radius: 6px;
-  --ipp-gap: 2px;
-  --ipp-tray: #dde3ea;
-  --ipp-duration: 160ms;
   display: block;
   color: var(--ipp-fg);
   font-family: var(--ipp-font);
@@ -46,7 +33,7 @@ button.control:disabled { opacity: 0.5; cursor: not-allowed; }
 button:focus-visible { outline: 3px solid var(--ipp-focus); outline-offset: 2px; }
 .status { display: flex; flex-wrap: wrap; gap: 0.25rem 1rem; color: var(--ipp-muted); font-size: 0.875rem; font-variant-numeric: tabular-nums; }
 .message { margin: 0; padding: 1rem; border: 1px dashed var(--ipp-border); border-radius: var(--ipp-radius); }
-.message[data-kind='error'] { border-style: solid; border-color: #b00020; color: #b00020; }
+.message[data-kind='error'] { border-style: solid; border-color: var(--ipp-error); color: var(--ipp-error); }
 .sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 
 .board { position: relative; width: 100%; direction: ltr; background: var(--ipp-surface); border-radius: var(--ipp-radius); overflow: hidden; touch-action: manipulation; user-select: none; -webkit-user-select: none; }

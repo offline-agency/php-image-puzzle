@@ -13,3 +13,10 @@ export { DEFAULT_TAG, ELEMENT_EVENTS, defineImagePuzzlePlayer } from './element.
 export type { ElementOptions, ImagePuzzlePlayerElement } from './element.js';
 export { dictionaries, en, format, formatTime, it, resolveMessages } from './messages.js';
 export type { Messages } from './messages.js';
+export { createConfigurator } from './configurator.js';
+export type { Configurator, ConfiguratorChange, ConfiguratorOptions } from './configurator.js';
+export { CONFIGURATOR_CHANGE_EVENT, CONFIGURATOR_TAG, defineImagePuzzleConfigurator } from './configurator-element.js';
+export type { ImagePuzzleConfiguratorElement } from './configurator-element.js';
+export { configuratorEn, configuratorIt, resolveConfiguratorMessages } from './configurator-messages.js';
+export type { ConfiguratorMessages } from './configurator-messages.js';
+export { themeTokens } from './theme.js';

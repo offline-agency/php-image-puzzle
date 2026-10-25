@@ -120,6 +120,16 @@ final class GameFactory
     }
 
     /**
+     * Parameter names the "custom" preset accepts for a mode.
+     *
+     * @return list<string>
+     */
+    public static function customKeys(GameKind $kind): array
+    {
+        return $kind === GameKind::Jigsaw ? DefinitionBuilder::JIGSAW_KEYS : [...self::CUSTOM_KEYS[$kind->value] ?? [], 'assistance'];
+    }
+
+    /**
      * @param array<string, mixed> $custom
      * @return array<string, mixed>
      */
@@ -129,7 +139,7 @@ final class GameFactory
             if ($custom === []) {
                 throw new InvalidArgumentException('The custom preset needs explicit parameters.');
             }
-            Doc::keys($custom, [...self::CUSTOM_KEYS[$kind->value] ?? [], 'assistance'], 'parameters');
+            Doc::keys($custom, self::customKeys($kind), 'parameters');
 
             return $custom;
         }

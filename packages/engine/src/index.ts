@@ -34,6 +34,21 @@ export { cellRect, cellSize } from './rules/grid.js';
 export { autoPersist, browserStorage, clearState, restoreState, saveState, storageKey } from './persistence.js';
 export type { AutoPersistOptions, PersistResult, RestoreResult, StateStorage } from './persistence.js';
 export { canonicalJson, sha256Hex } from './canonical.js';
+export {
+  BUILD_CONFIG_FORMAT,
+  BUILD_CONFIG_VERSION,
+  BUILD_KINDS,
+  CUSTOM_KEYS,
+  MAX_CROP,
+  MAX_JIGSAW_SEED,
+  PRESET_NAMES,
+  PRESET_SHAPES,
+  buildConfigDocument,
+  buildShape,
+  createBuildConfig,
+  parseBuildConfig,
+} from './build-config.js';
+export type { BuildConfig, BuildConfigDocument, BuildKind, BuildShape, CropRect, PresetName } from './build-config.js';
 export type {
   Action,
   Assistance,

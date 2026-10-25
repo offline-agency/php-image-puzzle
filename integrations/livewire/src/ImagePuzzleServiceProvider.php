@@ -17,7 +17,7 @@ use Livewire\Livewire;
 
 final class ImagePuzzleServiceProvider extends ServiceProvider
 {
-    /** Gate ability checked with (user|null, puzzle key) before any play, save or asset access. */
+    /** Gate ability checked with (user|null, puzzle key, subject record|null) before any play, save or asset access. */
     public const ABILITY = 'image-puzzle.play';
 
     public function register(): void
@@ -39,8 +39,9 @@ final class ImagePuzzleServiceProvider extends ServiceProvider
 
         $gate = $this->app->make(Gate::class);
         if (!$gate->has(self::ABILITY)) {
-            // Registered puzzles are public by default; define the ability to restrict them.
-            $gate->define(self::ABILITY, static fn (mixed $user, string $puzzle): bool => true);
+            // Configured puzzles are public by default; puzzles stored on a
+            // record need the "view" ability on it. Define the ability to change this.
+            $gate->define(self::ABILITY, static fn (mixed $user, string $puzzle, ?object $subject = null): bool => $subject === null || $gate->forUser($user)->allows('view', [$subject]));
         }
 
         Livewire::component('image-puzzle-player', PuzzlePlayer::class);

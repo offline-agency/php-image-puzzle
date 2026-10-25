@@ -20,6 +20,16 @@ test.describe('accessibility', () => {
     });
   }
 
+  test('Web Component page in dark mode: no axe violations', async ({ page }) => {
+    await page.emulateMedia({ colorScheme: 'dark' });
+    await page.goto('examples/player/element.html');
+    await page.waitForFunction(() =>
+      [...document.querySelectorAll('image-puzzle-player')].every((element) => element.getAttribute('data-state') === 'ready'),
+    );
+    const results = await new AxeBuilder({ page }).include('image-puzzle-player').withTags(TAGS).analyze();
+    expect(results.violations.map((violation) => violation.id)).toEqual([]);
+  });
+
   test('Web Component page: no axe violations', async ({ page }) => {
     await page.goto('examples/player/element.html');
     await page.waitForFunction(() =>

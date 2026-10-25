@@ -27,7 +27,7 @@ final readonly class Puzzles
         if ($puzzle === null) {
             throw new NotFoundHttpException('Unknown puzzle.');
         }
-        if (!$this->gate->allows(ImagePuzzleServiceProvider::ABILITY, [$key])) {
+        if (!$this->gate->allows(ImagePuzzleServiceProvider::ABILITY, [$key, $puzzle->subject])) {
             throw new AccessDeniedHttpException('This puzzle is not available to you.');
         }
 

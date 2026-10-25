@@ -197,8 +197,12 @@ Customise the player through:
 
 - Custom properties: `--ipp-font`, `--ipp-fg`, `--ipp-muted`, `--ipp-bg`,
   `--ipp-surface`, `--ipp-border`, `--ipp-accent`, `--ipp-accent-fg`,
-  `--ipp-focus`, `--ipp-correct`, `--ipp-hint`, `--ipp-radius`, `--ipp-gap`,
-  `--ipp-tray`, `--ipp-duration`.
+  `--ipp-focus`, `--ipp-correct`, `--ipp-hint`, `--ipp-error`,
+  `--ipp-radius`, `--ipp-gap`, `--ipp-tray`, `--ipp-duration`.
+- Theme: a dark palette applies when the operating system prefers dark,
+  unless the host element has `theme="light"`; `theme="dark"` forces it.
+  Frameworks with a class-based dark mode (for example Filament) set the
+  attribute. Both palettes pass the automated WCAG AA contrast checks.
 - Parts: `root`, `toolbar`, `control`, `control-<name>`, `status`,
   `message`, `board`, `board-area`, `viewport`, `tile`, `piece`, `preview`.
 - `data-state` on the host (`empty`, `loading`, `error`, `ready`) and
@@ -255,11 +259,61 @@ and `puzzle-error`. The `detail` is the engine payload. They are
 even through enclosing shadow roots. The `puzzle-` prefix avoids collisions
 with native `error` and `progress` events, which bubble to `window` handlers.
 
+## Configurator
+
+`<image-puzzle-configurator>` edits a **build configuration**
+([schema](schemas/game/v1/build-config.schema.json)): mode, difficulty or
+custom parameters, seed, and a crop of the source image in pixels. The PHP
+`DefinitionBuilder::buildConfigured()` turns the same document and image into
+the same definition, so a saved configuration can be regenerated later.
+
+```html
+<form method="post">
+  <image-puzzle-configurator name="config" src="/uploads/photo.jpg" kinds="jigsaw swap"></image-puzzle-configurator>
+  <button>Save</button>
+</form>
+```
+
+| API | Kind | Behaviour |
+| --- | --- | --- |
+| `value` | attribute (JSON) and property | Getter: the valid document or `null`. Setter: document object, JSON string or `null` (defaults). An invalid document shows its error and falls back to defaults |
+| `src` | attribute and property | Preview image. Crop coordinates are in its natural (EXIF-upright) pixels |
+| `kinds` | attribute and property | Modes offered, space separated, in order |
+| `disabled` | attribute and property | Read-only form; pointer and keyboard editing stop |
+| `locale` | attribute and property | `en`, `it` |
+| `name` | attribute and property | Form field name. The element is form-associated: it submits the JSON and an invalid configuration blocks submission. `form.reset()` restores the `value` attribute |
+| `valid`, `error`, `configurator` | read-only | State and the underlying controller |
+| `randomizeSeed()`, `resetCrop()` | methods | |
+
+It dispatches `configurator-change` (`bubbles`, `composed`) with
+`{ value, valid, error }` after every edit. Programmatic changes (`value`,
+`src`, `locale`, `disabled`) do not dispatch it; `kinds` does only when it
+removes the selected mode. `createConfigurator(target, options)` is
+the same controller without the element.
+
+Client-side validation mirrors the PHP rules and messages
+(`conformance/build-config.json`) and the generator's parameter ranges. The
+server must still validate: `BuildConfiguration::fromJson()` and the builder
+reject anything the browser sends that does not fit the image or the budgets.
+
+Input:
+
+- Mouse, pen or touch: drag the frame to move the crop, drag a corner to
+  resize it.
+- Keyboard: every value has a labelled field. On the focused frame, arrow
+  keys move the crop and Shift+arrow keys resize it, by 2% of the shorter
+  side.
+
+The preview draws the integer cell grid the generator will use (centred, with
+square cells when rotation turns by 90°). Jigsaw outlines are only drawn at
+generation time, so the preview shows their grid.
+
 ## No-bundler use
 
 `dist/image-puzzle-player.iife.js` defines the global `ImagePuzzle`, which
-contains `createPlayer`, `defineImagePuzzlePlayer`, `createEngine`, the error
-classes and the message helpers. It also registers the element.
+contains `createPlayer`, `createConfigurator`, the `define*` functions,
+`createEngine`, `parseBuildConfig`, the error classes and the message
+helpers. It also registers both elements.
 `dist/image-puzzle-player.bundle.js` is the same code as one ES module. Types
 for the global: `import type {} from '@offline-agency/image-puzzle-player/global'`.
 

@@ -153,5 +153,23 @@ foreach ($examples === false ? [] : $examples as $file) {
     }
 }
 
+// Build configurations as BuildConfiguration writes them, one per mode.
+foreach (ImagePuzzle\Game\Modes::available() as $kind) {
+    $custom = ImagePuzzle\Game\BuildConfiguration::fromArray([
+        'format' => ImagePuzzle\Game\BuildConfiguration::FORMAT,
+        'version' => 1,
+        'kind' => $kind->value,
+        'preset' => 'custom',
+        'custom' => array_fill_keys(array_slice(ImagePuzzle\Game\GameFactory::customKeys($kind), 0, 2), 2),
+        'seed' => $kind === ImagePuzzle\Game\GameKind::Jigsaw ? ImagePuzzle\GeometryOptions::MAX_SEED : ImagePuzzle\Game\Prng::MAX_SEED,
+        'crop' => ['x' => 0, 'y' => 3, 'width' => 40, 'height' => 30],
+    ]);
+    $preset = new ImagePuzzle\Game\BuildConfiguration($kind, 'hard', [], 1);
+    $report("build configuration ({$kind->value})", [
+        ...$validator->validate($custom->toArray(), 'game/v1/build-config.schema.json'),
+        ...$validator->validate($preset->toArray(), 'game/v1/build-config.schema.json'),
+    ]);
+}
+
 echo $failures === 0 ? "\nAll schema checks passed.\n" : "\n{$failures} schema check(s) failed.\n";
 exit($failures === 0 ? 0 : 1);

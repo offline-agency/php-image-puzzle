@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Image puzzle — configurator</title>
+    <style>
+      body { font-family: system-ui, sans-serif; margin: 0 auto; padding: 1rem; max-width: 64rem; }
+      pre { background: #f2f4f7; padding: 0.75rem; overflow: auto; font-size: 0.8125rem; }
+      @media (prefers-color-scheme: dark) {
+        body { background: #0f1216; color: #e6e9ee; }
+        pre { background: #1d232b; }
+      }
+    </style>
+  </head>
+  <body>
+    <h1>&lt;image-puzzle-configurator&gt;</h1>
+    <p>
+      Edits the build configuration that the PHP <code>DefinitionBuilder</code> consumes. The element is
+      form-associated: submitting the form sends the configuration JSON as <code>config</code>.
+    </p>
+    <form id="form">
+      <image-puzzle-configurator
+        id="configurator"
+        name="config"
+        src="assets/picture.png"
+        kinds="jigsaw sliding swap rotation strips"
+        value='{"format":"image-puzzle/build-config","version":1,"kind":"jigsaw","preset":"easy","seed":7}'
+      ></image-puzzle-configurator>
+      <p><button type="submit">Save configuration</button> <button type="reset">Revert</button></p>
+    </form>
+    <h2>Configuration</h2>
+    <pre id="output" aria-live="polite"></pre>
+
+    <script type="module">
+      import '../../packages/player/dist/image-puzzle-player.bundle.js';
+
+      const configurator = document.getElementById('configurator');
+      const output = document.getElementById('output');
+      const show = () => {
+        output.textContent = configurator.valid ? JSON.stringify(configurator.value, null, 2) : `Invalid: ${configurator.error}`;
+      };
+      configurator.addEventListener('configurator-change', show);
+      document.getElementById('form').addEventListener('submit', (event) => {
+        event.preventDefault();
+        output.textContent = `Submitted: ${new FormData(event.target).get('config')}`;
+      });
+      show();
+    </script>
+  </body>
+</html>
