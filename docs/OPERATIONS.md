@@ -81,10 +81,15 @@ partial output: see [Ownership](#ownership-of-sources-and-outputs).
 worker processes with ext-pcntl in the CLI SAPI, and run sequentially
 otherwise (web requests included), with the same results.
 
-- Each export worker decodes the source itself. The number of workers is
-  bounded by `maxWorkers`, by the number of pieces and by
-  `workerMemoryBudget` divided by the estimated decode size;
-  `ExportResult::getWorkerMemory()` reports what each worker used.
+- The parent decodes the source once, before forking; the workers read
+  that image through copy-on-write pages and never decode it again, so a
+  source file replaced during the export cannot reach some workers only.
+  The number of workers is still bounded by `maxWorkers`, by the number of
+  pieces and by `workerMemoryBudget` divided by the estimated decode size,
+  which is conservative now that the decode is shared.
+  `ExportResult::getWorkerMemory()` reports what each worker used; its RSS
+  figures include the shared pages, so their sum overstates the physical
+  total.
 - A worker that crashes, is killed or returns an invalid result fails the
   export (or the batch item); nothing is published from it. Workers never
   return into the caller's code.

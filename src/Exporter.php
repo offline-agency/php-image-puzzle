@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace ImagePuzzle;
 
+use GdImage;
 use ImagePuzzle\EdgeStyle\EdgeStyleInterface;
 use ImagePuzzle\Exception\ExportFailedException;
 use ImagePuzzle\Exception\InvalidArgumentException;
@@ -84,8 +85,11 @@ final class Exporter implements ExporterInterface
     /**
      * Export using forked worker processes (CLI with ext-pcntl).
      *
-     * Workers each decode the source and render a contiguous chunk of pieces
-     * into the staging directory; the parent validates every worker's exit
+     * The parent decodes the source once, before forking; the workers share
+     * that decoded image copy-on-write (they only read it) and each render a
+     * contiguous chunk of pieces into the staging directory, so a source file
+     * replaced during the export cannot reach some workers and not others.
+     * The parent validates every worker's exit
      * status and result envelope before publishing. The effective worker count
      * is bounded by ResourceLimits (worker cap, piece count and aggregate
      * memory budget). With fewer than two effective workers, without pcntl or
@@ -136,15 +140,22 @@ final class Exporter implements ExporterInterface
         $session = ExportSession::open($directory, $baseDirectory, $plan, $options);
         $workerDir = null;
         $workerMemory = [];
+        $image = null;
         try {
             $pending = $session->pendingIds();
-            if ($pending !== []) {
+            if ($pending !== [] || $options->getOnPieceAfterSave() !== null) {
+                $image = $loader->loadFromFile($sourcePath);
+                if (imagesx($image) !== $width || imagesy($image) !== $height) {
+                    throw new ExportFailedException('The source changed while it was being exported.');
+                }
+            }
+            if ($pending !== [] && $image !== null) {
                 $workerDir = $session->root() . DIRECTORY_SEPARATOR . OutputPlan::RESERVED_PREFIX . '-workers-' . bin2hex(random_bytes(8));
                 if (!@mkdir($workerDir, 0700)) {
                     throw new ExportFailedException('Failed to create worker result directory.');
                 }
                 $chunks = array_chunk($pending, max(1, (int) ceil(count($pending) / min($capacity, count($pending)))));
-                $workerMemory = $this->runWorkers($chunks, $shapes, $sourcePath, $rows, $cols, $generator, $limits, $options, $session, $workerDir);
+                $workerMemory = $this->runWorkers($chunks, $shapes, $image, $rows, $cols, $generator, $options, $session, $workerDir);
             }
 
             $geometryMeta = [
@@ -161,12 +172,12 @@ final class Exporter implements ExporterInterface
 
             $after = $options->getOnPieceAfterSave();
             $parentPieces = null;
-            $result = $session->publish($manifest, static function (string $id) use ($after, &$parentPieces, $generator, $sourcePath, $rows, $cols, $session): void {
-                if ($after === null) {
+            $result = $session->publish($manifest, static function (string $id) use ($after, &$parentPieces, $generator, $image, $rows, $cols, $session): void {
+                if ($after === null || $image === null) {
                     return;
                 }
-                // Decode once in the parent, after all workers have exited.
-                $parentPieces ??= self::piecesById($generator->generateFromFile($sourcePath, $rows, $cols));
+                // The same decoded source the workers cut.
+                $parentPieces ??= self::piecesById($generator->generateFromGd($image, $rows, $cols));
                 $after($parentPieces[$id] ?? throw new ExportFailedException("Unknown piece {$id}"), $session->destination($id));
             });
             $session->close();
@@ -209,11 +220,10 @@ final class Exporter implements ExporterInterface
     private function runWorkers(
         array $chunks,
         array $shapes,
-        string $sourcePath,
+        GdImage $image,
         int $rows,
         int $cols,
         PuzzleGenerator $generator,
-        ResourceLimits $limits,
         ExportOptions $options,
         ExportSession $session,
         string $workerDir,
@@ -227,7 +237,7 @@ final class Exporter implements ExporterInterface
                 throw new ExportFailedException('Failed to fork worker ' . ($index + 1) . ' of ' . count($chunks) . '; started workers were terminated.');
             }
             if ($pid === 0) {
-                $code = $this->runWorker($index, $chunk, $shapes, $sourcePath, $rows, $cols, $generator, $limits, $options, $session, $workerDir);
+                $code = $this->runWorker($index, $chunk, $shapes, $image, $rows, $cols, $generator, $options, $session, $workerDir);
                 $this->process->terminateChild($code);
             }
             $children[$pid] = $index;
@@ -284,17 +294,15 @@ final class Exporter implements ExporterInterface
         int $index,
         array $chunk,
         array $shapes,
-        string $sourcePath,
+        GdImage $image,
         int $rows,
         int $cols,
         PuzzleGenerator $generator,
-        ResourceLimits $limits,
         ExportOptions $options,
         ExportSession $session,
         string $workerDir,
     ): int {
         try {
-            $image = (new ImageLoader($limits))->loadFromFile($sourcePath);
             $indices = array_map(static fn (string $id): array => [$shapes[$id]->row, $shapes[$id]->col], $chunk);
             $before = $options->getOnPieceBeforeSave();
             $entries = [];

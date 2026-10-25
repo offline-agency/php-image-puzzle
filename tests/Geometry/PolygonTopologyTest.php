@@ -25,7 +25,7 @@ use ImagePuzzle\SplitStrategy\DimensionSplitStrategy;
 use ImagePuzzle\Tests\Support\Fixtures;
 
 /*
- * Oracles for hexagonal and triangular boards (F23). Ownership uses an
+ * Oracles for hexagonal and triangular boards (F03). Ownership uses an
  * even-odd ray test that shares no code with the scanline rasterizer.
  */
 

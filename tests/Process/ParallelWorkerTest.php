@@ -143,6 +143,69 @@ final class ScriptedWait implements ProcessControl
     }
 }
 
+/**
+ * Real process control that replaces the source file with another picture
+ * of the same size right before the first fork, as a concurrent writer
+ * could.
+ */
+final class ReplaceSourceBeforeFork implements ProcessControl
+{
+    private readonly PcntlProcessControl $inner;
+
+    private bool $replaced = false;
+
+    public function __construct(private readonly string $source)
+    {
+        $this->inner = new PcntlProcessControl();
+    }
+
+    public function isAvailable(): bool
+    {
+        return $this->inner->isAvailable();
+    }
+
+    public function fork(): int
+    {
+        if (!$this->replaced) {
+            $this->replaced = true;
+            [$width, $height] = Fixtures::size($this->source);
+            Fixtures::writePng(Fixtures::canvas($width, $height), $this->source);
+        }
+
+        return $this->inner->fork();
+    }
+
+    public function wait(int $pid): array
+    {
+        return $this->inner->wait($pid);
+    }
+
+    public function signal(int $pid, int $signal): bool
+    {
+        return $this->inner->signal($pid, $signal);
+    }
+
+    public function exitedNormally(int $status): bool
+    {
+        return $this->inner->exitedNormally($status);
+    }
+
+    public function exitCode(int $status): int
+    {
+        return $this->inner->exitCode($status);
+    }
+
+    public function termSignal(int $status): ?int
+    {
+        return $this->inner->termSignal($status);
+    }
+
+    public function terminateChild(int $code): never
+    {
+        $this->inner->terminateChild($code);
+    }
+}
+
 function noChildrenLeft(): bool
 {
     $status = 0;
@@ -307,6 +370,14 @@ test('parallel output is byte-identical to sequential output', function (string 
     expect(ManifestAssertions::snapshot(Workspace::$dir . '/par'))->toBe(ManifestAssertions::snapshot(Workspace::$dir . '/seq'));
     ManifestAssertions::assertConsistent($par->getManifestPath());
 })->with(['rect', 'jigsaw'])->group('process')->skip(!pcntlAvailable(), 'ext-pcntl is not available (the sequential fallback is covered in tests/Export).');
+
+test('the source is decoded once, before the workers start, and shared by all of them', function (): void {
+    $seq = (new PuzzleGenerator())->generateFromFile(Workspace::$source, 3, 4)->export(Workspace::$dir . '/seq', new ExportOptions());
+    $par = (new Exporter(new ReplaceSourceBeforeFork(Workspace::$source)))->exportParallel(Workspace::$source, Workspace::$dir . '/par', 3, 4, new ExportOptions(), 3);
+    // Workers that decoded the file themselves would have cut the replacement.
+    expect($par->getManifest())->toBe($seq->getManifest());
+    expect(ManifestAssertions::snapshot(Workspace::$dir . '/par'))->toBe(ManifestAssertions::snapshot(Workspace::$dir . '/seq'));
+})->group('process')->skip(!pcntlAvailable(), 'ext-pcntl is not available (the sequential fallback is covered in tests/Export).');
 
 test('parallel export honours overwrite=false exactly like sequential export', function (): void {
     $out = Workspace::$dir . '/out';
