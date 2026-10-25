@@ -11,6 +11,7 @@
 /build export-ignore
 /compose.yaml export-ignore
 /Dockerfile export-ignore
+/docs/adoption export-ignore
 /docs/quality export-ignore
 /export export-ignore
 /pest.php export-ignore

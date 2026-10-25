@@ -121,7 +121,10 @@ build/demo photo.jpg` writes a static site with one puzzle per mode
 See [CONTRIBUTING.md](CONTRIBUTING.md) for the development setup and checks,
 and [AGENTS.md](AGENTS.md) for a condensed version aimed at coding agents.
 Report vulnerabilities privately as described in [SECURITY.md](SECURITY.md).
-Changes are listed in [CHANGELOG.md](CHANGELOG.md).
+Changes are listed in [CHANGELOG.md](CHANGELOG.md). Maintainers: the [release runbook](docs/release/RUNBOOK.md)
+describes the release automation and how to activate it, and
+[docs/adoption](docs/adoption/README.md) holds the method for measuring
+discoverability and adoption.
 
 ## Credits
 
