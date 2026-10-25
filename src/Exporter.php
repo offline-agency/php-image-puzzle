@@ -135,6 +135,7 @@ final class Exporter implements ExporterInterface
         $plan = OutputPlan::create($shapes, $rows, $cols, $options);
         $session = ExportSession::open($directory, $baseDirectory, $plan, $options);
         $workerDir = null;
+        $workerMemory = [];
         try {
             $pending = $session->pendingIds();
             if ($pending !== []) {
@@ -143,7 +144,7 @@ final class Exporter implements ExporterInterface
                     throw new ExportFailedException('Failed to create worker result directory.');
                 }
                 $chunks = array_chunk($pending, max(1, (int) ceil(count($pending) / min($capacity, count($pending)))));
-                $this->runWorkers($chunks, $shapes, $sourcePath, $rows, $cols, $generator, $limits, $options, $session, $workerDir);
+                $workerMemory = $this->runWorkers($chunks, $shapes, $sourcePath, $rows, $cols, $generator, $limits, $options, $session, $workerDir);
             }
 
             $geometryMeta = [
@@ -170,7 +171,7 @@ final class Exporter implements ExporterInterface
             });
             $session->close();
 
-            return $result;
+            return $result->withWorkerMemory($workerMemory);
         } catch (\Throwable $e) {
             $session->abort();
             throw $e;
@@ -201,6 +202,7 @@ final class Exporter implements ExporterInterface
     /**
      * @param list<list<string>> $chunks
      * @param array<string, PieceShape> $shapes
+     * @return list<array{peakMemory: int, maxRss: int}> per-worker memory, in chunk order
      */
     private function runWorkers(
         array $chunks,
@@ -213,7 +215,7 @@ final class Exporter implements ExporterInterface
         ExportOptions $options,
         ExportSession $session,
         string $workerDir,
-    ): void {
+    ): array {
         /** @var array<int, int> $children pid => chunk index */
         $children = [];
         foreach ($chunks as $index => $chunk) {
@@ -230,6 +232,7 @@ final class Exporter implements ExporterInterface
         }
 
         $failures = [];
+        $memory = [];
         foreach ($children as $pid => $index) {
             $status = $this->reap($pid);
             if ($status === null) {
@@ -245,7 +248,11 @@ final class Exporter implements ExporterInterface
                 $failures[] = "worker {$index}: abnormal termination";
                 continue;
             }
-            $error = $this->validateEnvelope($workerDir, $index, $chunks[$index], $session);
+            $usage = null;
+            $error = $this->validateEnvelope($workerDir, $index, $chunks[$index], $session, $usage);
+            if ($usage !== null) {
+                $memory[$index] = $usage;
+            }
             $code = $this->process->exitCode($status);
             if ($code !== 0) {
                 $failures[] = "worker {$index}: exit code {$code}" . ($error !== null ? " ({$error})" : '');
@@ -256,6 +263,9 @@ final class Exporter implements ExporterInterface
         if ($failures !== []) {
             throw new ExportFailedException("Parallel export failed; nothing was published:\n- " . implode("\n- ", $failures));
         }
+        ksort($memory);
+
+        return array_values($memory);
     }
 
     /**
@@ -292,7 +302,7 @@ final class Exporter implements ExporterInterface
                 ImageEncoder::write($piece->toGdImage(), $path, $options);
                 $entries[] = ['id' => $id, 'filename' => basename($path), 'bytes' => (int) filesize($path)];
             }
-            $envelope = ['version' => self::ENVELOPE_VERSION, 'ok' => true, 'worker' => $index, 'pieces' => $entries];
+            $envelope = ['version' => self::ENVELOPE_VERSION, 'ok' => true, 'worker' => $index, 'pieces' => $entries, 'memory' => self::selfMemory()];
             $code = 0;
         } catch (\Throwable $e) {
             $envelope = ['version' => self::ENVELOPE_VERSION, 'ok' => false, 'worker' => $index, 'error' => ['class' => $e::class, 'message' => $e->getMessage()]];
@@ -315,9 +325,24 @@ final class Exporter implements ExporterInterface
     }
 
     /**
-     * @param list<string> $chunk
+     * Peak PHP memory and peak RSS of the current process, in bytes.
+     * ru_maxrss is reported in bytes on macOS and kilobytes elsewhere.
+     *
+     * @return array{peakMemory: int, maxRss: int}
      */
-    private function validateEnvelope(string $workerDir, int $index, array $chunk, ExportSession $session): ?string
+    private static function selfMemory(): array
+    {
+        $usage = getrusage();
+        $rss = is_array($usage) && is_int($usage['ru_maxrss'] ?? null) ? $usage['ru_maxrss'] : 0;
+
+        return ['peakMemory' => memory_get_peak_usage(true), 'maxRss' => PHP_OS_FAMILY === 'Darwin' ? $rss : $rss * 1024];
+    }
+
+    /**
+     * @param list<string> $chunk
+     * @param ?array{peakMemory: int, maxRss: int} $memory receives the worker's reported memory usage
+     */
+    private function validateEnvelope(string $workerDir, int $index, array $chunk, ExportSession $session, ?array &$memory = null): ?string
     {
         $file = $workerDir . DIRECTORY_SEPARATOR . "worker-{$index}.json";
         if (!is_file($file)) {
@@ -374,6 +399,10 @@ final class Exporter implements ExporterInterface
         $missing = array_diff($chunk, array_keys($seen));
         if ($missing !== []) {
             return 'missing pieces ' . implode(', ', $missing);
+        }
+        $reported = $data['memory'] ?? null;
+        if (is_array($reported) && is_int($reported['peakMemory'] ?? null) && is_int($reported['maxRss'] ?? null)) {
+            $memory = ['peakMemory' => $reported['peakMemory'], 'maxRss' => $reported['maxRss']];
         }
 
         return null;

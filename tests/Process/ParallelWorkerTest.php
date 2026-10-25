@@ -258,6 +258,16 @@ test('worker count is capped by the aggregate memory budget', function (): void 
     // A budget too small for two workers falls back to sequential export.
     $result = (new Exporter())->exportParallel(Workspace::$source, Workspace::$dir . '/out', 2, 2, new ExportOptions(), 4, null, null, null, new \ImagePuzzle\ResourceLimits(workerMemoryBudget: 10));
     ManifestAssertions::assertConsistent($result->getManifestPath());
+    expect($result->getWorkerMemory())->toBe([]);
+})->group('process');
+
+test('each worker reports its own memory usage', function (): void {
+    $result = (new Exporter())->exportParallel(Workspace::$source, Workspace::$dir . '/out', 3, 4, new ExportOptions(), 3);
+    expect($result->getWorkerMemory())->toHaveCount(3);
+    foreach ($result->getWorkerMemory() as $usage) {
+        expect($usage['peakMemory'])->toBeGreaterThan(0);
+        expect($usage['maxRss'])->toBeGreaterThan(0);
+    }
 })->group('process');
 
 test('callbacks: before hooks run in workers, after hooks in the parent', function (): void {
