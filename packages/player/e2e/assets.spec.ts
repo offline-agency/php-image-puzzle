@@ -72,14 +72,17 @@ test.describe('alternative piece images', () => {
     expect(images).toEqual(['/examples/player/assets/jigsaw-atlas/atlas.png']);
     // Every piece shows its own, non-empty frame.
     const frames = await page.evaluate(() =>
-      [...(window.puzzlePlayer?.element.shadowRoot?.querySelectorAll<HTMLCanvasElement>('.piece canvas.piece-image') ?? [])].map(
-        (canvas) => {
-          const data = canvas.getContext('2d')?.getImageData(0, 0, canvas.width, canvas.height).data ?? new Uint8ClampedArray();
-          let opaque = 0;
-          for (let i = 3; i < data.length; i += 4) if ((data[i] ?? 0) === 255) opaque++;
-          return opaque;
-        },
-      ),
+      [...(window.puzzlePlayer?.element.shadowRoot?.querySelectorAll<HTMLImageElement>('.piece img.piece-image') ?? [])].map((image) => {
+        const canvas = document.createElement('canvas');
+        canvas.width = image.naturalWidth;
+        canvas.height = image.naturalHeight;
+        const context = canvas.getContext('2d');
+        context?.drawImage(image, 0, 0);
+        const data = context?.getImageData(0, 0, canvas.width, canvas.height).data ?? new Uint8ClampedArray();
+        let opaque = 0;
+        for (let i = 3; i < data.length; i += 4) if ((data[i] ?? 0) === 255) opaque++;
+        return opaque;
+      }),
     );
     expect(frames).toHaveLength(12);
     expect(frames.every((opaque) => opaque > 100)).toBe(true);

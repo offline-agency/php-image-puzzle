@@ -82,13 +82,16 @@ export function createJigsawView(ctx: ViewContext): ModeView {
   const resolutions = definition.media.resolutions ?? [];
   let atlasLoad: PendingImage | null = null;
   const atlasUrl = atlas === undefined ? null : ctx.asset(atlas.image);
-  const frames: { readonly canvas: HTMLCanvasElement; readonly frame: Rect }[] = [];
+  const frames: { readonly image: HTMLImageElement; readonly frame: Rect }[] = [];
+  /** Object URLs of the frame images, revoked on destroy. */
+  const frameUrls: string[] = [];
+  let destroyed = false;
   if (atlasUrl !== null) {
     pending++;
     atlasLoad = loadImage(
       atlasUrl,
       (sheet) => {
-        drawFrames(sheet);
+        drawFrames(sheet, atlasUrl);
         onImageLoad();
       },
       () => {
@@ -128,21 +131,65 @@ export function createJigsawView(ctx: ViewContext): ModeView {
   const byId = new Map(pieces.map((piece) => [piece.tile.id, piece]));
 
   /**
-   * A canvas holding the piece's frame of the atlas, filled once the atlas has
-   * loaded. The browser then scales it like a separate piece image: CSS
-   * backgrounds, SVG viewports and clipping boxes all lose part of the
-   * anti-aliased edge at the piece box and widen the seams between pieces.
+   * An image of the piece's frame of the atlas, cut out once the atlas has
+   * loaded. The browser then scales it exactly like a separate piece image:
+   * CSS backgrounds, SVG viewports and clipping boxes all lose part of the
+   * anti-aliased edge at the piece box, and WebKit scales a <canvas> with a
+   * coarser filter than an <img>; both widen the seams between pieces. An
+   * atlas from another origin without CORS taints the canvas, so the piece
+   * then shows the canvas itself.
    */
-  function atlasFrame(frame: Rect): HTMLCanvasElement {
-    const canvas = el(doc, 'canvas', { class: 'piece-image', width: String(frame.width), height: String(frame.height) });
-    frames.push({ canvas, frame });
-    return canvas;
+  function atlasFrame(frame: Rect): HTMLImageElement {
+    const image = el(doc, 'img', {
+      class: 'piece-image',
+      alt: '',
+      draggable: 'false',
+      width: String(frame.width),
+      height: String(frame.height),
+    });
+    pending++;
+    image.addEventListener('load', onImageLoad, { once: true });
+    frames.push({ image, frame });
+    return image;
   }
 
-  function drawFrames(sheet: HTMLImageElement): void {
-    for (const { canvas, frame } of frames) {
-      canvas.getContext('2d')?.drawImage(sheet, frame.x, frame.y, frame.width, frame.height, 0, 0, frame.width, frame.height);
+  function drawFrames(sheet: HTMLImageElement, sheetUrl: string): void {
+    for (const { image, frame } of frames) {
+      const canvas = el(doc, 'canvas', { width: String(frame.width), height: String(frame.height) });
+      const context = canvas.getContext('2d');
+      if (context === null) {
+        onImageError(sheetUrl);
+        return;
+      }
+      context.drawImage(sheet, frame.x, frame.y, frame.width, frame.height, 0, 0, frame.width, frame.height);
+      try {
+        toImage(canvas, image, sheetUrl);
+      } catch {
+        canvas.className = 'piece-image';
+        image.replaceWith(canvas);
+        onImageLoad();
+      }
     }
+  }
+
+  function toImage(canvas: HTMLCanvasElement, image: HTMLImageElement, sheetUrl: string): void {
+    canvas.toBlob((blob) => {
+      if (destroyed) return;
+      if (blob === null) {
+        onImageError(sheetUrl);
+        return;
+      }
+      const url = URL.createObjectURL(blob);
+      frameUrls.push(url);
+      image.addEventListener(
+        'error',
+        () => {
+          onImageError(sheetUrl);
+        },
+        { once: true },
+      );
+      image.src = url;
+    }, 'image/png');
   }
 
   function pieceImage(tile: Tile, rendered: Rect): HTMLImageElement {
@@ -421,7 +468,9 @@ export function createJigsawView(ctx: ViewContext): ModeView {
       stage.removeEventListener('pointerup', onPointerEnd);
       stage.removeEventListener('pointercancel', onPointerEnd);
       observer?.disconnect();
+      destroyed = true;
       atlasLoad?.cancel();
+      for (const url of frameUrls) URL.revokeObjectURL(url);
       for (const piece of pieces) piece.image.removeAttribute('src');
       element.remove();
     },

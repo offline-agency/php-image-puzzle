@@ -342,17 +342,18 @@ describe('alternative piece images', () => {
     expect(first.getAttribute('src')).toBe(`https://cdn.example/puzzle/${String(tile.attributes['image'])}`);
   });
 
-  it('draws atlas pieces into one canvas per frame and loads the atlas once', async () => {
+  it('shows atlas pieces as one frame-sized image each, without requesting piece files', async () => {
     const { player, shadow } = mount();
     await player.load(mediaDocument('atlas'));
     const definition = player.engine.definition;
-    const canvases = [...shadow.querySelectorAll<HTMLCanvasElement>('.piece canvas.piece-image')];
-    expect(shadow.querySelectorAll('.piece img')).toHaveLength(0);
-    expect(canvases).toHaveLength(definition?.tiles.length ?? -1);
+    const images = [...shadow.querySelectorAll<HTMLImageElement>('.piece img.piece-image')];
+    expect(images).toHaveLength(definition?.tiles.length ?? -1);
     const frames = definition?.media.atlas?.frames ?? {};
-    canvases.forEach((canvas, i) => {
+    images.forEach((image, i) => {
       const id = definition?.tiles[i]?.id ?? '';
-      expect([canvas.width, canvas.height]).toEqual([frames[id]?.width, frames[id]?.height]);
+      expect([image.width, image.height]).toEqual([frames[id]?.width, frames[id]?.height]);
+      // The source is a blob of the frame, set once the atlas has loaded.
+      expect(image.getAttribute('src')).toBeNull();
     });
   });
 });
