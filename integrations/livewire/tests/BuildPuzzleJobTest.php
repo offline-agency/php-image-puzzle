@@ -20,7 +20,7 @@ function jobItem(string $id, ?string $source = null): BatchItem
 {
     $root = jobRoot();
 
-    return new BatchItem($id, $source ?? dirname(TestCase::puzzle('swap')->definitionPath()) . '/source.png', $root . '/' . $id . '-' . bin2hex(random_bytes(4)), new BuildConfiguration(GameKind::Memory, 'easy', [], 3));
+    return new BatchItem($id, $source ?? dirname(TestCase::puzzle('swap')->definitionPath()) . '/source.png', $root . '/' . $id . '-' . str_replace('.', '', uniqid('', true)), new BuildConfiguration(GameKind::Memory, 'easy', [], 3));
 }
 
 afterEach(function (): void {
@@ -59,7 +59,7 @@ it('skips the item when its Bus batch or cancel file is cancelled', function ():
     $job->handle(app(ImagePuzzle\Game\DefinitionBuilder::class));
     expect(file_exists($item->output))->toBeFalse();
 
-    $flag = sys_get_temp_dir() . '/image-puzzle-cancel-' . bin2hex(random_bytes(4));
+    $flag = sys_get_temp_dir() . '/image-puzzle-cancel-' . str_replace('.', '', uniqid('', true));
     touch($flag);
     $other = jobItem('flagged');
     BuildPuzzle::dispatchSync($other, $flag);

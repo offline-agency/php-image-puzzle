@@ -16,7 +16,7 @@ export default defineConfig({
   forbidOnly: process.env['CI'] !== undefined,
   retries: 0,
   timeout: 60_000,
-  reporter: process.env['CI'] !== undefined ? [['list'], ['html', { open: 'never' }]] : 'list',
+  reporter: process.env['CI'] !== undefined ? [['list'], ['html', { open: 'never', outputFolder: 'playwright-report' }]] : 'list',
   use: {
     baseURL: `http://127.0.0.1:${port}/`,
     trace: 'retain-on-failure',
@@ -36,9 +36,7 @@ export default defineConfig({
     })),
   ],
   webServer: {
-    // APP_URL: FileUpload previews load public-disk URLs, which must be same-origin.
     command: `php vendor/bin/testbench workbench:build && php vendor/bin/testbench serve --host=127.0.0.1 --port=${port}`,
-    env: { APP_URL: `http://127.0.0.1:${port}` },
     url: `http://127.0.0.1:${port}/admin/login`,
     reuseExistingServer: process.env['CI'] === undefined,
     timeout: 120_000,

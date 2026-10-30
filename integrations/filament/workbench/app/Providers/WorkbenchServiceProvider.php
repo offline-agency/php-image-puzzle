@@ -25,6 +25,9 @@ final class WorkbenchServiceProvider extends ServiceProvider
             'swap' => dirname(__DIR__, 5) . '/examples/player/assets/swap.json',
         ]);
         $config->set('image-puzzle.sync_debounce_ms', 300);
+        // FileUpload previews fetch public-disk URLs: keep them on the origin
+        // that served the page, whatever APP_URL the server process received.
+        $config->set('filesystems.disks.public.url', '/storage');
     }
 
     public function boot(): void

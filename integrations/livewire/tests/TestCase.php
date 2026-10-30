@@ -26,7 +26,7 @@ abstract class TestCase extends Orchestra
     public static function puzzle(string $kind): BuildResult
     {
         if (!isset(self::$built[$kind])) {
-            self::$root ??= sys_get_temp_dir() . '/image-puzzle-livewire-' . bin2hex(random_bytes(6));
+            self::$root ??= sys_get_temp_dir() . '/image-puzzle-livewire-' . str_replace('.', '', uniqid('', true));
             $source = self::$root . '/source.png';
             if (!is_file($source)) {
                 @mkdir(self::$root, 0700, true);
