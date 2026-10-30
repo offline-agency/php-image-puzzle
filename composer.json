@@ -65,7 +65,10 @@
             "ImagePuzzle\\Tests\\": "tests/",
             "ImagePuzzle\\Release\\": "tools/release/src/",
             "ImagePuzzle\\Tools\\": "tools/src/"
-        }
+        },
+        "exclude-from-classmap": [
+            "tests/**/*Test.php"
+        ]
     },
     "scripts": {
         "test": "pest",
@@ -81,7 +84,7 @@
         "release:test": "php tools/release/run-scenarios.php",
         "qa": [
             "@composer validate --strict",
-            "@composer dump-autoload --strict-psr --dry-run",
+            "@composer dump-autoload --optimize --strict-psr --dry-run",
             "@format:check",
             "@analyse",
             "@test",

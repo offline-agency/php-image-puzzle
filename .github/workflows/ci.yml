@@ -46,7 +46,7 @@ jobs:
           tools: composer:v2
       - run: composer validate --strict
       - run: composer install --no-progress --prefer-dist
-      - run: composer dump-autoload --strict-psr --dry-run
+      - run: composer dump-autoload --optimize --strict-psr --dry-run
       - run: composer format:check
       - run: composer analyse
       - run: composer schemas
@@ -101,20 +101,16 @@ jobs:
           persist-credentials: false
           # Empty except when the release workflow validates one exact commit.
           ref: ${{ inputs.sha }}
-      - uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
-        with:
-          php-version: '8.4'
-          extensions: gd, :exif, :pcntl, :zip
-          coverage: none
-          tools: composer:v2
+      # The runner's PHP has pcntl compiled in, so setup-php cannot remove
+      # it; the minimal image (PHP 8.4 + GD) never builds the three.
+      - run: docker compose build --build-arg UID="$(id -u)" --build-arg GID="$(id -g)" minimal
       - name: Extensions are really absent
         run: |
-          if php -m | grep -Eix 'exif|pcntl|zip'; then
+          if docker compose run --rm minimal php -m | grep -Eix 'exif|pcntl|zip'; then
             echo "an extension that must be absent is loaded" >&2
             exit 1
           fi
-      - run: composer install --no-progress --prefer-dist
-      - run: vendor/bin/pest
+      - run: docker compose run --rm minimal sh -c 'composer install --no-progress && vendor/bin/pest'
 
   coverage:
     name: Coverage
@@ -206,9 +202,9 @@ jobs:
           persist-credentials: false
           # Empty except when the release workflow validates one exact commit.
           ref: ${{ inputs.sha }}
-      - run: docker compose build --build-arg UID="$(id -u)" --build-arg GID="$(id -g)" php84 minimal
+      # The minimal image runs in the minimal-extensions job.
+      - run: docker compose build --build-arg UID="$(id -u)" --build-arg GID="$(id -g)" php84
       - run: docker compose run --rm php84 sh -c 'composer install --no-progress && vendor/bin/pest'
-      - run: docker compose run --rm minimal sh -c 'composer install --no-progress && vendor/bin/pest'
 
   js:
     name: TypeScript packages (lint, types, unit tests, build)
@@ -224,11 +220,12 @@ jobs:
           node-version: '24'
           cache: npm
       - run: npm ci --no-fund --no-audit
+      # First: tools/js-consumer type-checks against the built declarations.
+      - run: npm run build
       - run: npx eslint .
       - run: npx prettier --check .
       - run: npm run typecheck
       - run: npm test
-      - run: npm run build
       # The PHP packages ship copies of the player (integrations: ES module,
       # core resources/dist: IIFE for ZIP bundles); they must match this build.
       - run: node tools/sync-player-bundle.mjs --check

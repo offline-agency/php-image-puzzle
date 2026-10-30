@@ -35,6 +35,11 @@ jobs:
           php-version: '8.5'
           coverage: none
           tools: none
-      - env:
+      - if: hashFiles('tools/release/check-pr.php') != ''
+        env:
           GITHUB_TOKEN: ${{ github.token }}
         run: php tools/release/check-pr.php --payload="$GITHUB_EVENT_PATH"
+      # Only the pull request that adds the release tooling meets a base
+      # without it; its classification is stated in docs/release/RUNBOOK.md.
+      - if: hashFiles('tools/release/check-pr.php') == ''
+        run: echo "::notice::The base branch has no release tooling yet (bootstrap); nothing to classify."

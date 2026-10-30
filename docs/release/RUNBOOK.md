@@ -17,7 +17,8 @@ Observed on 2026-10-25 through the public GitHub and Packagist APIs:
 | Item | State |
 | --- | --- |
 | Release automation | **Not active.** The workflow listens to `master`, and the repository has no `master` branch yet. |
-| Branches | `main` only (default branch) |
+| Branches | `main` only (default branch); the change that adds this workflow is pull request #3 |
+| Release labels | `release:major`, `release:minor`, `release:patch` exist (since 2026-10-30) |
 | Release tags | `1.0.0` (`e1c0138`), `1.0.1` (`61b6594`), `1.0.2` (`b114a4a`), all lightweight |
 | Activation anchor | `1.0.2` at `b114a4a2d0cc0b144e1c07b713142fd82717c74e` (`.github/release-policy.json`). Earlier history is never released again. |
 | Packagist `offline-agency/image-puzzle` | Lists `1.0.0` and `dev-main` (at `b114a4a`). **`1.0.1` and `1.0.2` are missing.** |
@@ -233,6 +234,15 @@ token or extra secret is needed.
 
 A tag ruleset for `*.*.*` that blocks updates and deletions protects
 published versions. Creation must stay allowed for GitHub Actions.
+
+The release labels must exist (created on 2026-10-30; re-create them on a
+fork or a new repository):
+
+```bash
+gh label create release:major --color B60205 --description "Release as a major version"
+gh label create release:minor --color FBCA04 --description "Release as a minor version"
+gh label create release:patch --color 0E8A16 --description "Release as a patch version"
+```
 
 ### 4. Merge the workflow
 
