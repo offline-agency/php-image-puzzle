@@ -7,7 +7,8 @@ use ImagePuzzle\Tests\Support\Fixtures;
 /*
  * The README images come from examples/showcase.php. A fresh run must
  * reassemble the source exactly, and the committed images must match it
- * (a small tolerance absorbs GD scaling differences between builds).
+ * (the script scales without imagescale(), so builds agree; the small
+ * tolerance only absorbs alpha-blending rounding between GD builds).
  */
 
 /**

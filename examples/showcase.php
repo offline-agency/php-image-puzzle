@@ -211,13 +211,86 @@ function showcaseReassembled(array $pieces): GdImage
     return $canvas;
 }
 
+/**
+ * Area-average resampling of an opaque image, in plain arithmetic: GD's
+ * imagescale() differs between GD builds, which would make the committed
+ * images depend on the machine that generated them.
+ */
+function showcaseScale(GdImage $image, int $width, int $height): GdImage
+{
+    $sw = imagesx($image);
+    $sh = imagesy($image);
+    $spans = static function (int $from, int $to): array {
+        // For each target index, the source indices it covers and their weights.
+        $ratio = $from / $to;
+        $spans = [];
+        for ($t = 0; $t < $to; $t++) {
+            $start = $t * $ratio;
+            $end = ($t + 1) * $ratio;
+            $weights = [];
+            for ($s = (int) floor($start); $s < min($from, (int) ceil($end)); $s++) {
+                $weights[$s] = (min($end, $s + 1) - max($start, $s)) / $ratio;
+            }
+            $spans[] = $weights;
+        }
+
+        return $spans;
+    };
+    $columns = $spans($sw, $width);
+    // Source row => [target row => weight], to stream the vertical pass.
+    $contributions = [];
+    foreach ($spans($sh, $height) as $ty => $weights) {
+        foreach ($weights as $y => $weight) {
+            $contributions[$y][$ty] = $weight;
+        }
+    }
+    $scaled = showcaseCanvas($width, $height);
+    imagealphablending($scaled, false);
+    /** @var array<int, list<float>> $pending target row => r, g, b per column */
+    $pending = [];
+    for ($y = 0; $y < $sh; $y++) {
+        $line = [];
+        for ($x = 0; $x < $sw; $x++) {
+            $line[] = imagecolorat($image, $x, $y);
+        }
+        // Horizontal pass of this source row.
+        $row = [];
+        foreach ($columns as $weights) {
+            $r = $g = $b = 0.0;
+            foreach ($weights as $x => $weight) {
+                $r += (($line[$x] >> 16) & 0xFF) * $weight;
+                $g += (($line[$x] >> 8) & 0xFF) * $weight;
+                $b += ($line[$x] & 0xFF) * $weight;
+            }
+            array_push($row, $r, $g, $b);
+        }
+        foreach ($contributions[$y] ?? [] as $ty => $weight) {
+            $acc = $pending[$ty] ?? array_fill(0, 3 * $width, 0.0);
+            foreach ($row as $i => $value) {
+                $acc[$i] += $value * $weight;
+            }
+            $pending[$ty] = $acc;
+        }
+        // Target rows that no later source row contributes to are complete.
+        foreach (array_keys($pending) as $ty) {
+            if (!isset($contributions[$y + 1][$ty])) {
+                $acc = $pending[$ty];
+                for ($tx = 0; $tx < $width; $tx++) {
+                    imagesetpixel($scaled, $tx, $ty, ((int) round($acc[3 * $tx]) << 16) | ((int) round($acc[3 * $tx + 1]) << 8) | (int) round($acc[3 * $tx + 2]));
+                }
+                unset($pending[$ty]);
+            }
+        }
+    }
+    imagealphablending($scaled, true);
+
+    return $scaled;
+}
+
 function showcaseFit(GdImage $image, int $width, int $height): GdImage
 {
     $scale = min($width / imagesx($image), $height / imagesy($image));
-    $scaled = imagescale($image, max(1, (int) round(imagesx($image) * $scale)), max(1, (int) round(imagesy($image) * $scale)), IMG_BICUBIC);
-    if ($scaled === false) {
-        throw new RuntimeException('Cannot scale an image.');
-    }
+    $scaled = showcaseScale($image, max(1, (int) round(imagesx($image) * $scale)), max(1, (int) round(imagesy($image) * $scale)));
     $panel = showcaseCanvas($width, $height);
     imagecopy($panel, $scaled, intdiv($width - imagesx($scaled), 2), intdiv($height - imagesy($scaled), 2), 0, 0, imagesx($scaled), imagesy($scaled));
 
