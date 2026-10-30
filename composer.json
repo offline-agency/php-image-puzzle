@@ -47,10 +47,10 @@
         "league/flysystem": "^3.29",
         "league/flysystem-memory": "^3.29",
         "opis/json-schema": "^2.6",
-        "pestphp/pest": "^5.3.3",
+        "pestphp/pest": "^5.3.4",
         "phpstan/phpstan": "^2.3.2",
         "phpstan/phpstan-strict-rules": "^2.0",
-        "phpunit/phpunit": "^13.4.3"
+        "phpunit/phpunit": "^13.4.4"
     },
     "bin": [
         "bin/image-puzzle"
