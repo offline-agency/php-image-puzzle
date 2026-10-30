@@ -7,16 +7,22 @@ namespace ImagePuzzle\EdgeStyle;
 use ImagePuzzle\Exception\InvalidArgumentException;
 
 /**
- * Builds an EdgeStyleInterface from a config array (decoded YAML/JSON).
+ * Builds an EdgeStyleInterface from a config array (docs/schemas/v2/edge.schema.json).
+ *
+ * Values are validated, never coerced: a non-integer radius, unknown keys,
+ * options on styles that take none, or sides on a non-composite style are
+ * rejected with the offending path in the message.
  */
 final class EdgeStyleFactory
 {
     private const DEFAULT_ROUNDED_CORNERS_RADIUS = 4;
+    private const SIDE_TYPES = ['no_edge', 'line', 'jigsaw', 'arc', 'half_circle', 'sinus'];
+    private const SIDES = ['top', 'right', 'bottom', 'left'];
 
     /**
-     * Build edge style from a config array.
+     * Build edge style from a config array containing an "edge" object.
      *
-     * @param array<string, mixed> $config Must contain "edge" with "type" (string). Optional "edge.options" for style params.
+     * @param array<mixed> $config
      * @throws InvalidArgumentException When edge config is missing, type is unknown, or options are invalid.
      */
     public static function fromArray(array $config): EdgeStyleInterface
@@ -25,45 +31,86 @@ final class EdgeStyleFactory
             throw new InvalidArgumentException('Config must contain an "edge" object.');
         }
 
-        $edge = $config['edge'];
+        return self::fromEdge($config['edge']);
+    }
 
+    /**
+     * Build edge style from the "edge" object itself.
+     *
+     * @param array<mixed> $edge
+     */
+    public static function fromEdge(array $edge, string $path = 'edge'): EdgeStyleInterface
+    {
         if (!isset($edge['type']) || !is_string($edge['type'])) {
             throw new InvalidArgumentException('Edge config must contain a "type" string.');
         }
+        $type = $edge['type'];
+        $allowed = $type === 'composite' ? ['type', ...self::SIDES] : ['type', 'options'];
+        self::assertKeys($edge, $allowed, $path);
 
-        $options = isset($edge['options']) && is_array($edge['options']) ? $edge['options'] : [];
-
-        if ($edge['type'] === 'composite') {
-            return self::createComposite($edge);
+        if ($type === 'composite') {
+            return self::createComposite($edge, $path);
         }
 
-        return self::createFromType($edge['type'], $options);
+        $options = $edge['options'] ?? [];
+        if (!is_array($options)) {
+            throw new InvalidArgumentException("{$path}.options must be an object.");
+        }
+
+        return self::createFromType($type, $options, $path);
     }
 
     /**
-     * @param array<string, mixed> $edge Edge config with type "composite" and top, right, bottom, left
-     */
-    private static function createComposite(array $edge): EdgeStyleInterface
-    {
-        $top = isset($edge['top']) && is_array($edge['top']) ? $edge['top'] : ['type' => 'no_edge'];
-        $right = isset($edge['right']) && is_array($edge['right']) ? $edge['right'] : ['type' => 'no_edge'];
-        $bottom = isset($edge['bottom']) && is_array($edge['bottom']) ? $edge['bottom'] : ['type' => 'no_edge'];
-        $left = isset($edge['left']) && is_array($edge['left']) ? $edge['left'] : ['type' => 'no_edge'];
-
-        return new CompositeEdgeStyle(
-            self::createFromEdgeSpec($top),
-            self::createFromEdgeSpec($right),
-            self::createFromEdgeSpec($bottom),
-            self::createFromEdgeSpec($left),
-        );
-    }
-
-    /**
-     * Build one style from a sub-config with "type" and optional "options".
+     * Normalised representation of a style built from config, suitable for
+     * saving a reproducible configuration.
      *
-     * @param array<string, mixed> $spec Must have "type" (string); may have "options" (array).
+     * @param array<mixed> $edge
+     * @return array<string, mixed>
      */
-    private static function createFromEdgeSpec(array $spec): EdgeStyleInterface
+    public static function normalize(array $edge): array
+    {
+        $style = self::fromEdge($edge);
+        $type = $edge['type'];
+        if (!is_string($type)) {
+            throw new InvalidArgumentException('Edge config must contain a "type" string.');
+        }
+        if ($style instanceof RoundedCornersStyle) {
+            return ['type' => 'rounded_corners', 'options' => ['radius' => $style->getRadius()]];
+        }
+        if ($style instanceof CompositeEdgeStyle) {
+            $out = ['type' => 'composite'];
+            foreach (self::SIDES as $side) {
+                $spec = $edge[$side] ?? ['type' => 'no_edge'];
+                $out[$side] = ['type' => is_array($spec) && is_string($spec['type'] ?? null) ? $spec['type'] : 'no_edge'];
+            }
+
+            return $out;
+        }
+
+        return ['type' => $type];
+    }
+
+    /**
+     * @param array<mixed> $edge Edge config with type "composite" and top, right, bottom, left
+     */
+    private static function createComposite(array $edge, string $path): EdgeStyleInterface
+    {
+        $styles = [];
+        foreach (self::SIDES as $side) {
+            $spec = $edge[$side] ?? ['type' => 'no_edge'];
+            if (!is_array($spec)) {
+                throw new InvalidArgumentException("{$path}.{$side} must be an object.");
+            }
+            $styles[$side] = self::createFromEdgeSpec($spec, "{$path}.{$side}");
+        }
+
+        return new CompositeEdgeStyle($styles['top'], $styles['right'], $styles['bottom'], $styles['left']);
+    }
+
+    /**
+     * @param array<mixed> $spec Must have "type" (string).
+     */
+    private static function createFromEdgeSpec(array $spec, string $path): EdgeStyleInterface
     {
         if (!isset($spec['type']) || !is_string($spec['type'])) {
             throw new InvalidArgumentException('Edge spec must contain a "type" string.');
@@ -71,8 +118,12 @@ final class EdgeStyleFactory
         if ($spec['type'] === 'composite') {
             throw new InvalidArgumentException('Nested composite edge type is not supported.');
         }
-        $options = isset($spec['options']) && is_array($spec['options']) ? $spec['options'] : [];
-        return self::createFromType($spec['type'], $options);
+        if (!in_array($spec['type'], self::SIDE_TYPES, true)) {
+            throw new InvalidArgumentException("{$path}.type must be one of " . implode(', ', self::SIDE_TYPES) . "; got \"{$spec['type']}\".");
+        }
+        self::assertKeys($spec, ['type'], $path);
+
+        return self::createFromType($spec['type'], [], $path);
     }
 
     /**
@@ -96,20 +147,27 @@ final class EdgeStyleFactory
             throw new InvalidArgumentException("Failed to read config file: {$path}");
         }
 
-        $config = json_decode($raw, true);
+        try {
+            $config = json_decode($raw, true, 32, JSON_THROW_ON_ERROR);
+        } catch (\JsonException $e) {
+            throw new InvalidArgumentException("Invalid JSON in config file: {$e->getMessage()}", 0, $e);
+        }
         if (!is_array($config)) {
-            $msg = json_last_error_msg();
-            throw new InvalidArgumentException("Invalid JSON in config file: {$msg}");
+            throw new InvalidArgumentException('Invalid JSON in config file: expected an object.');
         }
 
         return self::fromArray($config);
     }
 
     /**
-     * @param array<string, mixed> $options
+     * @param array<mixed> $options
      */
-    private static function createFromType(string $type, array $options): EdgeStyleInterface
+    private static function createFromType(string $type, array $options, string $path): EdgeStyleInterface
     {
+        if ($type !== 'rounded_corners' && $options !== []) {
+            throw new InvalidArgumentException("{$path}.options is not supported for edge type \"{$type}\".");
+        }
+
         return match ($type) {
             'no_edge' => new NoEdgeStyle(),
             'line' => new LineStyle(),
@@ -117,12 +175,36 @@ final class EdgeStyleFactory
             'arc' => new ArcStyle(),
             'half_circle' => new HalfCircleStyle(),
             'sinus' => new SinusStyle(),
-            'rounded_corners' => new RoundedCornersStyle(
-                isset($options['radius'])
-                    ? (int) $options['radius']
-                    : self::DEFAULT_ROUNDED_CORNERS_RADIUS,
-            ),
+            'rounded_corners' => new RoundedCornersStyle(self::radius($options, $path)),
             default => throw new InvalidArgumentException("Unknown edge type: {$type}."),
         };
+    }
+
+    /**
+     * @param array<mixed> $options
+     */
+    private static function radius(array $options, string $path): int
+    {
+        self::assertKeys($options, ['radius'], "{$path}.options");
+        if (!array_key_exists('radius', $options)) {
+            return self::DEFAULT_ROUNDED_CORNERS_RADIUS;
+        }
+        if (!is_int($options['radius'])) {
+            throw new InvalidArgumentException("{$path}.options.radius must be an integer.");
+        }
+
+        return $options['radius'];
+    }
+
+    /**
+     * @param array<mixed> $data
+     * @param list<string> $allowed
+     */
+    private static function assertKeys(array $data, array $allowed, string $path): void
+    {
+        $unknown = array_diff(array_map('strval', array_keys($data)), $allowed);
+        if ($unknown !== []) {
+            throw new InvalidArgumentException("{$path} has unsupported keys: " . implode(', ', $unknown) . '.');
+        }
     }
 }

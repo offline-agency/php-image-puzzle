@@ -1,0 +1,325 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/offline-agency/php-image-puzzle/HEAD/docs/schemas/game/v1/definition.schema.json",
+  "title": "Game definition",
+  "description": "Immutable, versioned puzzle definition: source binding, geometry, mode rules and the initial scramble. The id is gd1- plus the SHA-256 of the canonical JSON of every field except $schema and id. Rule-level invariants (permutations, reachability, snap zones) are checked by the PHP and TypeScript engines, not by this schema alone.",
+  "type": "object",
+  "required": ["format", "version", "id", "kind", "generator", "seed", "preset", "source", "media", "board", "tiles", "rules", "actions", "capabilities", "assistance", "initial"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "format": { "const": "image-puzzle/game-definition" },
+    "version": { "const": 1 },
+    "id": { "type": "string", "pattern": "^gd1-[0-9a-f]{64}$" },
+    "kind": { "enum": ["sliding", "swap", "rotation", "strips", "jigsaw", "memory", "tangram", "nonogram"] },
+    "generator": {
+      "type": "object",
+      "required": ["algorithm"],
+      "properties": { "algorithm": { "const": 1 } },
+      "additionalProperties": false
+    },
+    "seed": { "type": "integer", "minimum": 0, "maximum": 4294967295 },
+    "preset": {
+      "type": "object",
+      "required": ["name", "version"],
+      "properties": {
+        "name": { "enum": ["easy", "medium", "hard", "custom"] },
+        "version": { "type": "integer", "minimum": 1 }
+      },
+      "additionalProperties": false
+    },
+    "source": {
+      "type": "object",
+      "required": ["width", "height", "sha256"],
+      "properties": {
+        "width": { "type": "integer", "minimum": 1 },
+        "height": { "type": "integer", "minimum": 1 },
+        "sha256": { "type": ["string", "null"], "pattern": "^[0-9a-f]{64}$" }
+      },
+      "additionalProperties": false
+    },
+    "media": {
+      "type": "object",
+      "required": ["image"],
+      "properties": {
+        "image": { "type": "string", "minLength": 1, "maxLength": 2048, "description": "Relative path (no dot segments) or https URL of the source image, resolved against the definition URL." },
+        "resolutions": {
+          "description": "Jigsaw only: smaller sets of the tile images. A tile's image in a set is directory + '/' + the file name of its tile image; the set's scale is width / source.width. IDs and geometry (source pixels) do not change.",
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 4,
+          "items": {
+            "type": "object",
+            "required": ["name", "width", "directory"],
+            "properties": {
+              "name": { "type": "string", "pattern": "^[a-z][a-z0-9-]{0,15}$" },
+              "width": { "type": "integer", "minimum": 1, "description": "Width of the whole source at this resolution, smaller than source.width." },
+              "directory": { "type": "string", "maxLength": 255, "pattern": "^[A-Za-z0-9_][A-Za-z0-9._-]*(/[A-Za-z0-9_][A-Za-z0-9._-]*)*$" }
+            },
+            "additionalProperties": false
+          }
+        },
+        "atlas": {
+          "description": "Jigsaw only: spritesheet of every tile image. frames maps each tile ID, in tile order, to the rectangle of its rendered box in atlas pixels.",
+          "type": "object",
+          "required": ["image", "width", "height", "frames"],
+          "properties": {
+            "image": { "type": "string", "maxLength": 255, "pattern": "^[A-Za-z0-9_][A-Za-z0-9._-]*(/[A-Za-z0-9_][A-Za-z0-9._-]*)*$" },
+            "width": { "type": "integer", "minimum": 1, "maximum": 16384 },
+            "height": { "type": "integer", "minimum": 1, "maximum": 16384 },
+            "frames": { "type": "object", "minProperties": 1, "propertyNames": { "$ref": "#/$defs/id" }, "additionalProperties": { "$ref": "#/$defs/rect" } }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "board": {
+      "type": "object",
+      "required": ["rows", "cols", "crop"],
+      "properties": {
+        "rows": { "type": "integer", "minimum": 1, "maximum": 1024 },
+        "cols": { "type": "integer", "minimum": 1, "maximum": 1024 },
+        "crop": { "$ref": "#/$defs/rect" }
+      },
+      "additionalProperties": false
+    },
+    "tiles": { "type": "array", "maxItems": 4096, "items": { "$ref": "#/$defs/tile" } },
+    "rules": { "type": "object" },
+    "actions": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+    "capabilities": {
+      "type": "object",
+      "required": ["undo", "redo", "reset", "shuffle", "hint"],
+      "properties": {
+        "undo": { "type": "boolean" },
+        "redo": { "type": "boolean" },
+        "reset": { "type": "boolean" },
+        "shuffle": { "type": "boolean" },
+        "hint": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "assistance": {
+      "type": "object",
+      "required": ["preview", "numbers", "highlightCorrect"],
+      "properties": {
+        "preview": { "type": "boolean" },
+        "numbers": { "type": "boolean" },
+        "highlightCorrect": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "initial": { "type": "object" }
+  },
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": { "properties": { "kind": { "const": "sliding" } } },
+      "then": {
+        "properties": {
+          "actions": { "const": ["slide"] },
+          "rules": {
+            "type": "object",
+            "required": ["empty", "scrambleMoves"],
+            "properties": { "empty": { "$ref": "#/$defs/id" }, "scrambleMoves": { "type": "integer", "minimum": 1, "maximum": 100000 } },
+            "additionalProperties": false
+          },
+          "initial": { "$ref": "board.schema.json#/$defs/sliding" }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "kind": { "const": "swap" } } },
+      "then": {
+        "properties": {
+          "actions": { "const": ["swap"] },
+          "rules": { "type": "object", "maxProperties": 0 },
+          "initial": { "$ref": "board.schema.json#/$defs/swap" }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "kind": { "const": "rotation" } } },
+      "then": {
+        "properties": {
+          "actions": { "const": ["rotate"] },
+          "rules": {
+            "type": "object",
+            "required": ["orientations"],
+            "properties": {
+              "orientations": { "type": "array", "minItems": 2, "maxItems": 4, "uniqueItems": true, "prefixItems": [{ "const": 0 }], "items": { "enum": [0, 90, 180, 270] } }
+            },
+            "additionalProperties": false
+          },
+          "initial": { "$ref": "board.schema.json#/$defs/rotation" }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "kind": { "const": "strips" } } },
+      "then": {
+        "properties": {
+          "actions": { "const": ["move"] },
+          "rules": {
+            "type": "object",
+            "required": ["axis"],
+            "properties": { "axis": { "enum": ["horizontal", "vertical"] } },
+            "additionalProperties": false
+          },
+          "initial": { "$ref": "board.schema.json#/$defs/strips" }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "kind": { "const": "jigsaw" } } },
+      "then": {
+        "properties": {
+          "actions": { "const": ["place"] },
+          "rules": {
+            "type": "object",
+            "required": ["topology", "snap", "area", "tray"],
+            "properties": {
+              "topology": { "enum": ["rect", "hex", "triangle"] },
+              "snap": { "type": "integer", "minimum": 1, "maximum": 256 },
+              "area": { "$ref": "#/$defs/rect" },
+              "tray": { "$ref": "#/$defs/rect" }
+            },
+            "additionalProperties": false
+          },
+          "tiles": { "items": { "required": ["rendered", "image"] } },
+          "initial": { "$ref": "board.schema.json#/$defs/jigsaw" }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "kind": { "const": "memory" } } },
+      "then": {
+        "properties": {
+          "actions": { "const": ["flip"] },
+          "board": { "properties": { "rows": { "minimum": 2, "maximum": 8 }, "cols": { "minimum": 2, "maximum": 8 } } },
+          "tiles": {
+            "minItems": 4,
+            "maxItems": 64,
+            "items": {
+              "required": ["pair", "face"],
+              "properties": {
+                "pair": { "type": "string", "pattern": "^p[0-9]{1,2}$" },
+                "face": { "enum": ["image", "text"] },
+                "text": { "type": "string", "minLength": 1, "maxLength": 120 }
+              }
+            }
+          },
+          "rules": {
+            "type": "object",
+            "required": ["regions"],
+            "properties": {
+              "regions": {
+                "type": "object",
+                "required": ["rows", "cols"],
+                "properties": { "rows": { "type": "integer", "minimum": 1, "maximum": 32 }, "cols": { "type": "integer", "minimum": 1, "maximum": 32 } },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          "initial": { "$ref": "board.schema.json#/$defs/memory" }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "kind": { "const": "tangram" } } },
+      "then": {
+        "properties": {
+          "actions": { "const": ["pose"] },
+          "board": { "properties": { "rows": { "const": 4 }, "cols": { "const": 4 } } },
+          "tiles": {
+            "minItems": 7,
+            "maxItems": 7,
+            "items": {
+              "required": ["shape", "path"],
+              "properties": { "shape": { "enum": ["large", "medium", "small", "square", "parallelogram"] } }
+            }
+          },
+          "rules": {
+            "type": "object",
+            "required": ["target", "unit", "snap", "area", "tray"],
+            "properties": {
+              "target": { "enum": ["square", "arrow", "chevron"], "description": "A target from the validated library; other silhouettes are not recognised." },
+              "unit": { "type": "integer", "minimum": 12, "multipleOf": 6, "description": "A quarter of the square side, in source pixels." },
+              "snap": { "type": "integer", "minimum": 1, "maximum": 256 },
+              "area": { "$ref": "#/$defs/rect" },
+              "tray": { "$ref": "#/$defs/rect" }
+            },
+            "additionalProperties": false
+          },
+          "initial": { "$ref": "board.schema.json#/$defs/tangram" }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "kind": { "const": "nonogram" } } },
+      "then": {
+        "properties": {
+          "actions": { "const": ["mark"] },
+          "board": { "properties": { "rows": { "minimum": 2, "maximum": 30 }, "cols": { "minimum": 2, "maximum": 30 } } },
+          "tiles": { "maxItems": 0 },
+          "rules": {
+            "type": "object",
+            "required": ["solution", "clues", "uniqueness", "threshold", "invert"],
+            "properties": {
+              "solution": { "type": "string", "pattern": "^[01]{4,900}$", "description": "The generated grid, row-major: 1 filled, 0 empty." },
+              "clues": {
+                "type": "object",
+                "required": ["rows", "cols"],
+                "properties": { "rows": { "$ref": "#/$defs/clues" }, "cols": { "$ref": "#/$defs/clues" } },
+                "additionalProperties": false
+              },
+              "uniqueness": { "enum": ["unique", "multiple", "unverified"], "description": "The bounded solver's verdict. unverified: the budget ran out before uniqueness was decided." },
+              "threshold": { "type": "integer", "minimum": 1, "maximum": 255 },
+              "invert": { "type": "boolean" }
+            },
+            "additionalProperties": false
+          },
+          "initial": { "$ref": "board.schema.json#/$defs/nonogram" }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[a-z][a-z0-9_-]{0,31}$" },
+    "clues": {
+      "description": "One clue per line: the lengths of its runs of filled cells, in order; [] for an empty line.",
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 30,
+      "items": { "type": "array", "maxItems": 15, "items": { "type": "integer", "minimum": 1, "maximum": 30 } }
+    },
+    "rect": {
+      "type": "object",
+      "required": ["x", "y", "width", "height"],
+      "properties": {
+        "x": { "type": "integer" },
+        "y": { "type": "integer" },
+        "width": { "type": "integer", "minimum": 1 },
+        "height": { "type": "integer", "minimum": 1 }
+      },
+      "additionalProperties": false
+    },
+    "tile": {
+      "type": "object",
+      "required": ["id", "home", "rect"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "home": { "type": "integer", "minimum": 0 },
+        "rect": { "$ref": "#/$defs/rect" },
+        "rendered": { "$ref": "#/$defs/rect" },
+        "image": { "type": "string", "pattern": "^[A-Za-z0-9_][A-Za-z0-9._-]*(/[A-Za-z0-9_][A-Za-z0-9._-]*)*$" },
+        "path": { "type": "string", "pattern": "^M[-0-9. LZ]+$" },
+        "pair": { "type": "string" },
+        "face": { "type": "string" },
+        "text": { "type": "string" },
+        "shape": { "type": "string" }
+      },
+      "additionalProperties": false
+    }
+  }
+}

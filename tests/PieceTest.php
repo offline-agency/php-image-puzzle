@@ -5,6 +5,7 @@ declare(strict_types=1);
 use ImagePuzzle\EdgeStyle\NoEdgeStyle;
 use ImagePuzzle\Piece;
 use ImagePuzzle\PuzzleGenerator;
+use ImagePuzzle\Tests\Support\Fixtures;
 
 test('piece coordinates and dimensions', function (): void {
     $generator = new PuzzleGenerator();
@@ -60,29 +61,19 @@ test('last piece in grid has remainder dimensions when source not divisible', fu
         ->toBe($puzzle->getWidth());
 });
 
-test('toGdImage when imagecreatetruecolor fails throws', function (): void {
-    $sourceImage = imagecreatefrompng(__DIR__ . '/fixtures/sample.png');
+test('toGdImage renders the rendered bounds of the shape', function (): void {
+    $sourceImage = Fixtures::load(__DIR__ . '/fixtures/sample.png');
     expect($sourceImage)->not->toBeFalse();
-    $piece = new Piece(
+    $shape = new \ImagePuzzle\Geometry\PieceShape(
+        'r0c0',
         0,
         0,
-        0,
-        0,
-        0,
-        0,
-        $sourceImage,
-        32,
-        32,
-        1,
-        1,
-        new NoEdgeStyle(),
+        new \ImagePuzzle\Geometry\Bounds(0, 0, 16, 16),
+        new \ImagePuzzle\Geometry\Bounds(0, 0, 16, 16),
+        [[0.0, 0.0], [16.0, 0.0], [16.0, 16.0], [0.0, 16.0]],
     );
-    try {
-        $piece->toGdImage();
-        expect(false)->toBeTrue('Expected exception');
-    } catch (\RuntimeException $e) {
-        expect($e->getMessage())->toContain('Failed to create piece image');
-    } catch (\ValueError $e) {
-        expect($e->getMessage())->toContain('must be greater than 0');
-    }
+    $piece = new Piece($shape, $sourceImage, 32, 32, 2, 2, new NoEdgeStyle());
+    $image = $piece->toGdImage();
+    expect(imagesx($image))->toBe(16)->and(imagesy($image))->toBe(16);
+    expect($piece->getContext()->getRenderedBounds()->toArray())->toBe(['x' => 0, 'y' => 0, 'width' => 16, 'height' => 16]);
 });

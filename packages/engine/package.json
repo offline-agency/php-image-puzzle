@@ -1,0 +1,29 @@
+{
+  "name": "@offline-agency/image-puzzle-engine",
+  "version": "0.0.0-dev",
+  "description": "Headless rules engine for image-puzzle game definitions: legal actions, transitions, completion, undo/redo, timing and state import/export. No DOM required.",
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": false,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/offline-agency/php-image-puzzle.git",
+    "directory": "packages/engine"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  }
+}

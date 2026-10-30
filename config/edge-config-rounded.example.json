@@ -1,4 +1,5 @@
 {
+  "$schema": "https://raw.githubusercontent.com/offline-agency/php-image-puzzle/HEAD/docs/schemas/v2/edge-config.schema.json",
   "edge": {
     "type": "rounded_corners",
     "options": {

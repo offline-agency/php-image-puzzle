@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/offline-agency/php-image-puzzle/HEAD/docs/schemas/v2/edge-config.schema.json",
+  "title": "Edge config",
+  "description": "Edge-only configuration read by EdgeStyleFactory::fromFile().",
+  "type": "object",
+  "required": ["edge"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "edge": { "$ref": "edge.schema.json" }
+  },
+  "additionalProperties": false
+}

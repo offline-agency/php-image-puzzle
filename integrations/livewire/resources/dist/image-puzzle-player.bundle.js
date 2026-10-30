@@ -1,0 +1,5702 @@
+// ../engine/dist/canonical.js
+function e(e) {
+	return JSON.stringify(t(e));
+}
+function t(e) {
+	if (Array.isArray(e)) return e.map(t);
+	if (typeof e == "object" && e) {
+		let r = {};
+		for (let i of Object.keys(e).sort(n)) r[i] = t(e[i]);
+		return r;
+	}
+	return e;
+}
+function n(e, t) {
+	return e < t ? -1 : +(e > t);
+}
+var r = new Uint32Array([
+	1116352408,
+	1899447441,
+	3049323471,
+	3921009573,
+	961987163,
+	1508970993,
+	2453635748,
+	2870763221,
+	3624381080,
+	310598401,
+	607225278,
+	1426881987,
+	1925078388,
+	2162078206,
+	2614888103,
+	3248222580,
+	3835390401,
+	4022224774,
+	264347078,
+	604807628,
+	770255983,
+	1249150122,
+	1555081692,
+	1996064986,
+	2554220882,
+	2821834349,
+	2952996808,
+	3210313671,
+	3336571891,
+	3584528711,
+	113926993,
+	338241895,
+	666307205,
+	773529912,
+	1294757372,
+	1396182291,
+	1695183700,
+	1986661051,
+	2177026350,
+	2456956037,
+	2730485921,
+	2820302411,
+	3259730800,
+	3345764771,
+	3516065817,
+	3600352804,
+	4094571909,
+	275423344,
+	430227734,
+	506948616,
+	659060556,
+	883997877,
+	958139571,
+	1322822218,
+	1537002063,
+	1747873779,
+	1955562222,
+	2024104815,
+	2227730452,
+	2361852424,
+	2428436474,
+	2756734187,
+	3204031479,
+	3329325298
+]);
+function i(e) {
+	let t = new TextEncoder().encode(e), n = t.length * 8, i = new Uint8Array(Math.ceil((t.length + 9) / 64) * 64);
+	i.set(t), i[t.length] = 128;
+	let o = new DataView(i.buffer);
+	o.setUint32(i.length - 8, Math.floor(n / 4294967296)), o.setUint32(i.length - 4, n >>> 0);
+	let s = new Uint32Array([
+		1779033703,
+		3144134277,
+		1013904242,
+		2773480762,
+		1359893119,
+		2600822924,
+		528734635,
+		1541459225
+	]), c = /* @__PURE__ */ new Uint32Array(64);
+	for (let e = 0; e < i.length; e += 64) {
+		for (let t = 0; t < 16; t++) c[t] = o.getUint32(e + t * 4);
+		for (let e = 16; e < 64; e++) {
+			let t = c[e - 15] ?? 0, n = c[e - 2] ?? 0, r = a(t, 7) ^ a(t, 18) ^ t >>> 3, i = a(n, 17) ^ a(n, 19) ^ n >>> 10;
+			c[e] = (c[e - 16] ?? 0) + r + (c[e - 7] ?? 0) + i >>> 0;
+		}
+		let [t, n, i, l, u, d, f, p] = [
+			s[0] ?? 0,
+			s[1] ?? 0,
+			s[2] ?? 0,
+			s[3] ?? 0,
+			s[4] ?? 0,
+			s[5] ?? 0,
+			s[6] ?? 0,
+			s[7] ?? 0
+		];
+		for (let e = 0; e < 64; e++) {
+			let o = a(u, 6) ^ a(u, 11) ^ a(u, 25), s = u & d ^ ~u & f, m = p + o + s + (r[e] ?? 0) + (c[e] ?? 0) >>> 0, h = (a(t, 2) ^ a(t, 13) ^ a(t, 22)) + (t & n ^ t & i ^ n & i) >>> 0;
+			p = f, f = d, d = u, u = l + m >>> 0, l = i, i = n, n = t, t = m + h >>> 0;
+		}
+		let m = [
+			t,
+			n,
+			i,
+			l,
+			u,
+			d,
+			f,
+			p
+		];
+		for (let e = 0; e < 8; e++) s[e] = (s[e] ?? 0) + (m[e] ?? 0) >>> 0;
+	}
+	return Array.from(s, (e) => e.toString(16).padStart(8, "0")).join("");
+}
+function a(e, t) {
+	return e >>> t | e << 32 - t;
+}
+// ../engine/dist/errors.js
+var o = class extends Error {
+	code;
+	constructor(e, t, n) {
+		super(t, n), this.name = "PuzzleError", this.code = e;
+	}
+}, s = class extends o {
+	constructor(e) {
+		super("invalid", e), this.name = "InvalidDocumentError";
+	}
+}, c = class extends o {
+	constructor(e) {
+		super("illegal", e), this.name = "IllegalActionError";
+	}
+}, l = /^[a-z][a-z0-9_-]{0,31}$/, u = -(2 ** 53 - 1), d = 2 ** 53 - 1;
+function f(e, t) {
+	if (Array.isArray(e) && e.length === 0) return {};
+	if (typeof e != "object" || !e || Array.isArray(e)) throw new s(`${t} must be an object.`);
+	return e;
+}
+function p(e, t, n = 4096) {
+	if (typeof e == "object" && e && !Array.isArray(e) && Object.keys(e).length === 0) return [];
+	if (!Array.isArray(e)) throw new s(`${t} must be an array.`);
+	if (e.length > n) throw new s(`${t} has more than ${n} entries.`);
+	return e;
+}
+function m(e, t, n) {
+	let r = Object.keys(e).filter((e) => !t.includes(e));
+	if (r.length > 0) throw new s(`${n} has unknown field(s): ${r.join(", ")}.`);
+}
+function h(e, t) {
+	return Object.prototype.hasOwnProperty.call(e, t);
+}
+function g(e, t, n, r = u, i = d) {
+	if (!h(e, t)) throw new s(`${n}.${t} is required.`);
+	return _(e[t], `${n}.${t}`, r, i);
+}
+function _(e, t, n = u, r = d) {
+	if (typeof e != "number" || !Number.isSafeInteger(e)) throw new s(`${t} must be an integer.`);
+	if (e < n || e > r) throw new s(`${t} must be between ${n} and ${r}, got ${e}.`);
+	return e;
+}
+function v(e, t, n, r = 2048) {
+	if (!h(e, t)) throw new s(`${n}.${t} is required.`);
+	return y(e[t], `${n}.${t}`, r);
+}
+function y(e, t, n = 2048) {
+	if (typeof e != "string") throw new s(`${t} must be a string.`);
+	if (S(e) > n) throw new s(`${t} is longer than ${n} bytes.`);
+	return e;
+}
+function b(e, t, n) {
+	let r = e[t];
+	if (!h(e, t) || typeof r != "boolean") throw new s(`${n}.${t} must be a boolean.`);
+	return r;
+}
+function x(e, t) {
+	let n = y(e, t, 32);
+	if (!l.test(n)) throw new s(`${t} is not a valid identifier: "${n}".`);
+	return n;
+}
+function S(e) {
+	let t = 0;
+	for (let n of e) {
+		let e = n.codePointAt(0) ?? 0;
+		t += e < 128 ? 1 : e < 2048 ? 2 : e < 65536 ? 3 : 4;
+	}
+	return t;
+}
+// ../engine/dist/rect.js
+var C = 1 << 20;
+function w(e, t) {
+	let n = f(e, t);
+	return m(n, [
+		"x",
+		"y",
+		"width",
+		"height"
+	], t), {
+		x: g(n, "x", t, -1048576, C),
+		y: g(n, "y", t, -1048576, C),
+		width: g(n, "width", t, 1, C),
+		height: g(n, "height", t, 1, C)
+	};
+}
+var T = 16384, E = /^[a-z][a-z0-9-]{0,15}$/, D = /^[A-Za-z0-9_][A-Za-z0-9._-]*(\/[A-Za-z0-9_][A-Za-z0-9._-]*)*$/;
+function O(e) {
+	let t = f(e, "definition.media");
+	m(t, [
+		"image",
+		"resolutions",
+		"atlas"
+	], "definition.media");
+	let n = v(t, "image", "definition.media"), r = t.resolutions === void 0 ? [] : p(t.resolutions, "definition.media.resolutions", 4).map((e, t) => ee(e, `definition.media.resolutions[${t}]`));
+	if (t.resolutions !== void 0 && r.length === 0) throw new s("definition.media.resolutions must not be empty when present.");
+	let i = /* @__PURE__ */ new Set(), a = /* @__PURE__ */ new Set();
+	for (let e of r) {
+		if (i.has(e.name) || a.has(e.directory)) throw new s(`media.resolutions repeats the name or directory of "${e.name}".`);
+		i.add(e.name), a.add(e.directory);
+	}
+	let o = t.atlas === void 0 ? void 0 : M(t.atlas, "definition.media.atlas");
+	return {
+		image: n,
+		...r.length > 0 ? { resolutions: r } : {},
+		...o === void 0 ? {} : { atlas: o }
+	};
+}
+function k(e, t, n, r) {
+	if (e.resolutions === void 0 && e.atlas === void 0) return;
+	if (t !== "jigsaw") throw new s("media.resolutions and media.atlas are only defined for jigsaw pieces.");
+	let i = r[0]?.attributes.image, a = typeof i == "string" && i.includes("/") ? i.slice(0, i.lastIndexOf("/")) : ".";
+	for (let t of e.resolutions ?? []) {
+		if (t.directory === a) throw new s(`Resolution ${t.name} cannot use the directory of the full-resolution tile images.`);
+		if (t.width >= n) throw new s(`Resolution ${t.name} (${t.width} px) must be narrower than the ${n} px source; the tile images are the full resolution.`);
+	}
+	if (e.atlas !== void 0) {
+		let t = Object.keys(e.atlas.frames);
+		if (t.length !== r.length || t.some((e, t) => r[t]?.id !== e)) throw new s("media.atlas.frames must list every tile ID once, in tile order.");
+	}
+}
+function A(e, t) {
+	return `${e.directory}/${t.slice(t.lastIndexOf("/") + 1)}`;
+}
+function j(e, t, n) {
+	return Math.max(1, Math.round(t * e.width / n));
+}
+function ee(e, t) {
+	let n = f(e, t);
+	m(n, [
+		"name",
+		"width",
+		"directory"
+	], t);
+	let r = v(n, "name", t, 16), i = g(n, "width", t, 1, 1 << 20), a = v(n, "directory", t, 255);
+	if (!E.test(r)) throw new s(`Resolution name "${r}" must match ${String(E)}.`);
+	if (!D.test(a)) throw new s(`Resolution ${r} directory must be a safe relative path.`);
+	return {
+		name: r,
+		width: i,
+		directory: a
+	};
+}
+function M(e, t) {
+	let n = f(e, t);
+	m(n, [
+		"image",
+		"width",
+		"height",
+		"frames"
+	], t);
+	let r = v(n, "image", t, 255);
+	if (!D.test(r)) throw new s("media.atlas.image must be a safe relative path.");
+	let i = g(n, "width", t, 1, T), a = g(n, "height", t, 1, T), o = {};
+	for (let [e, r] of Object.entries(f(n.frames, `${t}.frames`))) {
+		let n = w(r, `${t}.frames.${x(e, `${t}.frames`)}`);
+		if (n.x < 0 || n.y < 0 || n.x + n.width > i || n.y + n.height > a) throw new s(`media.atlas frame ${e} lies outside the ${i}x${a} atlas.`);
+		o[e] = n;
+	}
+	return {
+		image: r,
+		width: i,
+		height: a,
+		frames: o
+	};
+}
+// ../engine/dist/prng.js
+var N = 4294967295, P = 1 << 20;
+function F(e) {
+	let t = 2166136261;
+	for (let n of new TextEncoder().encode(e)) t = Math.imul(t ^ n, 16777619) >>> 0;
+	return t >>> 0;
+}
+var I = class {
+	state;
+	constructor(e, t) {
+		if (!Number.isInteger(e) || e < 0 || e > 4294967295) throw new o("invalid", "Seed must be an unsigned 32-bit integer.");
+		this.state = (F(t) ^ e) >>> 0;
+	}
+	nextUint32() {
+		this.state = this.state + 1831565813 >>> 0;
+		let e = this.state;
+		return e = Math.imul(e ^ e >>> 15, e | 1), e ^= e + Math.imul(e ^ e >>> 7, e | 61), (e ^ e >>> 14) >>> 0;
+	}
+	int(e) {
+		if (!Number.isInteger(e) || e < 1 || e > 1048576) throw new o("invalid", `Range must be between 1 and ${P}.`);
+		return Math.floor(this.nextUint32() * e / 4294967296);
+	}
+	shuffle(e) {
+		let t = [...e];
+		for (let e = t.length - 1; e > 0; e--) {
+			let n = this.int(e + 1), r = t[e];
+			t[e] = t[n], t[n] = r;
+		}
+		return t;
+	}
+}, L = 256, R = /^M[-0-9. LZ]+$/, z = /^[A-Za-z0-9_][A-Za-z0-9._-]*(\/[A-Za-z0-9_][A-Za-z0-9._-]*)*$/, B = 1 << 20;
+function V(e) {
+	return w(e.attributes.rendered, `tile ${e.id} rendered`);
+}
+function H(e) {
+	return g(e.rules, "snap", "definition.rules", 1, L);
+}
+function te(e) {
+	return w(e.rules.area, "definition.rules.area");
+}
+function ne(e) {
+	return w(e.rules.tray, "definition.rules.tray");
+}
+function U(e, t) {
+	return t.x >= e.x && t.y >= e.y && t.x + t.width <= e.x + e.width && t.y + t.height <= e.y + e.height;
+}
+function re(e) {
+	return p(e.pieces, "board.pieces", 4096).map((e, t) => {
+		let n = f(e, `board.pieces[${t}]`);
+		return {
+			x: g(n, "x", `board.pieces[${t}]`),
+			y: g(n, "y", `board.pieces[${t}]`),
+			placed: b(n, "placed", `board.pieces[${t}]`)
+		};
+	});
+}
+var W = {
+	kind: "jigsaw",
+	actionTypes: ["place"],
+	capabilities: {
+		undo: !0,
+		redo: !0,
+		reset: !0,
+		shuffle: !0,
+		hint: !0
+	},
+	validateDefinition(e) {
+		m(e.rules, [
+			"topology",
+			"snap",
+			"area",
+			"tray"
+		], "definition.rules");
+		let t = v(e.rules, "topology", "definition.rules", 16);
+		if (![
+			"rect",
+			"hex",
+			"triangle"
+		].includes(t)) throw new s(`Unknown jigsaw topology "${t}".`);
+		let n = H(e), r = te(e), i = ne(e);
+		if (!U(r, i) || !U(r, e.crop)) throw new s("definition.rules.area must contain the board and the tray.");
+		if (i.x <= e.crop.x + e.crop.width + n - 1) throw new s("definition.rules.tray must start more than rules.snap pixels right of the board.");
+		if (e.tiles.length === 0) throw new s("A jigsaw needs at least one piece.");
+		e.tiles.forEach((t, n) => {
+			if (t.home !== n) throw new s(`Tile ${t.id} must have home ${n}.`);
+			m(t.attributes, [
+				"rendered",
+				"image",
+				"path"
+			], `definition.tiles[${n}]`);
+			let r = V(t);
+			if (!U(e.crop, r) || !U(r, t.rect)) throw new s(`Tile ${t.id}: rendered box must contain its cell and lie on the board.`);
+			if (r.width > i.width || r.height > i.height) throw new s(`Tile ${t.id} does not fit in the tray.`);
+			if (!h(t.attributes, "image")) throw new s(`Tile ${t.id} has no "image" attribute.`);
+			let a = y(t.attributes.image, `definition.tiles[${n}].image`, 255);
+			if (!z.test(a)) throw new s(`definition.tiles[${n}].image must be a safe relative path.`);
+			if (h(t.attributes, "path")) {
+				let e = y(t.attributes.path, `definition.tiles[${n}].path`, B);
+				if (!R.test(e)) throw new s(`definition.tiles[${n}].path must be M/L/Z path data.`);
+			}
+		});
+	},
+	solvedBoard(e) {
+		return { pieces: e.tiles.map((e) => {
+			let t = V(e);
+			return {
+				x: t.x,
+				y: t.y,
+				placed: !0
+			};
+		}) };
+	},
+	scramble(e, t) {
+		let n = new I(t, "image-puzzle/scramble/jigsaw"), r = ne(e);
+		return { pieces: e.tiles.map((e) => {
+			let t = V(e);
+			return {
+				x: r.x + n.int(r.width - t.width + 1),
+				y: r.y + n.int(r.height - t.height + 1),
+				placed: !1
+			};
+		}) };
+	},
+	validateBoard(e, t) {
+		let n = f(t, "board");
+		m(n, ["pieces"], "board");
+		let r = p(n.pieces, "board.pieces", 4096);
+		if (r.length !== e.tiles.length) throw new s("board.pieces must have one entry per tile.");
+		let i = H(e), a = te(e);
+		return { pieces: r.map((t, n) => {
+			let r = f(t, `board.pieces[${n}]`);
+			m(r, [
+				"x",
+				"y",
+				"placed"
+			], `board.pieces[${n}]`);
+			let o = g(r, "x", `board.pieces[${n}]`, -1048576, B), c = g(r, "y", `board.pieces[${n}]`, -1048576, B), l = b(r, "placed", `board.pieces[${n}]`), u = V(e.tiles[n]);
+			if (l && (o !== u.x || c !== u.y)) throw new s(`board.pieces[${n}] is marked placed away from its solved position.`);
+			if (!l && Math.abs(o - u.x) <= i && Math.abs(c - u.y) <= i) throw new s(`board.pieces[${n}] lies inside its snap zone but is not placed.`);
+			if (!U(a, {
+				x: o,
+				y: c,
+				width: u.width,
+				height: u.height
+			})) throw new s(`board.pieces[${n}] lies outside rules.area.`);
+			return {
+				x: o,
+				y: c,
+				placed: l
+			};
+		}) };
+	},
+	apply(e, t, n) {
+		let r = f(n, "action"), i = v(r, "type", "action", 32);
+		if (i !== "place") throw new c(`The jigsaw mode does not support "${i}" actions.`);
+		m(r, [
+			"type",
+			"piece",
+			"x",
+			"y"
+		], "action");
+		let a = x(r.piece, "action.piece"), o = g(r, "x", "action", -1048576, B), s = g(r, "y", "action", -1048576, B), l = e.tiles.findIndex((e) => e.id === a);
+		if (l < 0) throw new c(`Piece "${a}" is not on the board.`);
+		let u = re(t);
+		if (u[l]?.placed) throw new c(`Piece "${a}" is already placed.`);
+		let d = V(e.tiles[l]), p = H(e);
+		if (Math.abs(o - d.x) <= p && Math.abs(s - d.y) <= p) return u[l] = {
+			x: d.x,
+			y: d.y,
+			placed: !0
+		}, { pieces: u };
+		if (!U(te(e), {
+			x: o,
+			y: s,
+			width: d.width,
+			height: d.height
+		})) throw new c(`Piece "${a}" cannot leave the play area.`);
+		return u[l] = {
+			x: o,
+			y: s,
+			placed: !1
+		}, { pieces: u };
+	},
+	legalActions(e, t) {
+		let n = [];
+		return re(t).forEach((t, r) => {
+			if (!t.placed) {
+				let t = e.tiles[r], i = V(t);
+				n.push({
+					type: "place",
+					piece: t.id,
+					x: i.x,
+					y: i.y
+				});
+			}
+		}), n;
+	},
+	isComplete(e, t) {
+		return re(t).every((e) => e.placed);
+	},
+	progress(e, t) {
+		let n = re(t);
+		return n.filter((e) => e.placed).length / Math.max(1, n.length);
+	},
+	hint(e, t) {
+		return this.legalActions(e, t)[0] ?? null;
+	}
+};
+// ../engine/dist/rules/grid.js
+function G(e) {
+	let t = Math.floor(e.crop.width / Math.max(1, e.cols)), n = Math.floor(e.crop.height / Math.max(1, e.rows));
+	if (t < 1 || n < 1 || t * e.cols !== e.crop.width || n * e.rows !== e.crop.height) throw new s("board.crop must divide into equal cells.");
+	return [t, n];
+}
+function ie(e, t) {
+	let [n, r] = G(e), i = Math.floor(t / e.cols), a = t % e.cols;
+	return {
+		x: e.crop.x + a * n,
+		y: e.crop.y + i * r,
+		width: n,
+		height: r
+	};
+}
+function ae(e, t, n, r) {
+	let { kind: i, rows: a, cols: o, tiles: c } = e;
+	if (a < t || o < n || a > r || o > r) throw new s(`A ${i} board must be between ${t}x${n} and ${r}x${r}, got ${a}x${o}.`);
+	let l = a * o;
+	if (l < 2) throw new s(`A ${i} board needs at least two tiles.`);
+	if (c.length !== l) throw new s(`A ${a}x${o} ${i} board needs exactly ${l} tiles, got ${c.length}.`);
+	c.forEach((t, n) => {
+		if (t.home !== n) throw new s(`Tile ${t.id} must have home ${n} (tiles are listed in home order).`);
+		let r = ie(e, n);
+		if (t.rect.x !== r.x || t.rect.y !== r.y || t.rect.width !== r.width || t.rect.height !== r.height) throw new s(`Tile ${t.id} does not show cell ${n} of board.crop.`);
+		let i = Object.keys(t.attributes);
+		if (i.length > 0) throw new s(`Tile ${t.id} has unknown field(s): ${i.join(", ")}.`);
+	});
+}
+function K(e) {
+	return e.tiles.map((e) => e.id);
+}
+function oe(e, t, n) {
+	let r = p(e, n, 4096);
+	if (r.length !== t.length) throw new s(`${n} must list ${t.length} tiles, got ${r.length}.`);
+	let i = new Set(t), a = /* @__PURE__ */ new Set();
+	return r.map((e, t) => {
+		let r = x(e, `${n}[${t}]`);
+		if (!i.has(r)) throw new s(`${n}[${t}] is an unknown tile "${r}".`);
+		if (a.has(r)) throw new s(`${n}[${t}] repeats tile "${r}".`);
+		return a.add(r), r;
+	});
+}
+function se(e, t) {
+	let n = t.shuffle(e);
+	if (n.length > 1 && n.every((t, n) => t === e[n])) {
+		let e = n[0];
+		n[0] = n[1], n[1] = e;
+	}
+	return n;
+}
+function q(e, t, n, r) {
+	let i = f(n, "action"), a = v(i, "type", "action", 32);
+	if (!t.includes(a)) throw new c(`The ${e} mode does not support "${a}" actions.`);
+	return m(i, ["type", ...r], "action"), i;
+}
+function J(e, t) {
+	return p(e[t], `board.${t}`, 4096).map((e) => y(e, `board.${t}[]`, 32));
+}
+function ce(e, t) {
+	return e.length === t.length && e.every((e, n) => e === t[n]);
+}
+// ../engine/dist/rules/memory.js
+var le = ["flip"];
+function ue(e) {
+	return e.slice(0, -2);
+}
+var de = (e) => ue(e) + (e.endsWith("-a") ? "-b" : "-a");
+function fe(e, t) {
+	let n = y(e, t, 120);
+	if (n === "" || n.startsWith(" ") || n.endsWith(" ") || !/^[^\p{Cc}]+$/u.test(n)) throw new s(`${t} must be 1-120 bytes of text without control characters or surrounding spaces.`);
+	return n;
+}
+function pe(e, t, n, r) {
+	let i = [];
+	return p(e, n, r).forEach((e, r) => {
+		let a = x(e, `${n}[${r}]`);
+		if (!t.includes(a)) throw new s(`${n}[${r}] is an unknown card "${a}".`);
+		if (i.includes(a)) throw new s(`${n}[${r}] repeats card "${a}".`);
+		i.push(a);
+	}), i;
+}
+var me = {
+	kind: "memory",
+	actionTypes: le,
+	capabilities: {
+		undo: !1,
+		redo: !1,
+		reset: !0,
+		shuffle: !0,
+		hint: !1
+	},
+	validateDefinition(e) {
+		let { rows: t, cols: n, crop: r, tiles: i } = e;
+		if (t < 2 || n < 2 || t > 8 || n > 8 || t * n % 2 != 0) throw new s(`A memory board must be between 2x2 and 8x8 with an even number of cards, got ${t}x${n}.`);
+		let a = t * n / 2;
+		m(e.rules, ["regions"], "definition.rules");
+		let o = f(e.rules.regions, "definition.rules.regions");
+		m(o, ["rows", "cols"], "definition.rules.regions");
+		let c = g(o, "rows", "definition.rules.regions", 1, a), l = g(o, "cols", "definition.rules.regions", 1, a);
+		if (c * l !== a) throw new s(`definition.rules.regions must hold exactly ${a} regions.`);
+		if (r.width % l !== 0 || r.height % c !== 0) throw new s("board.crop must divide into equal regions.");
+		if (i.length !== 2 * a) throw new s(`A ${t}x${n} memory board needs exactly ${2 * a} cards, got ${i.length}.`);
+		let u = r.width / l, d = r.height / c;
+		i.forEach((e, t) => {
+			let n = Math.floor(t / 2), i = t % 2 == 0 ? "a" : "b";
+			if (e.id !== `p${n}-${i}` || e.home !== t) throw new s(`Card ${t} must be "p${n}-${i}" with home ${t} (cards are listed pair by pair).`);
+			let a = r.x + n % l * u, o = r.y + Math.floor(n / l) * d;
+			if (e.rect.x !== a || e.rect.y !== o || e.rect.width !== u || e.rect.height !== d) throw new s(`Card ${e.id} does not show region ${n} of board.crop.`);
+			let c = `definition.tiles[${t}]`, f = e.attributes;
+			if (f.pair !== `p${n}`) throw new s(`${c}.pair must be "p${n}".`);
+			let p = f.face;
+			if (p === "image") m(f, ["pair", "face"], c);
+			else if (p === "text" && i === "b") m(f, [
+				"pair",
+				"face",
+				"text"
+			], c), fe(f.text, `${c}.text`);
+			else throw new s(`${c}.face must be "image"${i === "b" ? " or \"text\"" : " (the first card of a pair shows the image)"}.`);
+		});
+	},
+	solvedBoard(e) {
+		let t = K(e);
+		return {
+			cards: t,
+			matched: [...t],
+			revealed: []
+		};
+	},
+	scramble(e, t) {
+		return {
+			cards: new I(t, "image-puzzle/scramble/memory").shuffle(K(e)),
+			matched: [],
+			revealed: []
+		};
+	},
+	validateBoard(e, t) {
+		let n = f(t, "board");
+		m(n, [
+			"cards",
+			"matched",
+			"revealed"
+		], "board");
+		let r = K(e), i = oe(n.cards, r, "board.cards"), a = pe(n.matched, r, "board.matched", r.length);
+		for (let e of a) if (!a.includes(de(e))) throw new s(`board.matched has card ${e} without its partner.`);
+		let o = pe(n.revealed, r, "board.revealed", 2);
+		for (let e of o) if (a.includes(e)) throw new s(`board.revealed has the matched card ${e}.`);
+		if (o.length === 2 && ue(o[0]) === ue(o[1])) throw new s("board.revealed holds a pair that should be matched.");
+		return {
+			cards: i,
+			matched: a,
+			revealed: o
+		};
+	},
+	apply(e, t, n) {
+		let r = x(q("memory", le, n, ["card"]).card, "action.card"), i = J(t, "cards");
+		if (!i.includes(r)) throw new c(`Card "${r}" is not on the board.`);
+		let a = J(t, "matched");
+		if (a.includes(r)) throw new c(`Card "${r}" is already matched.`);
+		let o = J(t, "revealed");
+		if (o.length === 2 && (o = []), o.includes(r)) throw new c(`Card "${r}" is already face up.`);
+		return o.push(r), o.length === 2 && ue(o[0]) === ue(o[1]) && (a = [...a, ...o], o = []), {
+			cards: i,
+			matched: a,
+			revealed: o
+		};
+	},
+	legalActions(e, t) {
+		let n = J(t, "matched"), r = J(t, "revealed");
+		return J(t, "cards").filter((e) => !n.includes(e) && (r.length !== 1 || r[0] !== e)).map((e) => ({
+			type: "flip",
+			card: e
+		}));
+	},
+	isComplete(e, t) {
+		return J(t, "matched").length === e.tiles.length;
+	},
+	progress(e, t) {
+		return J(t, "matched").length / Math.max(1, e.tiles.length);
+	},
+	hint() {
+		return null;
+	}
+}, he = ["mark"], ge = {
+	filled: "1",
+	crossed: "x",
+	unknown: "."
+}, Y = [
+	"unique",
+	"multiple",
+	"unverified"
+], _e = 900;
+function ve(e) {
+	let t = [], n = 0;
+	for (let r of e) r ? n++ : n > 0 && (t.push(n), n = 0);
+	return n > 0 && t.push(n), t;
+}
+function X(e, t, n) {
+	let r = (t, r) => e[t * n + r] === "1";
+	return {
+		rows: Array.from({ length: t }, (e, t) => ve(Array.from({ length: n }, (e, n) => r(t, n)))),
+		cols: Array.from({ length: n }, (e, n) => ve(Array.from({ length: t }, (e, t) => r(t, n))))
+	};
+}
+function ye(e) {
+	let t = f(e.rules.clues, "definition.rules.clues");
+	return {
+		rows: be(t.rows, e.rows, e.cols, "rows"),
+		cols: be(t.cols, e.cols, e.rows, "cols")
+	};
+}
+function be(e, t, n, r) {
+	return p(e, `definition.rules.clues.${r}`, t).map((e, t) => p(e, `definition.rules.clues.${r}[${t}]`, n).map((e, i) => _(e, `definition.rules.clues.${r}[${t}][${i}]`, 1, n)));
+}
+function xe(e) {
+	let t = y(e.rules.solution, "definition.rules.solution", _e);
+	if (t.length !== e.rows * e.cols || !/^[01]+$/.test(t)) throw new s("definition.rules.solution must have one \"1\" or \"0\" per cell.");
+	return t;
+}
+function Se(e) {
+	return y(e.cells, "board.cells", _e);
+}
+var Ce = (e) => e.replace(/[x.]/g, "0"), we = (e, t) => t !== void 0 && e.length === t.length && e.every((e, n) => e === t[n]), Te = (e, t) => e.length === t.length && e.every((e, n) => we(e, t[n])), Ee = {
+	kind: "nonogram",
+	actionTypes: he,
+	capabilities: {
+		undo: !0,
+		redo: !0,
+		reset: !0,
+		shuffle: !1,
+		hint: !0
+	},
+	validateDefinition(e) {
+		let { rows: t, cols: n, crop: r } = e;
+		if (t < 2 || n < 2 || t > 30 || n > 30) throw new s(`A nonogram must be between 2x2 and 30x30 cells, got ${t}x${n}.`);
+		if (e.tiles.length !== 0) throw new s("A nonogram has no tiles.");
+		if (r.width % n !== 0 || r.height % t !== 0 || Math.floor(r.width / n) !== Math.floor(r.height / t)) throw new s("board.crop must divide into square cells.");
+		let i = e.rules;
+		m(i, [
+			"solution",
+			"clues",
+			"uniqueness",
+			"threshold",
+			"invert"
+		], "definition.rules");
+		let a = xe(e);
+		if (!a.includes("1")) throw new s("definition.rules.solution has no filled cell.");
+		m(f(i.clues, "definition.rules.clues"), ["rows", "cols"], "definition.rules.clues");
+		let o = ye(e), c = X(a, t, n);
+		if (!Te(o.rows, c.rows) || !Te(o.cols, c.cols)) throw new s("definition.rules.clues do not match rules.solution.");
+		if (typeof i.uniqueness != "string" || !Y.includes(i.uniqueness)) throw new s("definition.rules.uniqueness must be unique, multiple or unverified.");
+		g(i, "threshold", "definition.rules", 1, 255), b(i, "invert", "definition.rules");
+	},
+	solvedBoard(e) {
+		return { cells: xe(e).replace(/0/g, "x") };
+	},
+	scramble(e) {
+		return { cells: ".".repeat(e.rows * e.cols) };
+	},
+	validateBoard(e, t) {
+		let n = f(t, "board");
+		m(n, ["cells"], "board");
+		let r = y(n.cells, "board.cells", _e);
+		if (r.length !== e.rows * e.cols || !/^[1x.]*$/.test(r)) throw new s("board.cells must have one of \"1\", \"x\" or \".\" per cell.");
+		return { cells: r };
+	},
+	apply(e, t, n) {
+		let r = q("nonogram", he, n, ["cell", "state"]), i = e.rows * e.cols, a = g(r, "cell", "action", 0, 2 ** 53 - 1);
+		if (a >= i) throw new c(`Cell ${a} is outside the ${e.rows}x${e.cols} grid.`);
+		let o = v(r, "state", "action", 16);
+		if (!Object.prototype.hasOwnProperty.call(ge, o)) throw new s("action.state must be filled, crossed or unknown.");
+		let l = ge[o], u = Se(t);
+		if (u[a] === l) throw new c(`Cell ${a} is already ${o}.`);
+		return { cells: u.slice(0, a) + l + u.slice(a + 1) };
+	},
+	legalActions(e, t) {
+		let n = Se(t), r = Object.entries(ge), i = [];
+		for (let e = 0; e < n.length; e++) for (let [t, a] of r) n[e] !== a && i.push({
+			type: "mark",
+			cell: e,
+			state: t
+		});
+		return i;
+	},
+	isComplete(e, t) {
+		let n = X(Ce(Se(t)), e.rows, e.cols), r = ye(e);
+		return Te(n.rows, r.rows) && Te(n.cols, r.cols);
+	},
+	progress(e, t) {
+		let n = X(Ce(Se(t)), e.rows, e.cols), r = ye(e);
+		return (n.rows.filter((e, t) => we(e, r.rows[t])).length + n.cols.filter((e, t) => we(e, r.cols[t])).length) / (e.rows + e.cols);
+	},
+	hint(e, t) {
+		if (Ee.isComplete(e, t)) return null;
+		let n = Se(t), r = xe(e);
+		for (let e = 0; e < r.length; e++) {
+			if (r[e] === "1" && n[e] !== "1") return {
+				type: "mark",
+				cell: e,
+				state: "filled"
+			};
+			if (r[e] === "0" && n[e] === "1") return {
+				type: "mark",
+				cell: e,
+				state: "crossed"
+			};
+		}
+		return null;
+	}
+}, De = ["rotate"], Oe = [
+	0,
+	90,
+	180,
+	270
+];
+function ke(e) {
+	let t = p(e.rules.orientations, "definition.rules.orientations", 4).map((e, t) => _(e, `definition.rules.orientations[${t}]`)), n = [...t].sort((e, t) => e - t);
+	if (!(t.every((e, t) => e === n[t]) && new Set(t).size === t.length && t.every((e) => Oe.includes(e)) && t.length >= 2 && t[0] === 0)) throw new s("definition.rules.orientations must be an ascending subset of [0, 90, 180, 270] with 0 and at least two angles.");
+	return t;
+}
+function Ae(e) {
+	return p(e.orientations, "board.orientations", 4096).map((e) => _(e, "board.orientations[]"));
+}
+var je = {
+	kind: "rotation",
+	actionTypes: De,
+	capabilities: {
+		undo: !0,
+		redo: !0,
+		reset: !0,
+		shuffle: !0,
+		hint: !0
+	},
+	validateDefinition(e) {
+		ae(e, 1, 1, 16), m(e.rules, ["orientations"], "definition.rules");
+		let t = ke(e), [n, r] = G(e);
+		if (n !== r && (t.includes(90) || t.includes(270))) throw new s(`Quarter turns need square cells; cells are ${n}x${r}.`);
+	},
+	solvedBoard(e) {
+		return { orientations: e.tiles.map(() => 0) };
+	},
+	scramble(e, t) {
+		let n = new I(t, "image-puzzle/scramble/rotation"), r = ke(e), i = e.tiles.map(() => r[n.int(r.length)]);
+		return i.some((e) => e !== 0) || (i[0] = r[1]), { orientations: i };
+	},
+	validateBoard(e, t) {
+		let n = f(t, "board");
+		m(n, ["orientations"], "board");
+		let r = p(n.orientations, "board.orientations", 4096);
+		if (r.length !== e.tiles.length) throw new s("board.orientations must have one entry per tile.");
+		let i = ke(e);
+		return { orientations: r.map((e, t) => {
+			let n = _(e, `board.orientations[${t}]`);
+			if (!i.includes(n)) throw new s(`board.orientations[${t}] = ${n} is not an allowed orientation.`);
+			return n;
+		}) };
+	},
+	apply(e, t, n) {
+		let r = q("rotation", De, n, ["tile", "direction"]), i = x(r.tile, "action.tile"), a = v(r, "direction", "action", 8);
+		if (a !== "cw" && a !== "ccw") throw new s("action.direction must be \"cw\" or \"ccw\".");
+		let o = e.tiles.findIndex((e) => e.id === i);
+		if (o < 0) throw new c(`Tile "${i}" is not on the board.`);
+		let l = Ae(t), u = ke(e), d = u.indexOf(l[o] ?? -1);
+		if (d < 0) throw new s(`board.orientations[${o}] is not an allowed orientation.`);
+		let f = u.length;
+		return l[o] = u[(d + (a === "cw" ? 1 : f - 1)) % f], { orientations: l };
+	},
+	legalActions(e) {
+		let t = ke(e).length > 2, n = [];
+		for (let r of e.tiles) n.push({
+			type: "rotate",
+			tile: r.id,
+			direction: "cw"
+		}), t && n.push({
+			type: "rotate",
+			tile: r.id,
+			direction: "ccw"
+		});
+		return n;
+	},
+	isComplete(e, t) {
+		return Ae(t).every((e) => e === 0);
+	},
+	progress(e, t) {
+		let n = Ae(t);
+		return n.filter((e) => e === 0).length / Math.max(1, n.length);
+	},
+	hint(e, t) {
+		let n = ke(e), r = n.length, i = Ae(t);
+		for (let t = 0; t < i.length; t++) {
+			let a = i[t];
+			if (a !== 0) {
+				let i = Math.max(0, n.indexOf(a));
+				return {
+					type: "rotate",
+					tile: e.tiles[t]?.id ?? "",
+					direction: i < r - i ? "ccw" : "cw"
+				};
+			}
+		}
+		return null;
+	}
+}, Me = 16, Ne = 1e5, Pe = ["slide"];
+function Fe(e) {
+	return x(e.rules.empty, "definition.rules.empty");
+}
+function Ie(e) {
+	return p(e.cells, "board.cells", 4096).map((e) => e === null ? null : y(e, "board.cells[]", 32));
+}
+function Le(e) {
+	let t = e.indexOf(null);
+	if (t < 0) throw new s("board.cells has no empty cell.");
+	return t;
+}
+function Re(e, t) {
+	let { cols: n, rows: r } = e, i = Math.floor(t / n), a = t % n, o = [];
+	return i > 0 && o.push(t - n), a > 0 && o.push(t - 1), a < n - 1 && o.push(t + 1), i < r - 1 && o.push(t + n), o;
+}
+function ze(e, t) {
+	let n = Ie(t), r = [];
+	for (let t of Re(e, Le(n))) {
+		let e = n[t];
+		typeof e == "string" && r.push(e);
+	}
+	return r;
+}
+function Be(e, t) {
+	let n = Fe(e), r = new Map(e.tiles.map((e) => [e.id, e.home])), i = t.map((e) => r.get(e ?? n) ?? -1), a = /* @__PURE__ */ new Set(), o = 0;
+	i.forEach((e, t) => {
+		if (a.has(t)) return;
+		let n = 0;
+		for (let e = t; !a.has(e); e = i[e] ?? t) a.add(e), n++;
+		o += n - 1;
+	});
+	let s = Le(t), c = r.get(n) ?? 0, { cols: l } = e, u = Math.abs(Math.floor(s / l) - Math.floor(c / l)) + Math.abs(s % l - c % l);
+	return o % 2 == u % 2;
+}
+var Ve = {
+	kind: "sliding",
+	actionTypes: Pe,
+	capabilities: {
+		undo: !0,
+		redo: !0,
+		reset: !0,
+		shuffle: !0,
+		hint: !1
+	},
+	validateDefinition(e) {
+		ae(e, 2, 2, Me), m(e.rules, ["empty", "scrambleMoves"], "definition.rules");
+		let t = x(e.rules.empty, "definition.rules.empty");
+		if (!e.tiles.some((e) => e.id === t)) throw new s(`definition.rules.empty names an unknown tile "${t}".`);
+		g(e.rules, "scrambleMoves", "definition.rules", 1, Ne);
+	},
+	solvedBoard(e) {
+		let t = Fe(e);
+		return { cells: K(e).map((e) => e === t ? null : e) };
+	},
+	scramble(e, t) {
+		let n = new I(t, "image-puzzle/scramble/sliding"), r = this.solvedBoard(e), i = JSON.stringify(r), a = g(e.rules, "scrambleMoves", "definition.rules", 1, Ne), o = null, c = a + 4 * e.tiles.length;
+		for (let t = 0; t < c && (t < a || JSON.stringify(r) === i); t++) {
+			let t = ze(e, r).filter((e) => e !== o);
+			o = t[n.int(t.length)] ?? null, r = this.apply(e, r, {
+				type: "slide",
+				tile: o
+			});
+		}
+		if (JSON.stringify(r) === i) throw new s("Could not produce an unsolved sliding scramble.");
+		return r;
+	},
+	validateBoard(e, t) {
+		let n = f(t, "board");
+		m(n, ["cells"], "board");
+		let r = p(n.cells, "board.cells", 4096), i = e.tiles.length;
+		if (r.length !== i) throw new s(`board.cells must have ${i} entries, got ${r.length}.`);
+		let a = Fe(e), o = K(e).filter((e) => e !== a);
+		if (r.filter((e) => e === null).length !== 1) throw new s("board.cells must contain exactly one empty cell (null).");
+		oe(r.filter((e) => e !== null), o, "board.cells");
+		let c = r.map((e) => typeof e == "string" ? e : null);
+		if (!Be(e, c)) throw new s("board.cells is not reachable by legal slides from the solved board.");
+		return { cells: c };
+	},
+	apply(e, t, n) {
+		let r = x(q("sliding", Pe, n, ["tile"]).tile, "action.tile"), i = Ie(t), a = i.indexOf(r);
+		if (a < 0) throw new c(`Tile "${r}" is not on the board.`);
+		let o = Le(i);
+		if (!Re(e, o).includes(a)) throw new c(`Tile "${r}" is not next to the empty cell.`);
+		return i[o] = r, i[a] = null, { cells: i };
+	},
+	legalActions(e, t) {
+		return ze(e, t).map((e) => ({
+			type: "slide",
+			tile: e
+		}));
+	},
+	isComplete(e, t) {
+		return JSON.stringify(Ie(t)) === JSON.stringify(Ie(this.solvedBoard(e)));
+	},
+	progress(e, t) {
+		let n = Ie(t), r = Ie(this.solvedBoard(e));
+		return n.filter((e, t) => e !== null && e === r[t]).length / Math.max(1, n.length - 1);
+	},
+	hint() {
+		return null;
+	}
+}, He = ["move"];
+function Ue(e) {
+	let t = v(e.rules, "axis", "definition.rules", 16);
+	if (t !== "horizontal" && t !== "vertical") throw new s("definition.rules.axis must be \"horizontal\" or \"vertical\".");
+	return t;
+}
+var We = {
+	kind: "strips",
+	actionTypes: He,
+	capabilities: {
+		undo: !0,
+		redo: !0,
+		reset: !0,
+		shuffle: !0,
+		hint: !0
+	},
+	validateDefinition(e) {
+		m(e.rules, ["axis"], "definition.rules");
+		let t = Ue(e);
+		if (t === "horizontal" && e.cols !== 1) throw new s("Horizontal strips need board.cols = 1.");
+		if (t === "vertical" && e.rows !== 1) throw new s("Vertical strips need board.rows = 1.");
+		ae(e, 1, 1, 128);
+	},
+	solvedBoard(e) {
+		return { order: K(e) };
+	},
+	scramble(e, t) {
+		return { order: se(K(e), new I(t, "image-puzzle/scramble/strips")) };
+	},
+	validateBoard(e, t) {
+		let n = f(t, "board");
+		return m(n, ["order"], "board"), { order: oe(n.order, K(e), "board.order") };
+	},
+	apply(e, t, n) {
+		let r = q("strips", He, n, ["strip", "to"]), i = x(r.strip, "action.strip"), a = J(t, "order"), o = g(r, "to", "action", 0, Math.max(0, a.length - 1)), s = a.indexOf(i);
+		if (s < 0) throw new c(`Strip "${i}" is not on the board.`);
+		if (s === o) throw new c(`Strip "${i}" is already at position ${o}.`);
+		return a.splice(s, 1), a.splice(o, 0, i), { order: a };
+	},
+	legalActions(e, t) {
+		let n = J(t, "order"), r = [];
+		return n.forEach((e, t) => {
+			n.forEach((n, i) => {
+				i !== t && r.push({
+					type: "move",
+					strip: e,
+					to: i
+				});
+			});
+		}), r;
+	},
+	isComplete(e, t) {
+		return ce(J(t, "order"), K(e));
+	},
+	progress(e, t) {
+		let n = K(e);
+		return J(t, "order").filter((e, t) => e === n[t]).length / Math.max(1, n.length);
+	},
+	hint(e, t) {
+		let n = J(t, "order"), r = K(e);
+		for (let e = 0; e < r.length; e++) if (n[e] !== r[e]) return {
+			type: "move",
+			strip: r[e],
+			to: e
+		};
+		return null;
+	}
+}, Ge = ["swap"], Ke = {
+	kind: "swap",
+	actionTypes: Ge,
+	capabilities: {
+		undo: !0,
+		redo: !0,
+		reset: !0,
+		shuffle: !0,
+		hint: !0
+	},
+	validateDefinition(e) {
+		ae(e, 1, 1, 16), m(e.rules, [], "definition.rules");
+	},
+	solvedBoard(e) {
+		return { cells: K(e) };
+	},
+	scramble(e, t) {
+		return { cells: se(K(e), new I(t, "image-puzzle/scramble/swap")) };
+	},
+	validateBoard(e, t) {
+		let n = f(t, "board");
+		return m(n, ["cells"], "board"), { cells: oe(n.cells, K(e), "board.cells") };
+	},
+	apply(e, t, n) {
+		let r = q("swap", Ge, n, ["a", "b"]), i = x(r.a, "action.a"), a = x(r.b, "action.b");
+		if (i === a) throw new c("A swap needs two different tiles.");
+		let o = J(t, "cells"), s = o.indexOf(i), l = o.indexOf(a);
+		if (s < 0 || l < 0) throw new c("Both tiles of a swap must be on the board.");
+		return o[s] = a, o[l] = i, { cells: o };
+	},
+	legalActions(e, t) {
+		let n = J(t, "cells"), r = [];
+		for (let e = 0; e < n.length; e++) for (let t = e + 1; t < n.length; t++) r.push({
+			type: "swap",
+			a: n[e],
+			b: n[t]
+		});
+		return r;
+	},
+	isComplete(e, t) {
+		return ce(J(t, "cells"), K(e));
+	},
+	progress(e, t) {
+		let n = K(e);
+		return J(t, "cells").filter((e, t) => e === n[t]).length / Math.max(1, n.length);
+	},
+	hint(e, t) {
+		let n = J(t, "cells"), r = K(e);
+		for (let e = 0; e < r.length; e++) {
+			let t = n[e];
+			if (t === void 0) throw new s("board.cells is incomplete.");
+			if (t !== r[e]) return {
+				type: "swap",
+				a: t,
+				b: r[e]
+			};
+		}
+		return null;
+	}
+}, qe = 256, Je = 4, Ye = 3, Xe = 1 << 20, Ze = {
+	"large-a": {
+		shape: "large",
+		vertices: [
+			[0, 0],
+			[4, 0],
+			[2, 2]
+		]
+	},
+	"large-b": {
+		shape: "large",
+		vertices: [
+			[0, 0],
+			[2, 2],
+			[0, 4]
+		]
+	},
+	medium: {
+		shape: "medium",
+		vertices: [
+			[4, 2],
+			[4, 4],
+			[2, 4]
+		]
+	},
+	"small-a": {
+		shape: "small",
+		vertices: [
+			[4, 0],
+			[4, 2],
+			[3, 1]
+		]
+	},
+	"small-b": {
+		shape: "small",
+		vertices: [
+			[2, 2],
+			[3, 3],
+			[1, 3]
+		]
+	},
+	square: {
+		shape: "square",
+		vertices: [
+			[2, 2],
+			[3, 1],
+			[4, 2],
+			[3, 3]
+		]
+	},
+	parallelogram: {
+		shape: "parallelogram",
+		vertices: [
+			[0, 4],
+			[1, 3],
+			[3, 3],
+			[2, 4]
+		]
+	}
+}, Qe = {
+	square: {
+		picture: !0,
+		moves: {}
+	},
+	arrow: {
+		picture: !1,
+		moves: { "large-b": [4, 0] }
+	},
+	chevron: {
+		picture: !1,
+		moves: { "large-a": [0, 4] }
+	}
+}, $e = [
+	[1, 0],
+	[Math.SQRT1_2, Math.SQRT1_2],
+	[0, 1],
+	[-Math.SQRT1_2, Math.SQRT1_2],
+	[-1, 0],
+	[-Math.SQRT1_2, -Math.SQRT1_2],
+	[0, -1],
+	[Math.SQRT1_2, -Math.SQRT1_2]
+], et = () => Object.keys(Ze);
+function tt(e) {
+	let t = Ze[e];
+	if (t === void 0) throw new s(`Unknown tangram piece "${e}".`);
+	return t;
+}
+function nt(e) {
+	let t = Object.hasOwn(Qe, e) ? Qe[e] : void 0;
+	if (t === void 0) throw new s(`Unknown tangram target "${e}"; supported targets: ${Object.keys(Qe).join(", ")}. Other silhouettes are not recognised.`);
+	return t;
+}
+function rt(e, t, n, r) {
+	return tt(e).vertices.map(([e, i]) => [t + e * r, n + i * r]);
+}
+function it(e, t, n, r) {
+	let { vertices: i } = tt(e), a = i.length, o = i.reduce((e, [t]) => e + t, 0) * r, s = i.reduce((e, [, t]) => e + t, 0) * r;
+	return [t + Math.trunc(o / a), n + Math.trunc(s / a)];
+}
+function at(e, t, n, r, i, a) {
+	let [o, s] = $e[i], { vertices: c } = tt(e), l = c.length, u = c.reduce((e, [t]) => e + t, 0) * t / l, d = c.reduce((e, [, t]) => e + t, 0) * t / l;
+	return c.map(([e, i]) => {
+		let c = e * t - u, l = i * t - d;
+		return a && (c = -c), [n + (c * o - l * s), r + (c * s + l * o)];
+	});
+}
+function ot(e, t, n, r) {
+	let i = nt(e);
+	return et().map((e) => {
+		let [a, o] = i.moves[e] ?? [0, 0], [s, c] = it(e, t, n, r);
+		return {
+			piece: e,
+			shape: tt(e).shape,
+			bound: i.picture,
+			x: s + a * r,
+			y: c + o * r,
+			rotation: 0,
+			flipped: !1
+		};
+	});
+}
+function st(e) {
+	let [t, n, r, i] = [
+		0,
+		0,
+		4,
+		4
+	];
+	for (let [a, [o, s]] of Object.entries(nt(e).moves)) for (let [e, c] of tt(a).vertices) t = Math.min(t, e + o), n = Math.min(n, c + s), r = Math.max(r, e + o), i = Math.max(i, c + s);
+	return [
+		t,
+		n,
+		r,
+		i
+	];
+}
+function ct(e, t) {
+	let n = 0;
+	for (let [r, i] of e) {
+		let e = Infinity;
+		for (let [n, a] of t) e = Math.min(e, Math.sqrt((r - n) * (r - n) + (i - a) * (i - a)));
+		n = Math.max(n, e);
+	}
+	return n;
+}
+function lt(e, t) {
+	return e.length === t.length ? Math.max(ct(e, t), ct(t, e)) : Infinity;
+}
+function ut(e, t, n, r = null) {
+	if (tt(e).shape !== t.shape || t.bound && t.piece !== e) return null;
+	if (t.bound) return {
+		x: t.x,
+		y: t.y,
+		rotation: t.rotation,
+		flipped: t.flipped
+	};
+	let i = at(t.piece, n, t.x, t.y, t.rotation, t.flipped);
+	if (r !== null && lt(at(e, n, t.x, t.y, r.rotation, r.flipped), i) <= 1e-6) return {
+		x: t.x,
+		y: t.y,
+		rotation: r.rotation,
+		flipped: r.flipped
+	};
+	for (let r of [!1, !0]) for (let a = 0; a < 8; a++) if (lt(at(e, n, t.x, t.y, a, r), i) <= 1e-6) return {
+		x: t.x,
+		y: t.y,
+		rotation: a,
+		flipped: r
+	};
+	return null;
+}
+function dt(e) {
+	return e.map(([e, t], n) => `${n === 0 ? "M " : "L "}${e} ${t}`).join(" ") + " Z";
+}
+function ft(e, t, n) {
+	let [r, i, a, o] = st(e), s = t.x + Math.trunc((r + a) * n / 2), c = 12 * n, l = {
+		x: s - Math.trunc(c / 2),
+		y: t.y + (o + 1) * n,
+		width: c,
+		height: 6 * n
+	}, u = Math.min(t.x + r * n, l.x) - n, d = t.y + i * n - n, f = Math.max(t.x + a * n, l.x + l.width) + n, p = l.y + l.height + n;
+	return {
+		area: {
+			x: u,
+			y: d,
+			width: f - u,
+			height: p - d
+		},
+		tray: l
+	};
+}
+var pt = (e) => g(e.rules, "unit", "definition.rules", 12, 65536), mt = (e) => v(e.rules, "target", "definition.rules", 32);
+function ht(e) {
+	return ot(mt(e), e.crop.x, e.crop.y, pt(e));
+}
+function gt(e, t) {
+	let n = f(e, t);
+	return m(n, [
+		"x",
+		"y",
+		"rotation",
+		"flipped"
+	], t), {
+		x: g(n, "x", t, -1048576, Xe),
+		y: g(n, "y", t, -1048576, Xe),
+		rotation: g(n, "rotation", t, 0, 7),
+		flipped: b(n, "flipped", t)
+	};
+}
+function _t(e) {
+	return p(e.pieces, "board.pieces", 7).map((e, t) => gt(e, `board.pieces[${t}]`));
+}
+var vt = (e, t) => e !== void 0 && e.x === t.x && e.y === t.y && e.rotation === t.rotation && e.flipped === t.flipped;
+function yt(e, t) {
+	let n = pt(e), r = ht(e), i = /* @__PURE__ */ new Set(), a = /* @__PURE__ */ new Map();
+	return et().forEach((e, o) => {
+		let s = t[o], c = at(e, n, s.x, s.y, s.rotation, s.flipped);
+		for (let [t, l] of r.entries()) if (!(i.has(t) || tt(e).shape !== l.shape) && (l.bound ? l.piece === e && vt(s, l) : lt(c, at(l.piece, n, l.x, l.y, l.rotation, l.flipped)) <= 1e-6)) {
+			a.set(o, t), i.add(t);
+			break;
+		}
+	}), a;
+}
+function bt(e, t, n) {
+	let r = w(e.rules.area, "definition.rules.area");
+	return at(t, pt(e), n.x, n.y, n.rotation, n.flipped).every(([e, t]) => !(e < r.x - 1e-6 || t < r.y - 1e-6 || e > r.x + r.width + 1e-6 || t > r.y + r.height + 1e-6));
+}
+function xt(e, t, n, r) {
+	let i = et()[n], a = pt(e), o = g(e.rules, "snap", "definition.rules", 1, qe), s = yt(e, t);
+	s.delete(n);
+	let c = new Set(s.values()), l = at(i, a, r.x, r.y, r.rotation, r.flipped), u = null, d = Infinity;
+	for (let [t, n] of ht(e).entries()) {
+		if (c.has(t)) continue;
+		let e = ut(i, n, a, r);
+		if (e === null) continue;
+		let s = lt(l, at(i, a, e.x, e.y, e.rotation, e.flipped));
+		s <= o && s < d && (u = e, d = s);
+	}
+	return u ?? r;
+}
+// ../engine/dist/rules/index.js
+var St = {
+	sliding: Ve,
+	swap: Ke,
+	rotation: je,
+	strips: We,
+	jigsaw: W,
+	nonogram: Ee,
+	memory: me,
+	tangram: {
+		kind: "tangram",
+		actionTypes: ["pose"],
+		capabilities: {
+			undo: !0,
+			redo: !0,
+			reset: !0,
+			shuffle: !0,
+			hint: !0
+		},
+		validateDefinition(e) {
+			let { rules: t, crop: n } = e;
+			m(t, [
+				"target",
+				"unit",
+				"snap",
+				"area",
+				"tray"
+			], "definition.rules");
+			let r = v(t, "target", "definition.rules", 32);
+			if (!Object.hasOwn(Qe, r)) throw new s(`definition.rules.target "${r}" is not a supported tangram target (${Object.keys(Qe).join(", ")}).`);
+			let i = pt(e);
+			if (i % 6 != 0) throw new s("definition.rules.unit must be a multiple of 6.");
+			if (g(t, "snap", "definition.rules", 1, qe) >= i) throw new s("definition.rules.snap must be smaller than rules.unit.");
+			if (e.rows !== 4 || e.cols !== 4 || n.width !== 4 * i || n.height !== 4 * i) throw new s("A tangram board is 4x4 units: board.crop must be a square of side 4 x rules.unit.");
+			let a = ft(r, n, i);
+			for (let e of ["area", "tray"]) {
+				let n = w(t[e], `definition.rules.${e}`), r = a[e];
+				if (n.x !== r.x || n.y !== r.y || n.width !== r.width || n.height !== r.height) throw new s(`definition.rules.${e} must be ${JSON.stringify(r)} for this target and unit.`);
+			}
+			let o = et();
+			if (e.tiles.length !== o.length) throw new s(`A tangram has exactly ${o.length} pieces.`);
+			e.tiles.forEach((e, t) => {
+				let r = o[t], a = rt(r, n.x, n.y, i), c = a.map(([e]) => e), l = a.map(([, e]) => e), u = [
+					Math.min(...c),
+					Math.min(...l),
+					Math.max(...c) - Math.min(...c),
+					Math.max(...l) - Math.min(...l)
+				], d = [
+					e.rect.x,
+					e.rect.y,
+					e.rect.width,
+					e.rect.height
+				];
+				if (e.id !== r || e.home !== t || d.some((e, t) => e !== u[t])) throw new s(`Piece ${t} must be "${r}" with home ${t} and its solved bounding box.`);
+				m(e.attributes, ["shape", "path"], `definition.tiles[${t}]`);
+				let f = tt(r).shape;
+				if (e.attributes.shape !== f || e.attributes.path !== dt(a)) throw new s(`definition.tiles[${t}] must have shape "${f}" and the solved outline as path.`);
+			});
+		},
+		solvedBoard(e) {
+			let t = pt(e);
+			return { pieces: ht(e).map((e) => {
+				let n = ut(e.piece, e, t);
+				if (n === null) throw new s("The tangram target does not fit its pieces.");
+				return n;
+			}) };
+		},
+		scramble(e, t) {
+			let n = new I(t, "image-puzzle/scramble/tangram"), r = w(e.rules.tray, "definition.rules.tray"), i = pt(e), a = n.shuffle(Array.from({ length: 8 }, (e, t) => t)), o = Math.trunc(Ye * i / 2);
+			return { pieces: e.tiles.map((e, t) => {
+				let s = a[t];
+				return {
+					x: r.x + s % Je * Ye * i + o,
+					y: r.y + Math.trunc(s / Je) * Ye * i + o,
+					rotation: n.int(8),
+					flipped: n.int(2) === 1
+				};
+			}) };
+		},
+		validateBoard(e, t) {
+			let n = f(t, "board");
+			m(n, ["pieces"], "board");
+			let r = p(n.pieces, "board.pieces", e.tiles.length);
+			if (r.length !== e.tiles.length) throw new s("board.pieces must have one entry per piece.");
+			return { pieces: r.map((t, n) => {
+				let r = gt(t, `board.pieces[${n}]`);
+				if (!bt(e, e.tiles[n]?.id ?? "", r)) throw new s(`board.pieces[${n}] lies outside rules.area.`);
+				return r;
+			}) };
+		},
+		apply(e, t, n) {
+			let r = f(n, "action"), i = v(r, "type", "action", 32);
+			if (i !== "pose") throw new c(`The tangram mode does not support "${i}" actions.`);
+			m(r, [
+				"type",
+				"piece",
+				"x",
+				"y",
+				"rotation",
+				"flipped"
+			], "action");
+			let a = x(r.piece, "action.piece"), o = et().indexOf(a);
+			if (o < 0) throw new c(`Piece "${a}" is not on the board.`);
+			let s = gt({
+				x: r.x ?? null,
+				y: r.y ?? null,
+				rotation: r.rotation ?? null,
+				flipped: r.flipped ?? null
+			}, "action"), l = _t(t);
+			if (!bt(e, a, s)) throw new c(`Piece "${a}" would leave the play area.`);
+			if (s = xt(e, l, o, s), vt(l[o], s)) throw new c(`Piece "${a}" is already in that pose.`);
+			return l[o] = s, { pieces: l };
+		},
+		legalActions(e, t) {
+			let n = _t(t), r = yt(e, n), i = new Set(r.values()), a = pt(e), o = ht(e), s = [];
+			return et().forEach((e, t) => {
+				r.has(t) || o.forEach((r, o) => {
+					if (i.has(o)) return;
+					let c = ut(e, r, a);
+					c !== null && !vt(n[t], c) && s.push({
+						type: "pose",
+						piece: e,
+						...c
+					});
+				});
+			}), s;
+		},
+		isComplete(e, t) {
+			return yt(e, _t(t)).size === et().length;
+		},
+		progress(e, t) {
+			return yt(e, _t(t)).size / et().length;
+		},
+		hint(e, t) {
+			let n = yt(e, _t(t)), r = new Set(n.values()), i = ht(e), a = pt(e);
+			for (let [e, t] of et().entries()) if (!n.has(e)) for (let n of [e, ...i.keys()]) {
+				if (r.has(n)) continue;
+				let e = ut(t, i[n], a);
+				if (e !== null) return {
+					type: "pose",
+					piece: t,
+					...e
+				};
+			}
+			return null;
+		}
+	}
+};
+function Ct(e) {
+	let t = St[e];
+	if (t === void 0) throw new o("unsupported", `The ${e} mode is not available in this version.`);
+	return t;
+}
+// ../engine/dist/types.js
+var wt = [
+	"sliding",
+	"swap",
+	"rotation",
+	"strips",
+	"jigsaw",
+	"memory",
+	"tangram",
+	"nonogram"
+], Tt = "image-puzzle/game-definition", Et = 4096, Dt = /^(?:https:\/\/[A-Za-z0-9._~:/?#[\]@!$&'()*+,;=%-]+|[A-Za-z0-9_~-][A-Za-z0-9._~/-]*)$/, Ot = /(^|\/)\.\.?(\/|$)/, kt = [
+	"$schema",
+	"format",
+	"version",
+	"id",
+	"kind",
+	"generator",
+	"seed",
+	"preset",
+	"source",
+	"media",
+	"board",
+	"tiles",
+	"rules",
+	"capabilities",
+	"actions",
+	"assistance",
+	"initial"
+];
+function At(e) {
+	let t = f(e, "definition");
+	if (m(t, kt, "definition"), t.format !== "image-puzzle/game-definition") throw new s(`definition.format must be "${Tt}".`);
+	let n = g(t, "version", "definition", 1);
+	if (n !== 1) throw new s(`Unsupported game definition version ${n}; this library reads version 1.`);
+	let r = v(t, "kind", "definition", 32);
+	if (!wt.includes(r)) throw new s("definition.kind is not a supported game kind.");
+	let i = r, a = f(t.generator, "definition.generator");
+	m(a, ["algorithm"], "definition.generator");
+	let o = g(a, "algorithm", "definition.generator", 1);
+	if (o !== 1) throw new s(`Unsupported generator algorithm ${o}.`);
+	let c = f(t.preset, "definition.preset");
+	m(c, ["name", "version"], "definition.preset");
+	let l = f(t.source, "definition.source");
+	m(l, [
+		"width",
+		"height",
+		"sha256"
+	], "definition.source");
+	let u = l.sha256 ?? null;
+	if (u !== null && (typeof u != "string" || !/^[0-9a-f]{64}$/.test(u))) throw new s("definition.source.sha256 must be null or 64 lowercase hex digits.");
+	let d = O(t.media), h = f(t.board, "definition.board");
+	m(h, [
+		"rows",
+		"cols",
+		"crop"
+	], "definition.board");
+	let _ = p(t.tiles, "definition.tiles", Et).map((e, t) => Nt(e, `definition.tiles[${t}]`)), y = f(t.assistance, "definition.assistance");
+	m(y, [
+		"preview",
+		"numbers",
+		"highlightCorrect"
+	], "definition.assistance");
+	let x = f(t.rules, "definition.rules"), S = {
+		kind: i,
+		seed: g(t, "seed", "definition", 0, N),
+		preset: {
+			name: v(c, "name", "definition.preset", 32),
+			version: g(c, "version", "definition.preset", 1)
+		},
+		source: {
+			width: g(l, "width", "definition.source", 1, 1 << 20),
+			height: g(l, "height", "definition.source", 1, 1 << 20),
+			sha256: u
+		},
+		media: d,
+		rows: g(h, "rows", "definition.board", 1, 1024),
+		cols: g(h, "cols", "definition.board", 1, 1024),
+		crop: w(h.crop, "definition.board.crop"),
+		tiles: _,
+		rules: structuredClone(x),
+		assistance: {
+			preview: b(y, "preview", "definition.assistance"),
+			numbers: b(y, "numbers", "definition.assistance"),
+			highlightCorrect: b(y, "highlightCorrect", "definition.assistance")
+		}
+	}, C = v(t, "id", "definition", 80);
+	Pt(S);
+	let T = Ct(i);
+	if (T.validateDefinition(S), JSON.stringify(t.capabilities) !== JSON.stringify(T.capabilities)) throw new s(`definition.capabilities do not match the ${i} rules.`);
+	if (JSON.stringify(t.actions) !== JSON.stringify(T.actionTypes)) throw new s(`definition.actions do not match the ${i} rules.`);
+	let E = T.validateBoard(S, t.initial);
+	if (T.isComplete(S, E)) throw new s("definition.initial is already solved.");
+	let D = {
+		...S,
+		id: C,
+		actions: [...T.actionTypes],
+		capabilities: { ...T.capabilities },
+		initial: E
+	}, k = jt(D);
+	if (k !== C) throw new s(`definition.id does not match its content (expected ${k}).`);
+	return Ft(D);
+}
+function jt(t) {
+	return `gd1-${i(e(Mt(t)))}`;
+}
+function Mt(e) {
+	return {
+		format: Tt,
+		version: 1,
+		kind: e.kind,
+		generator: { algorithm: 1 },
+		seed: e.seed,
+		preset: e.preset,
+		source: e.source,
+		media: e.media,
+		board: {
+			rows: e.rows,
+			cols: e.cols,
+			crop: e.crop
+		},
+		tiles: e.tiles.map((e) => ({
+			id: e.id,
+			home: e.home,
+			rect: e.rect,
+			...e.attributes
+		})),
+		rules: e.rules,
+		actions: e.actions,
+		capabilities: e.capabilities,
+		assistance: e.assistance,
+		initial: e.initial
+	};
+}
+function Nt(e, t) {
+	let n = f(e, t), r = x(n.id, `${t}.id`), i = g(n, "home", t, 0, 1 << 20), a = w(n.rect, `${t}.rect`), o = {};
+	for (let [e, t] of Object.entries(n)) e !== "id" && e !== "home" && e !== "rect" && (o[e] = structuredClone(t));
+	return {
+		id: r,
+		home: i,
+		rect: a,
+		attributes: o
+	};
+}
+function Pt(e) {
+	if (!/^(easy|medium|hard|custom)$/.test(e.preset.name)) throw new s(`Unknown preset "${e.preset.name}".`);
+	if (!Dt.test(e.media.image) || Ot.test(e.media.image)) throw new s("media.image must be a relative path without dot segments or an https URL.");
+	let { crop: t, source: n } = e;
+	if (t.x < 0 || t.y < 0 || t.x + t.width > n.width || t.y + t.height > n.height) throw new s("board.crop must lie inside the source image.");
+	let r = /* @__PURE__ */ new Set();
+	for (let t of e.tiles) {
+		if (r.has(t.id)) throw new s(`Duplicate tile id "${t.id}".`);
+		r.add(t.id);
+	}
+	k(e.media, e.kind, e.source.width, e.tiles);
+}
+function Ft(e) {
+	if (typeof e == "object" && e && !Object.isFrozen(e)) {
+		Object.freeze(e);
+		for (let t of Object.values(e)) Ft(t);
+	}
+	return e;
+}
+// ../engine/dist/state.js
+var It = "image-puzzle/game-state", Lt = 100, Rt = "https://raw.githubusercontent.com/offline-agency/php-image-puzzle/HEAD/docs/schemas/game/v1/state.schema.json";
+function zt(e, t) {
+	let n = f(t, "state");
+	if (m(n, [
+		"$schema",
+		"format",
+		"version",
+		"definitionId",
+		"kind",
+		"board",
+		"moves",
+		"elapsedMs",
+		"hintsUsed",
+		"completed",
+		"history"
+	], "state"), n.format !== "image-puzzle/game-state") throw new s(`state.format must be "${It}".`);
+	let r = g(n, "version", "state", 1);
+	if (r !== 1) throw new s(`Unsupported game state version ${r}; this library reads version 1.`);
+	if (v(n, "definitionId", "state", 80) !== e.id) throw new s("state.definitionId belongs to another puzzle.");
+	if (v(n, "kind", "state", 32) !== e.kind) throw new s("state.kind does not match the definition.");
+	let i = Ct(e.kind), a = i.validateBoard(e, n.board), o = b(n, "completed", "state");
+	if (o !== i.isComplete(e, a)) throw new s("state.completed does not match the board.");
+	let c = f(n.history, "state.history");
+	m(c, ["past", "future"], "state.history");
+	let l = p(c.past, "state.history.past", 100).map((t) => i.validateBoard(e, t)), u = p(c.future, "state.history.future", 100).map((t) => i.validateBoard(e, t));
+	return {
+		board: a,
+		moves: g(n, "moves", "state", 0),
+		elapsedMs: g(n, "elapsedMs", "state", 0),
+		hintsUsed: g(n, "hintsUsed", "state", 0),
+		completed: o,
+		past: l,
+		future: u
+	};
+}
+function Bt(e, t) {
+	return structuredClone({
+		$schema: Rt,
+		format: It,
+		version: 1,
+		definitionId: e.id,
+		kind: e.kind,
+		board: t.board,
+		moves: t.moves,
+		elapsedMs: t.elapsedMs,
+		hintsUsed: t.hintsUsed,
+		completed: t.completed,
+		history: {
+			past: t.past,
+			future: t.future
+		}
+	});
+}
+// ../engine/dist/engine.js
+function Vt() {
+	return typeof performance < "u" ? performance.now() : Date.now();
+}
+function Ht() {
+	return typeof crypto < "u" && typeof crypto.getRandomValues == "function" ? crypto.getRandomValues(/* @__PURE__ */ new Uint32Array(1))[0] ?? 0 : Math.floor(Math.random() * N);
+}
+function Ut(e = {}) {
+	let t = e.clock ?? Vt, n = e.randomSeed ?? Ht, r = e.onListenerError ?? ((e) => {
+		queueMicrotask(() => {
+			throw e;
+		});
+	}), i = /* @__PURE__ */ new Map(), a = null, s = "empty", l = 0, u = null;
+	function d() {
+		if (s === "destroyed") throw new o("destroyed", "The puzzle engine was destroyed.");
+	}
+	function f() {
+		if (d(), a === null) throw new o("invalid", "No puzzle is loaded.");
+		return a;
+	}
+	function p() {
+		return Math.floor(l + (u === null ? 0 : Math.max(0, t() - u)));
+	}
+	function m() {
+		l = p(), u = null;
+	}
+	function h(e, t) {
+		let n = i.get(e);
+		if (n !== void 0) for (let e of [...n]) try {
+			e(t);
+		} catch (e) {
+			r(e);
+		}
+	}
+	function g(e) {
+		return Bt(e.definition, {
+			...e.state,
+			elapsedMs: p()
+		});
+	}
+	function _(e) {
+		return Ct(e.definition.kind).progress(e.definition, e.state.board);
+	}
+	function v(e) {
+		let t = f();
+		h("state-change", {
+			reason: e,
+			status: s,
+			state: g(t)
+		}), h("progress", {
+			progress: _(t),
+			moves: t.state.moves,
+			elapsedMs: p()
+		});
+	}
+	function y(e) {
+		if (e instanceof o) throw h("error", {
+			code: e.code,
+			message: e.message
+		}), e;
+		let t = new o("invalid", e instanceof Error ? e.message : String(e), { cause: e });
+		throw h("error", {
+			code: t.code,
+			message: t.message
+		}), t;
+	}
+	function b() {
+		(s === "idle" || s === "paused") && (s = "running", u = t());
+	}
+	function x(e, t) {
+		return [...e, t].slice(-100);
+	}
+	function S(e, t, n, r) {
+		let i = Ct(e.definition.kind).isComplete(e.definition, t);
+		e.state = {
+			...e.state,
+			board: t,
+			past: n,
+			future: r,
+			moves: e.state.moves + 1,
+			completed: i
+		}, i && (m(), s = "complete");
+	}
+	function C(e) {
+		e.state.completed && h("complete", {
+			definitionId: e.definition.id,
+			moves: e.state.moves,
+			elapsedMs: p(),
+			hintsUsed: e.state.hintsUsed
+		});
+	}
+	function w(e, t) {
+		return {
+			board: t,
+			moves: 0,
+			elapsedMs: 0,
+			hintsUsed: 0,
+			completed: !1,
+			past: [],
+			future: []
+		};
+	}
+	let T = {
+		get definition() {
+			return a?.definition ?? null;
+		},
+		get status() {
+			return s;
+		},
+		load(e, t) {
+			d();
+			let n, r;
+			try {
+				n = At(e), r = t === void 0 ? w(n, n.initial) : zt(n, t);
+			} catch (e) {
+				y(e);
+			}
+			a = {
+				definition: n,
+				state: r
+			}, l = r.elapsedMs, u = null, s = r.completed ? "complete" : "idle", v("load"), h("ready", {
+				definitionId: n.id,
+				kind: n.kind,
+				state: g(a)
+			});
+		},
+		start() {
+			f(), b(), v("start");
+		},
+		pause() {
+			f(), s === "running" && (m(), s = "paused"), v("pause");
+		},
+		reset() {
+			let e = f();
+			e.state = w(e.definition, e.definition.initial), l = 0, u = null, s = "idle", v("reset");
+		},
+		shuffle(e) {
+			let t = f(), r = e ?? n(), i;
+			try {
+				i = Ct(t.definition.kind).scramble(t.definition, r);
+			} catch (e) {
+				y(e);
+			}
+			t.state = w(t.definition, i), l = 0, u = null, s = "idle", v("shuffle");
+		},
+		dispatchAction(e) {
+			let t = f();
+			if (t.state.completed) return {
+				ok: !1,
+				error: new c("The puzzle is already complete.")
+			};
+			let n;
+			try {
+				n = Ct(t.definition.kind).apply(t.definition, t.state.board, e);
+			} catch (e) {
+				if (e instanceof o) return {
+					ok: !1,
+					error: e
+				};
+				throw e;
+			}
+			return b(), S(t, n, x(t.state.past, t.state.board), []), h("move", {
+				action: structuredClone(e),
+				state: g(t)
+			}), v("action"), C(t), { ok: !0 };
+		},
+		legalActions() {
+			let e = f();
+			return e.state.completed ? [] : Ct(e.definition.kind).legalActions(e.definition, e.state.board);
+		},
+		hint() {
+			let e = f();
+			if (!e.definition.capabilities.hint || e.state.completed) return null;
+			let t = Ct(e.definition.kind).hint(e.definition, e.state.board);
+			return t === null ? null : (e.state = {
+				...e.state,
+				hintsUsed: e.state.hintsUsed + 1
+			}, v("hint"), t);
+		},
+		undo() {
+			let e = f();
+			if (!T.canUndo()) return !1;
+			let t = [...e.state.past], n = t.pop();
+			return b(), S(e, n, t, x(e.state.future, e.state.board)), v("undo"), C(e), !0;
+		},
+		redo() {
+			let e = f();
+			if (!T.canRedo()) return !1;
+			let t = [...e.state.future], n = t.pop();
+			return b(), S(e, n, x(e.state.past, e.state.board), t), v("redo"), C(e), !0;
+		},
+		canUndo() {
+			let e = f();
+			return e.definition.capabilities.undo && !e.state.completed && e.state.past.length > 0;
+		},
+		canRedo() {
+			let e = f();
+			return e.definition.capabilities.redo && !e.state.completed && e.state.future.length > 0;
+		},
+		exportState() {
+			return g(f());
+		},
+		importState(e) {
+			let t = f(), n;
+			try {
+				n = zt(t.definition, e);
+			} catch (e) {
+				y(e);
+			}
+			t.state = n, l = n.elapsedMs, u = null, s = n.completed ? "complete" : "idle", v("import");
+		},
+		snapshot() {
+			return d(), a === null ? {
+				status: s,
+				board: null,
+				moves: 0,
+				elapsedMs: 0,
+				hintsUsed: 0,
+				progress: 0,
+				completed: !1,
+				canUndo: !1,
+				canRedo: !1
+			} : {
+				status: s,
+				board: structuredClone(a.state.board),
+				moves: a.state.moves,
+				elapsedMs: p(),
+				hintsUsed: a.state.hintsUsed,
+				progress: _(a),
+				completed: a.state.completed,
+				canUndo: T.canUndo(),
+				canRedo: T.canRedo()
+			};
+		},
+		subscribe(e, t) {
+			d();
+			let n = i.get(e);
+			n === void 0 && (n = /* @__PURE__ */ new Set(), i.set(e, n));
+			let r = t;
+			return n.add(r), () => {
+				i.get(e)?.delete(r);
+			};
+		},
+		destroy() {
+			s !== "destroyed" && (m(), i.clear(), a = null, s = "destroyed");
+		}
+	};
+	return e.definition !== void 0 && T.load(e.definition, e.state), T;
+}
+// ../engine/dist/persistence.js
+var Wt = "image-puzzle";
+function Gt() {
+	try {
+		let e = globalThis.localStorage;
+		if (e === void 0) return null;
+		let t = `${Wt}:probe`;
+		return e.setItem(t, "1"), e.removeItem(t), e;
+	} catch {
+		return null;
+	}
+}
+function Kt(e, t = Wt) {
+	return `${t}:${e}`;
+}
+function qt(e, t, n = Wt) {
+	try {
+		let r = e.exportState();
+		return t.setItem(Kt(r.definitionId, n), JSON.stringify(r)), { ok: !0 };
+	} catch (e) {
+		return {
+			ok: !1,
+			error: Xt(e)
+		};
+	}
+}
+function Jt(e, t, n = Wt) {
+	let r = e.definition;
+	if (r === null) return {
+		restored: !1,
+		error: new o("invalid", "No puzzle is loaded.")
+	};
+	let i;
+	try {
+		i = t.getItem(Kt(r.id, n));
+	} catch (e) {
+		return {
+			restored: !1,
+			error: Xt(e)
+		};
+	}
+	if (i === null) return { restored: !1 };
+	let a;
+	try {
+		a = JSON.parse(i);
+	} catch {
+		return {
+			restored: !1,
+			error: new o("storage", "The saved game is not valid JSON.")
+		};
+	}
+	try {
+		return e.importState(a), { restored: !0 };
+	} catch (e) {
+		return {
+			restored: !1,
+			error: e instanceof o ? e : Xt(e)
+		};
+	}
+}
+function Yt(e, t, n = {}) {
+	let r = n.debounceMs ?? 250, i = null, a = !1, o = () => {
+		if (i = null, e.status === "destroyed" || e.definition === null) return;
+		let r = qt(e, t, n.prefix);
+		r.ok || n.onError?.(r.error);
+	}, s = e.subscribe("state-change", () => {
+		a || (i !== null && clearTimeout(i), i = setTimeout(o, r));
+	});
+	return () => {
+		a || (a = !0, s(), i !== null && (clearTimeout(i), o()));
+	};
+}
+function Xt(e) {
+	return new o("storage", e instanceof Error ? e.message : String(e), { cause: e });
+}
+// ../engine/dist/build-config.js
+var Zt = "image-puzzle/build-config", Qt = 1e5, $t = 2147483647, en = [
+	"sliding",
+	"swap",
+	"rotation",
+	"strips",
+	"jigsaw",
+	"nonogram",
+	"memory",
+	"tangram"
+], tn = [
+	"easy",
+	"medium",
+	"hard"
+], nn = {
+	sliding: [
+		"rows",
+		"cols",
+		"scrambleMoves",
+		"assistance"
+	],
+	swap: [
+		"rows",
+		"cols",
+		"assistance"
+	],
+	rotation: [
+		"rows",
+		"cols",
+		"orientations",
+		"assistance"
+	],
+	strips: [
+		"count",
+		"axis",
+		"assistance"
+	],
+	jigsaw: [
+		"rows",
+		"cols",
+		"topology",
+		"edge",
+		"snap"
+	],
+	nonogram: [
+		"rows",
+		"cols",
+		"threshold",
+		"invert",
+		"requireUnique",
+		"assistance"
+	],
+	memory: [
+		"rows",
+		"cols",
+		"labels",
+		"assistance"
+	],
+	tangram: [
+		"target",
+		"snap",
+		"assistance"
+	]
+}, rn = {
+	sliding: {
+		easy: {
+			rows: 3,
+			cols: 3,
+			scrambleMoves: 60
+		},
+		medium: {
+			rows: 4,
+			cols: 4,
+			scrambleMoves: 200
+		},
+		hard: {
+			rows: 5,
+			cols: 5,
+			scrambleMoves: 500
+		}
+	},
+	swap: {
+		easy: {
+			rows: 3,
+			cols: 3
+		},
+		medium: {
+			rows: 4,
+			cols: 4
+		},
+		hard: {
+			rows: 6,
+			cols: 6
+		}
+	},
+	rotation: {
+		easy: {
+			rows: 3,
+			cols: 3,
+			orientations: [0, 180]
+		},
+		medium: {
+			rows: 4,
+			cols: 4,
+			orientations: [
+				0,
+				90,
+				180,
+				270
+			]
+		},
+		hard: {
+			rows: 6,
+			cols: 6,
+			orientations: [
+				0,
+				90,
+				180,
+				270
+			]
+		}
+	},
+	strips: {
+		easy: {
+			count: 4,
+			axis: "horizontal"
+		},
+		medium: {
+			count: 8,
+			axis: "horizontal"
+		},
+		hard: {
+			count: 14,
+			axis: "vertical"
+		}
+	},
+	jigsaw: {
+		easy: {
+			rows: 3,
+			cols: 4,
+			edge: "jigsaw"
+		},
+		medium: {
+			rows: 6,
+			cols: 8,
+			edge: "jigsaw"
+		},
+		hard: {
+			rows: 10,
+			cols: 12,
+			edge: "jigsaw"
+		}
+	},
+	nonogram: {
+		easy: {
+			rows: 10,
+			cols: 10
+		},
+		medium: {
+			rows: 15,
+			cols: 15
+		},
+		hard: {
+			rows: 20,
+			cols: 20
+		}
+	},
+	memory: {
+		easy: {
+			rows: 3,
+			cols: 4
+		},
+		medium: {
+			rows: 4,
+			cols: 4
+		},
+		hard: {
+			rows: 4,
+			cols: 6
+		}
+	},
+	tangram: {
+		easy: {
+			target: "square",
+			snap: 50
+		},
+		medium: {
+			target: "square",
+			snap: 30
+		},
+		hard: {
+			target: "square",
+			snap: 15
+		}
+	}
+};
+function an(e) {
+	return en.includes(e);
+}
+function on(e) {
+	return tn.includes(e);
+}
+function sn(e) {
+	let t = f(e, "config");
+	if (m(t, [
+		"$schema",
+		"format",
+		"version",
+		"kind",
+		"preset",
+		"custom",
+		"seed",
+		"crop"
+	], "config"), t.format !== "image-puzzle/build-config") throw new s(`config.format must be "${Zt}".`);
+	let n = g(t, "version", "config", 1);
+	if (n !== 1) throw new s(`Unsupported build configuration version ${n}; this library reads version 1.`);
+	let r = v(t, "kind", "config", 32);
+	if (!an(r)) throw new s(`config.kind must be one of ${en.join(", ")}.`);
+	let i = null;
+	if (h(t, "crop") && t.crop !== null) {
+		let e = f(t.crop, "config.crop");
+		m(e, [
+			"x",
+			"y",
+			"width",
+			"height"
+		], "config.crop"), i = {
+			x: g(e, "x", "config.crop", 0, Qt),
+			y: g(e, "y", "config.crop", 0, Qt),
+			width: g(e, "width", "config.crop", 1, Qt),
+			height: g(e, "height", "config.crop", 1, Qt)
+		};
+	}
+	return cn({
+		kind: r,
+		preset: v(t, "preset", "config", 32),
+		custom: h(t, "custom") && t.custom !== null ? f(t.custom, "config.custom") : {},
+		seed: g(t, "seed", "config", 0, N),
+		crop: i
+	});
+}
+function cn(e) {
+	let t = e.custom ?? {}, n = e.seed ?? 0, r = e.preset;
+	if (r !== "custom" && !on(r)) throw new s(`config.preset must be one of ${tn.join(", ")} or "custom".`);
+	let i = Object.keys(t).length > 0;
+	if (r !== "custom" && i) throw new s("config.custom requires the \"custom\" preset.");
+	if (r === "custom") {
+		if (!i) throw new s("config.custom is required with the \"custom\" preset.");
+		m(t, nn[e.kind], "config.custom");
+	}
+	let a = e.kind === "jigsaw" ? $t : N;
+	if (!Number.isSafeInteger(n) || n < 0 || n > a) throw new s(`config.seed must be between 0 and ${a} for ${e.kind}, got ${n}.`);
+	return {
+		kind: e.kind,
+		preset: r,
+		custom: t,
+		seed: n,
+		crop: e.crop ?? null
+	};
+}
+function ln(e) {
+	return {
+		format: Zt,
+		version: 1,
+		kind: e.kind,
+		preset: e.preset,
+		...Object.keys(e.custom).length > 0 ? { custom: e.custom } : {},
+		seed: e.seed,
+		...e.crop === null ? {} : { crop: {
+			x: e.crop.x,
+			y: e.crop.y,
+			width: e.crop.width,
+			height: e.crop.height
+		} }
+	};
+}
+function un(e) {
+	let t = e.preset === "custom" ? e.custom : rn[e.kind][e.preset], n = (e, n) => {
+		let r = t[e];
+		return typeof r == "number" && Number.isSafeInteger(r) && r > 0 ? r : n;
+	};
+	if (e.kind === "tangram") return {
+		type: "tangram",
+		target: typeof t.target == "string" ? t.target : "square"
+	};
+	if (e.kind === "strips") return {
+		type: "strips",
+		count: n("count", 4),
+		axis: t.axis === "vertical" ? "vertical" : "horizontal"
+	};
+	let r = e.kind === "jigsaw" && typeof t.topology == "string" ? t.topology : "rect";
+	return {
+		type: "grid",
+		rows: n("rows", 3),
+		cols: n("cols", 3),
+		topology: r
+	};
+}
+// src/configurator-messages.ts
+var dn = {
+	label: "Puzzle configuration",
+	kind: "Game mode",
+	kinds: {
+		sliding: "Sliding",
+		swap: "Swap",
+		rotation: "Rotation",
+		strips: "Strips",
+		jigsaw: "Jigsaw",
+		nonogram: "Nonogram",
+		memory: "Memory",
+		tangram: "Tangram"
+	},
+	preset: "Difficulty",
+	presets: {
+		easy: "Easy",
+		medium: "Medium",
+		hard: "Hard",
+		custom: "Custom"
+	},
+	parameters: "Custom parameters",
+	fields: {
+		rows: "Rows",
+		cols: "Columns",
+		scrambleMoves: "Scramble moves",
+		orientations: "Rotations",
+		count: "Strips",
+		axis: "Direction",
+		topology: "Piece layout",
+		edge: "Edge",
+		snap: "Snap distance (px)",
+		threshold: "Darkness threshold (1-255, empty: automatic)",
+		invert: "Fill the light areas",
+		requireUnique: "Only accept a proven unique solution",
+		labels: "Card labels, one per pair and line (the second card of each pair shows the label)",
+		target: "Target shape",
+		"tangram.snap": "Snap distance (% of a quarter of the side)"
+	},
+	choices: {
+		horizontal: "Horizontal",
+		vertical: "Vertical",
+		rect: "Rectangular",
+		hex: "Hexagonal",
+		triangle: "Triangular",
+		jigsaw: "Jigsaw tabs",
+		line: "Straight",
+		arc: "Arc",
+		half_circle: "Half circle",
+		sinus: "Wave",
+		no_edge: "None",
+		square: "Square (the picture)",
+		arrow: "Arrow",
+		chevron: "Chevron"
+	},
+	optional: "(optional)",
+	seed: "Seed",
+	randomSeed: "New seed",
+	crop: "Crop",
+	cropX: "Left (px)",
+	cropY: "Top (px)",
+	cropWidth: "Width (px)",
+	cropHeight: "Height (px)",
+	resetCrop: "Use the whole image",
+	cropArea: "Crop area {width} × {height} px at {x}, {y}",
+	cropFrame: "crop frame",
+	cropHelp: "Drag the frame or its corners. With the keyboard: arrows move the frame, Shift+arrows resize it.",
+	noImage: "Choose an image to preview the crop and the board.",
+	imageError: "The image could not be loaded for the preview.",
+	preview: "Preview",
+	gridSummary: "{rows} × {cols} board, tiles of about {width} × {height} px",
+	stripsSummary: "{count} {axis} strips of about {size} px",
+	tangramSummary: "Seven tangram pieces from a {size} px square; target: {target}",
+	approximate: "Piece outlines are drawn when the puzzle is generated; the preview shows the grid.",
+	range: "{field} must be a whole number from {min} to {max}.",
+	required: "{field} is required.",
+	orientationsRequired: "Choose at least one rotation.",
+	cropOutside: "The crop must lie inside the {width} × {height} px image.",
+	tooSmall: "The crop is too small for this board."
+}, fn = {
+	label: "Configurazione del puzzle",
+	kind: "Modalità di gioco",
+	kinds: {
+		sliding: "Scorrevole",
+		swap: "Scambio",
+		rotation: "Rotazione",
+		strips: "Strisce",
+		jigsaw: "Jigsaw",
+		nonogram: "Nonogramma",
+		memory: "Memory",
+		tangram: "Tangram"
+	},
+	preset: "Difficoltà",
+	presets: {
+		easy: "Facile",
+		medium: "Media",
+		hard: "Difficile",
+		custom: "Personalizzata"
+	},
+	parameters: "Parametri personalizzati",
+	fields: {
+		rows: "Righe",
+		cols: "Colonne",
+		scrambleMoves: "Mosse di mescolamento",
+		orientations: "Rotazioni",
+		count: "Strisce",
+		axis: "Direzione",
+		topology: "Forma dei pezzi",
+		edge: "Bordo",
+		snap: "Distanza di aggancio (px)",
+		threshold: "Soglia di scuro (1-255, vuoto: automatica)",
+		invert: "Riempi le zone chiare",
+		requireUnique: "Accetta solo una soluzione unica dimostrata",
+		labels: "Etichette delle carte, una per coppia e per riga (la seconda carta di ogni coppia mostra l'etichetta)",
+		target: "Figura da comporre",
+		"tangram.snap": "Distanza di aggancio (% di un quarto del lato)"
+	},
+	choices: {
+		horizontal: "Orizzontali",
+		vertical: "Verticali",
+		rect: "Rettangolare",
+		hex: "Esagonale",
+		triangle: "Triangolare",
+		jigsaw: "Incastri",
+		line: "Dritto",
+		arc: "Arco",
+		half_circle: "Semicerchio",
+		sinus: "Onda",
+		no_edge: "Nessuno",
+		square: "Quadrato (l'immagine)",
+		arrow: "Freccia",
+		chevron: "Chevron"
+	},
+	optional: "(facoltativo)",
+	seed: "Seme",
+	randomSeed: "Nuovo seme",
+	crop: "Ritaglio",
+	cropX: "Sinistra (px)",
+	cropY: "Alto (px)",
+	cropWidth: "Larghezza (px)",
+	cropHeight: "Altezza (px)",
+	resetCrop: "Usa tutta l'immagine",
+	cropArea: "Area di ritaglio {width} × {height} px in {x}, {y}",
+	cropFrame: "cornice di ritaglio",
+	cropHelp: "Trascina la cornice o i suoi angoli. Da tastiera: le frecce spostano la cornice, Maiusc+frecce la ridimensionano.",
+	noImage: "Scegli un'immagine per vedere l'anteprima del ritaglio e della griglia.",
+	imageError: "Impossibile caricare l'immagine per l'anteprima.",
+	preview: "Anteprima",
+	gridSummary: "Griglia {rows} × {cols}, tessere di circa {width} × {height} px",
+	stripsSummary: "{count} strisce {axis} di circa {size} px",
+	tangramSummary: "Sette pezzi del tangram da un quadrato di {size} px; figura: {target}",
+	approximate: "I contorni dei pezzi vengono disegnati durante la generazione; l'anteprima mostra la griglia.",
+	range: "{field} deve essere un numero intero da {min} a {max}.",
+	required: "{field} è obbligatorio.",
+	orientationsRequired: "Scegli almeno una rotazione.",
+	cropOutside: "Il ritaglio deve stare dentro l'immagine di {width} × {height} px.",
+	tooSmall: "Il ritaglio è troppo piccolo per questa griglia."
+}, pn = {
+	en: dn,
+	it: fn
+};
+function mn(e, t) {
+	return {
+		...(e === void 0 ? void 0 : pn[e] ?? pn[e.split("-")[0] ?? ""]) ?? dn,
+		...t
+	};
+}
+// src/dom.ts
+function Z(e, t, n = {}, r) {
+	let i = e.createElement(t);
+	for (let [e, t] of Object.entries(n)) i.setAttribute(e, t);
+	return r !== void 0 && (i.textContent = r), i;
+}
+function Q(e) {
+	return `${Math.round(e * 1e4) / 1e4}%`;
+}
+function hn(e, t) {
+	let n = new URL(e, t);
+	if (![
+		"http:",
+		"https:",
+		"blob:",
+		"file:"
+	].includes(n.protocol)) throw Error(`Unsupported asset URL scheme ${n.protocol}`);
+	return n.href;
+}
+function gn(e) {
+	return `url("${e.replace(/["\\\n\r]/g, (e) => encodeURIComponent(e))}")`;
+}
+// src/messages.ts
+var _n = {
+	label: "Image puzzle",
+	controls: "Puzzle controls",
+	loading: "Loading puzzle…",
+	empty: "No puzzle loaded.",
+	loadError: "The puzzle could not be loaded: {message}",
+	start: "Start",
+	pause: "Pause",
+	resume: "Resume",
+	undo: "Undo",
+	redo: "Redo",
+	reset: "Reset",
+	shuffle: "Shuffle",
+	hint: "Hint",
+	preview: "Show picture",
+	zoomIn: "Zoom in",
+	zoomOut: "Zoom out",
+	moves: "Moves: {n}",
+	time: "Time: {time}",
+	progress: "{percent}% correct",
+	hints: "Hints: {n}",
+	paused: "Paused",
+	complete: "Puzzle complete in {moves} moves and {time}.",
+	illegal: "That move is not allowed.",
+	tile: "Tile {n}, row {row}, column {col}",
+	tileSelected: "Tile {n} selected",
+	strip: "Strip {n}, position {position} of {count}",
+	piece: "Piece {n}",
+	piecePlaced: "Piece {n}, placed",
+	orientation: "rotated {degrees} degrees",
+	moved: "Moved tile {n}.",
+	swapped: "Swapped tiles {a} and {b}.",
+	rotated: "Tile {n} now {degrees} degrees.",
+	placed: "Piece {n} placed.",
+	dropped: "Piece {n} dropped.",
+	hintGiven: "Hint: {hint}",
+	noHint: "No hint available.",
+	nonogramTool: "Pointer tool",
+	nonogramFill: "Fill",
+	nonogramCross: "Cross out",
+	nonogramRow: "Row {n} clue {clue}",
+	nonogramColumn: "Column {n} clue {clue}",
+	nonogramCell: "Row {row}, column {col}: {state}",
+	nonogramStates: {
+		filled: "filled",
+		crossed: "crossed out",
+		unknown: "empty"
+	},
+	memoryFaceDown: "Card {n}, face down",
+	memoryCard: "Card {n}: {face}",
+	memoryMatchedCard: "Card {n}: {face}, matched",
+	memoryPicture: "picture {n}",
+	memoryMatch: "Match!",
+	memoryMismatch: "No match.",
+	tangramPieces: {
+		"large-a": "Large triangle 1",
+		"large-b": "Large triangle 2",
+		medium: "Medium triangle",
+		"small-a": "Small triangle 1",
+		"small-b": "Small triangle 2",
+		square: "Square",
+		parallelogram: "Parallelogram"
+	},
+	tangramPose: "{name}, turned {degrees}°",
+	tangramPoseFlipped: "{name}, turned {degrees}°, mirrored",
+	tangramPlaced: "{name}, in place",
+	tangramTools: "Turn the selected piece",
+	tangramTurn: "Turn right",
+	tangramTurnBack: "Turn left",
+	tangramFlip: "Mirror",
+	instructions: {
+		sliding: "Use the arrow keys to move between tiles and Enter to slide a tile next to the gap.",
+		swap: "Press Enter on two tiles to swap them. Escape cancels the selection.",
+		rotation: "Press Enter to rotate a tile clockwise, Shift+Enter to rotate it counter-clockwise.",
+		strips: "Press Enter to pick up a strip, the arrow keys to move it, and Enter again to drop it.",
+		jigsaw: "Tab to a piece, move it with the arrow keys (Shift for larger steps) and press Enter to drop it.",
+		memory: "Find the pairs. Arrow keys move between cards, Enter or Space turns a card face up. Two cards that do not match turn face down with the next card you turn.",
+		nonogram: "Fill cells so each row and column shows its clue: the lengths of its runs of filled cells, in order. Arrow keys move, Enter or Space fills or clears a cell, X crosses it out, Delete clears it.",
+		tangram: "Cover the target shape with the seven pieces. Tab to a piece, move it with the arrow keys (Shift for larger steps) and press Enter to drop it. R turns it right by 45 degrees, Shift+R turns it left, F mirrors it. A piece dropped close to a matching place snaps into it."
+	}
+}, vn = {
+	label: "Puzzle",
+	controls: "Comandi del puzzle",
+	loading: "Caricamento del puzzle…",
+	empty: "Nessun puzzle caricato.",
+	loadError: "Impossibile caricare il puzzle: {message}",
+	start: "Inizia",
+	pause: "Pausa",
+	resume: "Riprendi",
+	undo: "Annulla",
+	redo: "Ripeti",
+	reset: "Ricomincia",
+	shuffle: "Mescola",
+	hint: "Suggerimento",
+	preview: "Mostra l'immagine",
+	zoomIn: "Ingrandisci",
+	zoomOut: "Riduci",
+	moves: "Mosse: {n}",
+	time: "Tempo: {time}",
+	progress: "{percent}% corretto",
+	hints: "Suggerimenti: {n}",
+	paused: "In pausa",
+	complete: "Puzzle completato in {moves} mosse e {time}.",
+	illegal: "Mossa non consentita.",
+	tile: "Tessera {n}, riga {row}, colonna {col}",
+	tileSelected: "Tessera {n} selezionata",
+	strip: "Striscia {n}, posizione {position} di {count}",
+	piece: "Pezzo {n}",
+	piecePlaced: "Pezzo {n}, posizionato",
+	orientation: "ruotata di {degrees} gradi",
+	moved: "Tessera {n} spostata.",
+	swapped: "Tessere {a} e {b} scambiate.",
+	rotated: "Tessera {n} ora a {degrees} gradi.",
+	placed: "Pezzo {n} posizionato.",
+	dropped: "Pezzo {n} lasciato.",
+	hintGiven: "Suggerimento: {hint}",
+	noHint: "Nessun suggerimento disponibile.",
+	nonogramTool: "Strumento del puntatore",
+	nonogramFill: "Riempi",
+	nonogramCross: "Segna vuota",
+	nonogramRow: "Indizio riga {n}: {clue}",
+	nonogramColumn: "Indizio colonna {n}: {clue}",
+	nonogramCell: "Riga {row}, colonna {col}: {state}",
+	nonogramStates: {
+		filled: "piena",
+		crossed: "segnata vuota",
+		unknown: "vuota"
+	},
+	memoryFaceDown: "Carta {n}, coperta",
+	memoryCard: "Carta {n}: {face}",
+	memoryMatchedCard: "Carta {n}: {face}, abbinata",
+	memoryPicture: "immagine {n}",
+	memoryMatch: "Coppia trovata!",
+	memoryMismatch: "Non è una coppia.",
+	tangramPieces: {
+		"large-a": "Triangolo grande 1",
+		"large-b": "Triangolo grande 2",
+		medium: "Triangolo medio",
+		"small-a": "Triangolo piccolo 1",
+		"small-b": "Triangolo piccolo 2",
+		square: "Quadrato",
+		parallelogram: "Parallelogramma"
+	},
+	tangramPose: "{name}, ruotato di {degrees}°",
+	tangramPoseFlipped: "{name}, ruotato di {degrees}°, specchiato",
+	tangramPlaced: "{name}, al suo posto",
+	tangramTools: "Ruota il pezzo selezionato",
+	tangramTurn: "Ruota a destra",
+	tangramTurnBack: "Ruota a sinistra",
+	tangramFlip: "Specchia",
+	instructions: {
+		sliding: "Usa le frecce per spostarti tra le tessere e Invio per far scorrere una tessera vicina allo spazio vuoto.",
+		swap: "Premi Invio su due tessere per scambiarle. Esc annulla la selezione.",
+		rotation: "Premi Invio per ruotare una tessera in senso orario, Maiusc+Invio in senso antiorario.",
+		strips: "Premi Invio per prendere una striscia, le frecce per spostarla e di nuovo Invio per lasciarla.",
+		jigsaw: "Usa Tab per scegliere un pezzo, le frecce per spostarlo (Maiusc per passi più lunghi) e Invio per lasciarlo.",
+		memory: "Trova le coppie. Le frecce spostano tra le carte, Invio o Spazio scopre una carta. Due carte diverse si coprono quando scopri la carta successiva.",
+		nonogram: "Riempi le caselle in modo che ogni riga e colonna mostri il suo indizio: le lunghezze dei gruppi di caselle piene, in ordine. Le frecce spostano, Invio o Spazio riempie o svuota una casella, X la segna vuota, Canc la svuota.",
+		tangram: "Copri la figura con i sette pezzi. Usa Tab per scegliere un pezzo, le frecce per spostarlo (Maiusc per passi più lunghi) e Invio per lasciarlo. R lo ruota a destra di 45 gradi, Maiusc+R a sinistra, F lo specchia. Un pezzo lasciato vicino a un posto adatto vi si aggancia."
+	}
+}, yn = {
+	en: _n,
+	it: vn
+};
+function bn(e, t) {
+	return {
+		...(e === void 0 ? void 0 : yn[e] ?? yn[e.split("-")[0] ?? ""]) ?? _n,
+		...t
+	};
+}
+function $(e, t) {
+	return e.replace(/\{(\w+)\}/g, (e, n) => {
+		let r = t[n];
+		return r === void 0 ? e : String(r);
+	});
+}
+function xn(e) {
+	let t = Math.floor(e / 1e3), n = Math.floor(t / 3600), r = Math.floor(t % 3600 / 60), i = t % 60, a = String(r).padStart(n > 0 ? 2 : 1, "0"), o = String(i).padStart(2, "0");
+	return n > 0 ? `${n}:${a}:${o}` : `${a}:${o}`;
+}
+// src/theme.ts
+var Sn = "\n  --ipp-fg: #e6e9ee;\n  --ipp-muted: #a9b2be;\n  --ipp-bg: #15191f;\n  --ipp-surface: #232933;\n  --ipp-border: #56606d;\n  --ipp-accent: #7aa7ff;\n  --ipp-accent-fg: #0b1220;\n  --ipp-focus: #ff7ab8;\n  --ipp-correct: #5fd38a;\n  --ipp-hint: #ffb45c;\n  --ipp-error: #ff8a80;\n  --ipp-tray: #1d232b;\n  color-scheme: dark;\n", Cn = `
+:host {
+  --ipp-font: system-ui, sans-serif;
+  --ipp-fg: #1d232b;
+  --ipp-muted: #55606e;
+  --ipp-bg: #ffffff;
+  --ipp-surface: #eef1f5;
+  --ipp-border: #c4ccd6;
+  --ipp-accent: #1f5fbf;
+  --ipp-accent-fg: #ffffff;
+  --ipp-focus: #d1006a;
+  --ipp-correct: #1b7f3b;
+  --ipp-hint: #b35c00;
+  --ipp-error: #b00020;
+  --ipp-radius: 6px;
+  --ipp-gap: 2px;
+  --ipp-tray: #dde3ea;
+  --ipp-duration: 160ms;
+  color-scheme: light;
+}
+:host([theme='dark']),
+:host([data-theme='dark']) {${Sn}}
+@media (prefers-color-scheme: dark) {
+  :host(:not([theme='light']):not([data-theme='light'])) {${Sn}}
+}
+`;
+function wn(e, t) {
+	let n = e.ownerDocument.documentElement, r = () => {
+		e.setAttribute("data-theme", n.classList.contains(t) ? "dark" : "light");
+	};
+	r();
+	let i = e.ownerDocument.defaultView;
+	if (i === null || i.MutationObserver === void 0) return () => {
+		e.removeAttribute("data-theme");
+	};
+	let a = new i.MutationObserver(r);
+	return a.observe(n, {
+		attributes: !0,
+		attributeFilter: ["class"]
+	}), () => {
+		a.disconnect(), e.removeAttribute("data-theme");
+	};
+}
+// src/configurator.ts
+var Tn = {
+	sliding: [
+		{
+			key: "rows",
+			type: "int",
+			min: 2,
+			max: 16
+		},
+		{
+			key: "cols",
+			type: "int",
+			min: 2,
+			max: 16
+		},
+		{
+			key: "scrambleMoves",
+			type: "int",
+			min: 1,
+			max: 1e5
+		}
+	],
+	swap: [{
+		key: "rows",
+		type: "int",
+		min: 1,
+		max: 16
+	}, {
+		key: "cols",
+		type: "int",
+		min: 1,
+		max: 16
+	}],
+	rotation: [
+		{
+			key: "rows",
+			type: "int",
+			min: 1,
+			max: 16
+		},
+		{
+			key: "cols",
+			type: "int",
+			min: 1,
+			max: 16
+		},
+		{
+			key: "orientations",
+			type: "angles"
+		}
+	],
+	strips: [{
+		key: "count",
+		type: "int",
+		min: 2,
+		max: 128
+	}, {
+		key: "axis",
+		type: "choice",
+		options: ["horizontal", "vertical"]
+	}],
+	jigsaw: [
+		{
+			key: "rows",
+			type: "int",
+			min: 1,
+			max: 64
+		},
+		{
+			key: "cols",
+			type: "int",
+			min: 1,
+			max: 64
+		},
+		{
+			key: "topology",
+			type: "choice",
+			options: [
+				"rect",
+				"hex",
+				"triangle"
+			]
+		},
+		{
+			key: "edge",
+			type: "choice",
+			options: [
+				"jigsaw",
+				"line",
+				"arc",
+				"half_circle",
+				"sinus",
+				"no_edge"
+			]
+		},
+		{
+			key: "snap",
+			type: "int",
+			min: 1,
+			max: 256,
+			optional: !0
+		}
+	],
+	nonogram: [
+		{
+			key: "rows",
+			type: "int",
+			min: 2,
+			max: 30
+		},
+		{
+			key: "cols",
+			type: "int",
+			min: 2,
+			max: 30
+		},
+		{
+			key: "threshold",
+			type: "int",
+			min: 1,
+			max: 255,
+			optional: !0
+		},
+		{
+			key: "invert",
+			type: "flag"
+		},
+		{
+			key: "requireUnique",
+			type: "flag"
+		}
+	],
+	memory: [
+		{
+			key: "rows",
+			type: "int",
+			min: 2,
+			max: 8
+		},
+		{
+			key: "cols",
+			type: "int",
+			min: 2,
+			max: 8
+		},
+		{
+			key: "labels",
+			type: "lines"
+		}
+	],
+	tangram: [{
+		key: "target",
+		type: "choice",
+		options: Object.keys(Qe)
+	}, {
+		key: "snap",
+		type: "int",
+		min: 1,
+		max: 90
+	}]
+}, En = [
+	0,
+	90,
+	180,
+	270
+], Dn = `${Cn}
+:host { display: block; color: var(--ipp-fg); font-family: var(--ipp-font); container-type: inline-size; }
+:host([hidden]) { display: none; }
+* { box-sizing: border-box; }
+.root { display: grid; gap: 1rem; grid-template-columns: minmax(0, 1fr); background: var(--ipp-bg); }
+@container (min-width: 44rem) { .root { grid-template-columns: minmax(15rem, 20rem) minmax(0, 1fr); } }
+.fields { display: grid; gap: 0.75rem; align-content: start; }
+fieldset { margin: 0; padding: 0.5rem 0.75rem 0.75rem; border: 1px solid var(--ipp-border); border-radius: var(--ipp-radius); display: grid; gap: 0.5rem; }
+fieldset[hidden] { display: none; }
+legend { padding: 0 0.25rem; font-weight: 600; font-size: 0.875rem; }
+label { display: grid; gap: 0.25rem; font-size: 0.875rem; }
+.pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.5rem; }
+.inline { display: flex; flex-wrap: wrap; gap: 0.5rem 1rem; }
+.inline label { display: flex; align-items: center; gap: 0.375rem; }
+input, select, button { font: inherit; font-size: 0.875rem; color: var(--ipp-fg); }
+input[type='number'], select, textarea { min-height: 2.5rem; padding: 0.25rem 0.5rem; border: 1px solid var(--ipp-border); border-radius: var(--ipp-radius); background: var(--ipp-bg); width: 100%; }
+input[type='checkbox'] { width: 1.125rem; height: 1.125rem; accent-color: var(--ipp-accent); }
+input[aria-invalid='true'], select[aria-invalid='true'] { border-color: var(--ipp-error); }
+.row { display: flex; gap: 0.5rem; align-items: end; }
+.row > label { flex: 1; }
+button { min-height: 2.5rem; padding: 0.25rem 0.75rem; border: 1px solid var(--ipp-border); border-radius: var(--ipp-radius); background: var(--ipp-surface); cursor: pointer; }
+button:disabled, input:disabled, select:disabled { opacity: 0.6; cursor: not-allowed; }
+:focus-visible { outline: 3px solid var(--ipp-focus); outline-offset: 2px; }
+.error { margin: 0; color: var(--ipp-error); font-size: 0.875rem; }
+.error:empty { display: none; }
+.help, .note, .summary { margin: 0; color: var(--ipp-muted); font-size: 0.8125rem; }
+.preview { display: grid; gap: 0.5rem; align-content: start; }
+.stage { position: relative; width: 100%; background: var(--ipp-tray); border-radius: var(--ipp-radius); overflow: hidden; touch-action: none; user-select: none; -webkit-user-select: none; }
+.stage[hidden], .placeholder[hidden] { display: none; }
+.stage img { display: block; width: 100%; height: auto; pointer-events: none; }
+.stage svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.shade { fill: rgb(0 0 0 / 0.55); fill-rule: evenodd; pointer-events: none; }
+.grid line { stroke: #fff; stroke-opacity: 0.85; vector-effect: non-scaling-stroke; stroke-width: 1; pointer-events: none; }
+.frame { fill: transparent; stroke: #fff; stroke-width: 2; vector-effect: non-scaling-stroke; cursor: move; }
+.frame:focus { outline: none; }
+.frame:focus-visible { stroke: var(--ipp-focus); stroke-width: 4; }
+.handle { fill: #fff; stroke: #1d232b; stroke-width: 1; vector-effect: non-scaling-stroke; }
+.handle[data-corner='nw'], .handle[data-corner='se'] { cursor: nwse-resize; }
+.handle[data-corner='ne'], .handle[data-corner='sw'] { cursor: nesw-resize; }
+:host([disabled]) .frame, :host([disabled]) .handle, :host([data-disabled]) .frame, :host([data-disabled]) .handle { cursor: default; }
+.placeholder { margin: 0; padding: 2rem 1rem; border: 1px dashed var(--ipp-border); border-radius: var(--ipp-radius); color: var(--ipp-muted); text-align: center; }
+.sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+@media (forced-colors: active) {
+  .frame, .grid line { stroke: CanvasText; }
+  .handle { fill: Canvas; stroke: CanvasText; }
+  .frame:focus-visible { stroke: Highlight; }
+}
+`, On = "http://www.w3.org/2000/svg", kn = 0;
+function An(e) {
+	return {
+		kind: e,
+		preset: "medium",
+		custom: {},
+		seed: 1,
+		crop: null
+	};
+}
+function jn(e, t) {
+	let n = rn[e][t] ?? rn[e].medium, r = {};
+	for (let t of Tn[e]) {
+		let e = n[t.key];
+		e !== void 0 && (r[t.key] = Array.isArray(e) ? [...e] : e);
+	}
+	return e === "jigsaw" && (r.topology ??= "rect"), e === "rotation" && (r.orientations ??= [
+		0,
+		90,
+		180,
+		270
+	]), r;
+}
+function Mn(e, t = {}) {
+	let n = e.ownerDocument, r = `ipc${++kn}`, i, a, s = !(e instanceof ShadowRoot);
+	e instanceof ShadowRoot ? (i = e, a = e.host) : (a = Z(n, "div", { class: "image-puzzle-configurator" }), e.append(a), i = a.attachShadow({ mode: "open" }));
+	let c = mn(t.locale, t.messages), l = t.kinds !== void 0 && t.kinds.length > 0 ? [...t.kinds] : [...en], u = t.disabled ?? !1, d = t.random ?? Math.random, f = An(l[0] ?? "jigsaw"), p = null, m = null, h = null, g = null, _ = !1, v = null, y = !1, b = Z(n, "div", {
+		class: "root",
+		part: "root",
+		role: "group"
+	}), x = Z(n, "div", {
+		class: "fields",
+		part: "fields"
+	}), S = Z(n, "label"), C = Z(n, "span"), w = Z(n, "select", {
+		name: "kind",
+		"data-field": "kind"
+	});
+	S.append(C, w);
+	let T = Z(n, "label"), E = Z(n, "span"), D = Z(n, "select", {
+		name: "preset",
+		"data-field": "preset"
+	});
+	T.append(E, D);
+	let O = Z(n, "fieldset", { "data-section": "custom" }), k = Z(n, "legend"), A = Z(n, "div", { class: "pair" });
+	O.append(k, A);
+	let j = Z(n, "div", { class: "row" }), ee = Z(n, "label"), M = Z(n, "span"), P = Z(n, "input", {
+		type: "number",
+		name: "seed",
+		min: "0",
+		step: "1",
+		inputmode: "numeric",
+		"data-field": "seed"
+	});
+	ee.append(M, P);
+	let F = Z(n, "button", {
+		type: "button",
+		"data-action": "random-seed"
+	});
+	j.append(ee, F);
+	let I = Z(n, "fieldset", { "data-section": "crop" }), L = Z(n, "legend"), R = Z(n, "div", { class: "pair" }), z = {}, B = {};
+	for (let e of [
+		"x",
+		"y",
+		"width",
+		"height"
+	]) {
+		let t = Z(n, "label");
+		B[e] = Z(n, "span"), z[e] = Z(n, "input", {
+			type: "number",
+			name: `crop-${e}`,
+			min: e === "x" || e === "y" ? "0" : "1",
+			max: String(Qt),
+			step: "1",
+			inputmode: "numeric",
+			"data-field": `crop.${e}`
+		}), t.append(B[e], z[e]), R.append(t);
+	}
+	let V = Z(n, "button", {
+		type: "button",
+		"data-action": "reset-crop"
+	});
+	I.append(L, R, V);
+	let H = Z(n, "p", {
+		class: "error",
+		part: "error",
+		role: "alert",
+		id: `${r}-error`
+	});
+	x.append(S, T, O, j, I, H);
+	let te = Z(n, "div", {
+		class: "preview",
+		part: "preview"
+	}), ne = Z(n, "span", { class: "sr-only" }), U = Z(n, "p", { class: "placeholder" }), re = Z(n, "div", {
+		class: "stage",
+		part: "stage"
+	}), W = Z(n, "img", {
+		alt: "",
+		draggable: "false"
+	}), G = n.createElementNS(On, "svg"), ie = n.createElementNS(On, "path");
+	ie.setAttribute("class", "shade");
+	let ae = n.createElementNS(On, "g");
+	ae.setAttribute("class", "grid");
+	let K = n.createElementNS(On, "rect");
+	K.setAttribute("class", "frame"), K.setAttribute("role", "button"), K.setAttribute("aria-describedby", `${r}-help`);
+	let oe = [
+		"nw",
+		"ne",
+		"sw",
+		"se"
+	].map((e) => {
+		let t = n.createElementNS(On, "rect");
+		return t.setAttribute("class", "handle"), t.setAttribute("data-corner", e), t;
+	});
+	G.append(ie, ae, K, ...oe), re.append(W, G);
+	let se = Z(n, "p", {
+		class: "help",
+		id: `${r}-help`
+	}), q = Z(n, "p", {
+		class: "summary",
+		part: "summary",
+		"aria-live": "polite"
+	}), J = Z(n, "p", { class: "note" });
+	te.append(ne, U, re, q, J, se), b.append(x, te), i.append(Z(n, "style", {}, Dn), b);
+	let ce = (e, t, r, i) => {
+		e.replaceChildren(...t.map((e) => Z(n, "option", { value: e }, r(e)))), e.value = t.includes(i) ? i : t[0] ?? "";
+	}, le = (e) => c.fields[`${f.kind}.${e}`] ?? c.fields[e] ?? e, ue = (e) => {
+		let t = e.value.trim();
+		if (t === "") return null;
+		let n = Number(t);
+		return Number.isFinite(n) ? n : NaN;
+	};
+	function de() {
+		A.replaceChildren();
+		for (let e of Tn[f.kind]) {
+			if (e.type === "angles") {
+				let e = Z(n, "fieldset", {
+					"data-field": "orientations",
+					style: "grid-column: 1 / -1"
+				});
+				e.append(Z(n, "legend", {}, le("orientations")));
+				let t = Z(n, "div", { class: "inline" }), r = Array.isArray(f.custom.orientations) ? f.custom.orientations : [];
+				for (let e of En) {
+					let i = Z(n, "label"), a = Z(n, "input", {
+						type: "checkbox",
+						value: String(e),
+						name: "orientations"
+					});
+					a.checked = r.includes(e), a.disabled = u, a.addEventListener("change", () => {
+						let e = En.filter((e) => A.querySelector(`input[name='orientations'][value='${e}']`)?.checked ?? !1);
+						f.custom.orientations = e, Y();
+					}), i.append(a, `${e}°`), t.append(i);
+				}
+				e.append(t), A.append(e);
+				continue;
+			}
+			if (e.type === "flag") {
+				let t = Z(n, "label", {
+					class: "inline",
+					style: "grid-column: 1 / -1"
+				}), r = Z(n, "input", {
+					type: "checkbox",
+					name: e.key,
+					"data-field": `custom.${e.key}`
+				});
+				r.checked = f.custom[e.key] === !0, r.disabled = u, r.addEventListener("change", () => {
+					r.checked ? f.custom[e.key] = !0 : Reflect.deleteProperty(f.custom, e.key), Y();
+				}), t.append(r, le(e.key)), A.append(t);
+				continue;
+			}
+			if (e.type === "lines") {
+				let t = Z(n, "label", { style: "grid-column: 1 / -1" }), r = Z(n, "textarea", {
+					name: e.key,
+					rows: "4",
+					"data-field": `custom.${e.key}`
+				}), i = f.custom[e.key];
+				r.value = Array.isArray(i) ? i.filter((e) => typeof e == "string").join("\n") : "", r.disabled = u, r.addEventListener("input", () => {
+					let t = r.value.split("\n").map((e) => e.trim()).filter((e) => e !== "");
+					t.length === 0 ? Reflect.deleteProperty(f.custom, e.key) : f.custom[e.key] = t, Y();
+				}), t.append(Z(n, "span", {}, `${le(e.key)} ${c.optional}`), r), A.append(t);
+				continue;
+			}
+			let t = Z(n, "label"), r = Z(n, "span", {}, e.type === "int" && e.optional === !0 ? `${le(e.key)} ${c.optional}` : le(e.key));
+			if (e.type === "choice") {
+				let i = Z(n, "select", {
+					name: e.key,
+					"data-field": `custom.${e.key}`
+				});
+				ce(i, e.options, (e) => c.choices[e] ?? e, typeof f.custom[e.key] == "string" ? f.custom[e.key] : e.options[0] ?? ""), f.custom[e.key] = i.value, i.disabled = u, i.addEventListener("change", () => {
+					f.custom[e.key] = i.value, Y();
+				}), t.append(r, i);
+			} else {
+				let i = Z(n, "input", {
+					type: "number",
+					name: e.key,
+					min: String(e.min),
+					max: String(e.max),
+					step: "1",
+					inputmode: "numeric",
+					"data-field": `custom.${e.key}`
+				}), a = f.custom[e.key];
+				i.value = typeof a == "number" ? String(a) : "", i.disabled = u, i.addEventListener("input", () => {
+					let t = ue(i);
+					t === null && e.optional === !0 ? Reflect.deleteProperty(f.custom, e.key) : f.custom[e.key] = t, Y();
+				}), t.append(r, i);
+			}
+			A.append(t);
+		}
+	}
+	function fe() {
+		b.setAttribute("aria-label", c.label), C.textContent = c.kind, E.textContent = c.preset, k.textContent = c.parameters, M.textContent = c.seed, F.textContent = c.randomSeed, L.textContent = c.crop, B.x.textContent = c.cropX, B.y.textContent = c.cropY, B.width.textContent = c.cropWidth, B.height.textContent = c.cropHeight, V.textContent = c.resetCrop, ne.textContent = c.preview, se.textContent = c.cropHelp, ce(w, l, (e) => c.kinds[e] ?? e, f.kind), ce(D, [...tn, "custom"], (e) => c.presets[e] ?? e, f.preset), de();
+	}
+	function pe() {
+		w.value = f.kind, D.value = f.preset, O.hidden = f.preset !== "custom", P.max = String(f.kind === "jigsaw" ? $t : N), ue(P) !== f.seed && (P.value = Number.isNaN(f.seed) ? P.value : String(f.seed));
+		for (let e of [
+			"x",
+			"y",
+			"width",
+			"height"
+		]) {
+			let t = f.crop?.[e];
+			t === void 0 ? z[e].value = "" : ue(z[e]) !== t && (z[e].value = String(t));
+		}
+		for (let e of [
+			w,
+			D,
+			P,
+			F,
+			V,
+			...Object.values(z)
+		]) e.disabled = u;
+		for (let e of A.querySelectorAll("input, select, textarea")) e.disabled = u;
+		V.disabled = u || f.crop === null, K.setAttribute("tabindex", u || g === null ? "-1" : "0"), K.setAttribute("aria-disabled", String(u));
+	}
+	function me() {
+		if (f.preset === "custom") for (let e of Tn[f.kind]) {
+			let t = f.custom[e.key];
+			if (e.type === "int") {
+				if (t === void 0 && e.optional === !0) continue;
+				if (t == null) return {
+					config: null,
+					message: $(c.required, { field: le(e.key) }),
+					field: `custom.${e.key}`
+				};
+				if (typeof t != "number" || !Number.isSafeInteger(t) || t < e.min || t > e.max) return {
+					config: null,
+					message: $(c.range, {
+						field: le(e.key),
+						min: e.min,
+						max: e.max
+					}),
+					field: `custom.${e.key}`
+				};
+			} else if (e.type === "angles" && (!Array.isArray(t) || t.length === 0)) return {
+				config: null,
+				message: c.orientationsRequired,
+				field: "orientations"
+			};
+		}
+		let e = f.kind === "jigsaw" ? $t : N;
+		if (!Number.isSafeInteger(f.seed) || f.seed < 0 || f.seed > e) return {
+			config: null,
+			message: $(c.range, {
+				field: c.seed,
+				min: 0,
+				max: e
+			}),
+			field: "seed"
+		};
+		let t = f.crop;
+		if (t !== null) {
+			for (let e of [
+				"x",
+				"y",
+				"width",
+				"height"
+			]) {
+				let n = e === "x" || e === "y" ? 0 : 1;
+				if (!Number.isSafeInteger(t[e]) || t[e] < n || t[e] > 1e5) {
+					let t = {
+						x: c.cropX,
+						y: c.cropY,
+						width: c.cropWidth,
+						height: c.cropHeight
+					}[e];
+					return {
+						config: null,
+						message: $(c.range, {
+							field: t,
+							min: n,
+							max: Qt
+						}),
+						field: `crop.${e}`
+					};
+				}
+			}
+			if (g !== null && (t.x + t.width > g.width || t.y + t.height > g.height)) return {
+				config: null,
+				message: $(c.cropOutside, g),
+				field: "crop"
+			};
+		}
+		try {
+			let e = cn({
+				kind: f.kind,
+				preset: f.preset,
+				custom: f.preset === "custom" ? { ...f.custom } : {},
+				seed: f.seed,
+				crop: f.crop
+			}), t = he(e);
+			if (t !== null) {
+				let n = un(e), [r, i] = n.type === "grid" ? [n.rows, n.cols] : n.type === "tangram" ? [48, 48] : n.axis === "vertical" ? [1, n.count] : [n.count, 1];
+				if (Math.floor(t.width / i) < 1 || Math.floor(t.height / r) < 1) return {
+					config: null,
+					message: c.tooSmall,
+					field: "crop"
+				};
+			}
+			return {
+				config: e,
+				message: null,
+				field: null
+			};
+		} catch (e) {
+			return {
+				config: null,
+				message: e instanceof Error ? e.message : String(e),
+				field: null
+			};
+		}
+	}
+	function he(e) {
+		return e.crop === null ? g === null ? null : {
+			x: 0,
+			y: 0,
+			width: g.width,
+			height: g.height
+		} : e.crop;
+	}
+	function ge(e) {
+		let t = v !== null && !_;
+		if (re.hidden = !t, U.hidden = t && g !== null, U.textContent = _ ? c.imageError : v === null ? c.noImage : "", v !== null && g === null && !_ && (U.hidden = !0), ae.replaceChildren(), J.textContent = f.kind === "jigsaw" ? c.approximate : "", g === null) {
+			q.textContent = "";
+			for (let e of [
+				ie,
+				K,
+				...oe
+			]) e.setAttribute("visibility", "hidden");
+			return;
+		}
+		let { width: r, height: i } = g;
+		G.setAttribute("viewBox", `0 0 ${r} ${i}`), G.setAttribute("preserveAspectRatio", "none");
+		let a = f.crop !== null && Number.isFinite(f.crop.x + f.crop.y + f.crop.width + f.crop.height) ? f.crop : {
+			x: 0,
+			y: 0,
+			width: r,
+			height: i
+		};
+		for (let e of [
+			ie,
+			K,
+			...oe
+		]) e.removeAttribute("visibility");
+		ie.setAttribute("d", `M0 0H${r}V${i}H0Z M${a.x} ${a.y}V${a.y + a.height}H${a.x + a.width}V${a.y}Z`), K.setAttribute("x", String(a.x)), K.setAttribute("y", String(a.y)), K.setAttribute("width", String(Math.max(0, a.width))), K.setAttribute("height", String(Math.max(0, a.height))), K.setAttribute("aria-label", $(c.cropArea, {
+			x: a.x,
+			y: a.y,
+			width: a.width,
+			height: a.height
+		})), K.setAttribute("aria-roledescription", c.cropFrame);
+		let o = Math.max(6, Math.min(r, i) / 30), s = {
+			nw: [a.x, a.y],
+			ne: [a.x + a.width, a.y],
+			sw: [a.x, a.y + a.height],
+			se: [a.x + a.width, a.y + a.height]
+		};
+		for (let e of oe) {
+			let [t, n] = s[e.getAttribute("data-corner")];
+			e.setAttribute("x", String(t - o / 2)), e.setAttribute("y", String(n - o / 2)), e.setAttribute("width", String(o)), e.setAttribute("height", String(o));
+		}
+		if (e === null) {
+			q.textContent = "";
+			return;
+		}
+		let l = un(e), u = (e, t, r, i) => {
+			let a = n.createElementNS(On, "line");
+			a.setAttribute("x1", String(e)), a.setAttribute("y1", String(t)), a.setAttribute("x2", String(r)), a.setAttribute("y2", String(i)), ae.append(a);
+		};
+		if (l.type === "tangram") {
+			let e = Math.floor(Math.min(a.width, a.height) / 24) * 24, t = a.x + Math.floor((a.width - e) / 2), r = a.y + Math.floor((a.height - e) / 2);
+			for (let i of et()) {
+				let a = n.createElementNS(On, "path");
+				a.setAttribute("d", dt(rt(i, t, r, e / 4))), a.setAttribute("fill", "none"), ae.append(a);
+			}
+			let i = c.choices[l.target] ?? l.target;
+			q.textContent = $(c.tangramSummary, {
+				target: i.toLocaleLowerCase(),
+				size: e
+			});
+			return;
+		}
+		if (l.type === "strips") {
+			let e = l.axis === "vertical", t = e ? a.width : a.height, n = Math.floor(t / l.count), r = Math.floor((t - n * l.count) / 2);
+			for (let t = 1; t < l.count; t++) e ? u(a.x + r + t * n, a.y, a.x + r + t * n, a.y + a.height) : u(a.x, a.y + r + t * n, a.x + a.width, a.y + r + t * n);
+			let i = c.choices[l.axis] ?? l.axis;
+			q.textContent = $(c.stripsSummary, {
+				count: l.count,
+				axis: i.toLocaleLowerCase(),
+				size: n
+			});
+			return;
+		}
+		let d = Math.floor(a.width / l.cols), p = Math.floor(a.height / l.rows), m = e.kind === "rotation" ? e.preset === "custom" ? e.custom.orientations : rn.rotation[e.preset].orientations : [];
+		Array.isArray(m) && (m.includes(90) || m.includes(270)) && (d = p = Math.min(d, p));
+		let h = a.x + Math.floor((a.width - d * l.cols) / 2), y = a.y + Math.floor((a.height - p * l.rows) / 2);
+		for (let e = 0; e <= l.cols; e++) u(h + e * d, y, h + e * d, y + p * l.rows);
+		for (let e = 0; e <= l.rows; e++) u(h, y + e * p, h + d * l.cols, y + e * p);
+		q.textContent = $(c.gridSummary, {
+			rows: l.rows,
+			cols: l.cols,
+			width: d,
+			height: p
+		});
+	}
+	function Y(e = !0) {
+		if (y) return;
+		let n = me();
+		m = n.message, h = n.field, p = n.config === null ? null : ln(n.config), H.textContent = m ?? "";
+		for (let e of x.querySelectorAll("[data-field]")) {
+			let t = e.getAttribute("data-field") ?? "";
+			h !== null && (t === h || h === "crop" && t.startsWith("crop.")) ? (e.setAttribute("aria-invalid", "true"), e.setAttribute("aria-describedby", `${r}-error`)) : (e.removeAttribute("aria-invalid"), e.removeAttribute("aria-describedby"));
+		}
+		if (pe(), ge(n.config), e) {
+			let e = {
+				value: p,
+				draft: _e(),
+				valid: p !== null,
+				error: m
+			};
+			t.onChange?.(e), a.dispatchEvent(new CustomEvent("configurator-change", {
+				detail: e,
+				bubbles: !0,
+				composed: !0
+			}));
+		}
+	}
+	function _e() {
+		let e = (e) => typeof e == "number" && !Number.isFinite(e) ? null : e, t = {};
+		if (f.preset === "custom") for (let n of Tn[f.kind]) n.key in f.custom && (t[n.key] = e(f.custom[n.key]));
+		return {
+			format: Zt,
+			version: 1,
+			kind: f.kind,
+			preset: f.preset,
+			...f.preset === "custom" ? { custom: t } : {},
+			seed: e(f.seed),
+			...f.crop === null ? {} : { crop: {
+				x: e(f.crop.x),
+				y: e(f.crop.y),
+				width: e(f.crop.width),
+				height: e(f.crop.height)
+			} }
+		};
+	}
+	function ve(e) {
+		if (e == null) {
+			f = An(l[0] ?? "jigsaw"), f.preset === "custom" && (f.custom = jn(f.kind, "medium"));
+			return;
+		}
+		let t = sn(e);
+		if (!l.includes(t.kind)) throw new o("invalid", `config.kind "${t.kind}" is not offered by this configurator.`);
+		f = {
+			kind: t.kind,
+			preset: t.preset,
+			custom: { ...t.custom },
+			seed: t.seed,
+			crop: t.crop
+		};
+	}
+	w.addEventListener("change", () => {
+		let e = w.value;
+		f.kind = e, f.custom = f.preset === "custom" ? jn(e, "medium") : {}, e === "jigsaw" && f.seed > 2147483647 && (f.seed %= $t + 1), de(), Y();
+	}), D.addEventListener("change", () => {
+		let e = f.preset;
+		f.preset = D.value, f.custom = f.preset === "custom" ? jn(f.kind, e) : {}, de(), Y();
+	}), P.addEventListener("input", () => {
+		f.seed = ue(P) ?? NaN, Y();
+	}), F.addEventListener("click", () => {
+		Ce.randomizeSeed();
+	});
+	for (let e of [
+		"x",
+		"y",
+		"width",
+		"height"
+	]) z[e].addEventListener("input", () => {
+		let t = f.crop ?? {
+			x: 0,
+			y: 0,
+			width: g?.width ?? 1,
+			height: g?.height ?? 1
+		}, n = ue(z[e]);
+		f.crop = {
+			...t,
+			[e]: n ?? NaN
+		}, Y();
+	});
+	V.addEventListener("click", () => {
+		Ce.resetCrop();
+	}), W.addEventListener("load", () => {
+		W.naturalWidth > 0 && W.naturalHeight > 0 && (g = {
+			width: W.naturalWidth,
+			height: W.naturalHeight
+		}, _ = !1), Y(!1);
+	}), W.addEventListener("error", () => {
+		g = null, _ = v !== null, Y(!1);
+	});
+	let X = null, ye = {
+		nw: [
+			1,
+			1,
+			-1,
+			-1
+		],
+		ne: [
+			0,
+			1,
+			1,
+			-1
+		],
+		sw: [
+			1,
+			0,
+			-1,
+			1
+		],
+		se: [
+			0,
+			0,
+			1,
+			1
+		]
+	}, be = (e) => {
+		let t = G.getBoundingClientRect(), n = g ?? {
+			width: 1,
+			height: 1
+		};
+		return {
+			x: t.width > 0 ? (e.clientX - t.left) / t.width * n.width : 0,
+			y: t.height > 0 ? (e.clientY - t.top) / t.height * n.height : 0
+		};
+	}, xe = (e) => {
+		let t = g ?? {
+			width: e.x + e.width,
+			height: e.y + e.height
+		}, n = Math.max(1, Math.min(Math.round(e.width), t.width)), r = Math.max(1, Math.min(Math.round(e.height), t.height));
+		return {
+			x: Math.max(0, Math.min(Math.round(e.x), t.width - n)),
+			y: Math.max(0, Math.min(Math.round(e.y), t.height - r)),
+			width: n,
+			height: r
+		};
+	};
+	G.addEventListener("pointerdown", (e) => {
+		if (u || g === null || e.button !== 0) return;
+		let t = e.target, n = t.getAttribute("data-corner");
+		if (t !== K && n === null) return;
+		e.preventDefault();
+		let r = f.crop ?? {
+			x: 0,
+			y: 0,
+			width: g.width,
+			height: g.height
+		}, i = be(e);
+		X = {
+			pointer: e.pointerId,
+			mode: n ?? "move",
+			start: r,
+			x: i.x,
+			y: i.y
+		};
+		try {
+			G.setPointerCapture(e.pointerId);
+		} catch {}
+		K.focus({ preventScroll: !0 });
+	}), G.addEventListener("pointermove", (e) => {
+		if (X === null || e.pointerId !== X.pointer) return;
+		let t = be(e), n = t.x - X.x, r = t.y - X.y, i = X.start;
+		if (X.mode === "move") f.crop = xe({
+			...i,
+			x: i.x + n,
+			y: i.y + r
+		});
+		else {
+			let [e, t, a, o] = ye[X.mode], s = g ?? {
+				width: Infinity,
+				height: Infinity
+			}, c = i.x + e * n, l = i.y + t * r, u = i.width + a * n, d = i.height + o * r;
+			c < 0 && (u += c, c = 0), l < 0 && (d += l, l = 0), u = Math.min(Math.max(1, u), s.width - c), d = Math.min(Math.max(1, d), s.height - l), f.crop = xe({
+				x: e === 1 ? Math.min(c, i.x + i.width - 1) : c,
+				y: t === 1 ? Math.min(l, i.y + i.height - 1) : l,
+				width: u,
+				height: d
+			});
+		}
+		Y();
+	});
+	let Se = (e) => {
+		X !== null && e.pointerId === X.pointer && (X = null, G.hasPointerCapture(e.pointerId) && G.releasePointerCapture(e.pointerId));
+	};
+	G.addEventListener("pointerup", Se), G.addEventListener("pointercancel", Se), K.addEventListener("keydown", (e) => {
+		if (u || g === null) return;
+		let t = {
+			ArrowLeft: [-1, 0],
+			ArrowRight: [1, 0],
+			ArrowUp: [0, -1],
+			ArrowDown: [0, 1]
+		}[e.key];
+		if (t === void 0) return;
+		e.preventDefault();
+		let n = Math.max(1, Math.round(Math.min(g.width, g.height) / 50)), r = f.crop ?? {
+			x: 0,
+			y: 0,
+			width: g.width,
+			height: g.height
+		};
+		f.crop = e.shiftKey ? xe({
+			...r,
+			width: r.width + t[0] * n,
+			height: r.height + t[1] * n
+		}) : xe({
+			...r,
+			x: r.x + t[0] * n,
+			y: r.y + t[1] * n
+		}), Y();
+	});
+	let Ce = {
+		element: a,
+		get value() {
+			return p;
+		},
+		get draft() {
+			return _e();
+		},
+		get valid() {
+			return p !== null;
+		},
+		get error() {
+			return m;
+		},
+		get imageSize() {
+			return g;
+		},
+		setValue(e) {
+			try {
+				ve(e), fe(), Y(!1);
+			} catch (e) {
+				f = An(l[0] ?? "jigsaw"), fe(), Y(!1), m = e instanceof Error ? e.message : String(e), H.textContent = m, p = null;
+			}
+		},
+		setSource(e) {
+			v = e === "" ? null : e, g = null, _ = !1, v === null ? W.removeAttribute("src") : W.src = v, Y(!1);
+		},
+		setKinds(e) {
+			l = e.length > 0 ? [...e] : [...en];
+			let t = !l.includes(f.kind);
+			t && (f.kind = l[0] ?? "jigsaw", f.custom = f.preset === "custom" ? jn(f.kind, "medium") : {}), fe(), Y(t);
+		},
+		setDisabled(e) {
+			u = e, s && a.toggleAttribute("data-disabled", e), Y(!1);
+		},
+		setLocale(e, n) {
+			c = mn(e, n ?? t.messages), fe(), Y(!1);
+		},
+		randomizeSeed() {
+			if (u) return;
+			let e = f.kind === "jigsaw" ? $t : N;
+			f.seed = Math.floor(d() * (e + 1)) % (e + 1), Y();
+		},
+		resetCrop() {
+			u || (f.crop = null, Y());
+		},
+		destroy() {
+			y || (y = !0, i.replaceChildren(), s && a.remove());
+		}
+	};
+	return t.disabled === !0 && s && a.setAttribute("data-disabled", ""), Ce.setValue(t.value ?? null), t.src !== void 0 && t.src !== null && Ce.setSource(t.src), Ce;
+}
+// src/configurator-element.ts
+var Nn = "image-puzzle-configurator", Pn = "configurator-change";
+function Fn(e) {
+	return e === null ? [] : e.split(/[\s,]+/).filter((e) => en.includes(e));
+}
+function In(e = Nn) {
+	if (typeof customElements > "u" || typeof HTMLElement > "u") return;
+	let t = customElements.get(e);
+	if (t !== void 0) return t;
+	class n extends HTMLElement {
+		static formAssociated = !0;
+		static observedAttributes = [
+			"src",
+			"value",
+			"kinds",
+			"disabled",
+			"locale",
+			"theme-class"
+		];
+		#e;
+		#t;
+		#n = null;
+		#r = null;
+		constructor() {
+			super();
+			let e = this.shadowRoot ?? this.attachShadow({ mode: "open" });
+			this.#t = typeof this.attachInternals == "function" ? this.attachInternals() : null, this.#e = Mn(e, { onChange: (e) => {
+				this.#o(e);
+			} }), this.#o(this.#i());
+		}
+		disconnectedCallback() {
+			queueMicrotask(() => {
+				this.isConnected || (this.#r?.(), this.#r = null);
+			});
+		}
+		connectedCallback() {
+			let e = this.getAttribute("theme-class");
+			this.#r === null && e !== null && e !== "" && (this.#r = wn(this, e));
+			for (let e of [
+				"value",
+				"src",
+				"kinds",
+				"disabled",
+				"locale",
+				"name"
+			]) if (Object.prototype.hasOwnProperty.call(this, e)) {
+				let t = this[e];
+				Reflect.deleteProperty(this, e), this[e] = t;
+			}
+		}
+		attributeChangedCallback(e, t, n) {
+			if (t !== n) {
+				switch (e) {
+					case "src":
+						this.#e.setSource(n);
+						break;
+					case "value":
+						this.#n = n, this.#a(n);
+						break;
+					case "kinds":
+						this.#e.setKinds(Fn(n));
+						break;
+					case "disabled":
+						this.#e.setDisabled(n !== null);
+						break;
+					case "locale":
+						this.#e.setLocale(n ?? void 0);
+						break;
+					case "theme-class": this.#r?.(), this.#r = n === null || n === "" ? null : wn(this, n);
+				}
+				this.#o(this.#i());
+			}
+		}
+		get value() {
+			return this.#e.value;
+		}
+		set value(e) {
+			this.#a(e), this.#o(this.#i());
+		}
+		get src() {
+			return this.getAttribute("src");
+		}
+		set src(e) {
+			e === null ? this.removeAttribute("src") : this.setAttribute("src", e);
+		}
+		get kinds() {
+			let e = Fn(this.getAttribute("kinds"));
+			return e.length > 0 ? e : [...en];
+		}
+		set kinds(e) {
+			this.setAttribute("kinds", e.join(" "));
+		}
+		get disabled() {
+			return this.hasAttribute("disabled");
+		}
+		set disabled(e) {
+			this.toggleAttribute("disabled", e);
+		}
+		get locale() {
+			return this.getAttribute("locale");
+		}
+		set locale(e) {
+			e === null ? this.removeAttribute("locale") : this.setAttribute("locale", e);
+		}
+		get name() {
+			return this.getAttribute("name");
+		}
+		set name(e) {
+			e === null ? this.removeAttribute("name") : this.setAttribute("name", e);
+		}
+		get draft() {
+			return this.#e.draft;
+		}
+		get valid() {
+			return this.#e.valid;
+		}
+		get error() {
+			return this.#e.error;
+		}
+		get configurator() {
+			return this.#e;
+		}
+		get form() {
+			return this.#t?.form ?? null;
+		}
+		get validity() {
+			return this.#t?.validity ?? null;
+		}
+		get validationMessage() {
+			return this.#t?.validationMessage ?? "";
+		}
+		get willValidate() {
+			return this.#t?.willValidate ?? !1;
+		}
+		checkValidity() {
+			return this.#t?.checkValidity() ?? this.#e.valid;
+		}
+		reportValidity() {
+			return this.#t?.reportValidity() ?? this.#e.valid;
+		}
+		randomizeSeed() {
+			this.#e.randomizeSeed();
+		}
+		resetCrop() {
+			this.#e.resetCrop();
+		}
+		formResetCallback() {
+			this.#a(this.#n), this.#o(this.#i());
+		}
+		formDisabledCallback(e) {
+			this.#e.setDisabled(e || this.hasAttribute("disabled"));
+		}
+		#i() {
+			let e = this.#e;
+			return {
+				value: e.value,
+				draft: e.draft,
+				valid: e.valid,
+				error: e.error
+			};
+		}
+		#a(e) {
+			if (typeof e == "string") {
+				let t;
+				try {
+					t = e.trim() === "" ? null : JSON.parse(e);
+				} catch {
+					t = e;
+				}
+				this.#e.setValue(t);
+			} else this.#e.setValue(e ?? null);
+		}
+		#o(e) {
+			let t = this.#t;
+			t !== null && typeof t.setFormValue == "function" && (t.setFormValue(e.value === null ? null : JSON.stringify(e.value)), e.valid ? t.setValidity({}) : t.setValidity({ customError: !0 }, e.error ?? "Invalid configuration."));
+		}
+	}
+	return customElements.define(e, n), n;
+}
+// src/styles.ts
+var Ln = `${Cn}
+:host {
+  display: block;
+  color: var(--ipp-fg);
+  font-family: var(--ipp-font);
+  container-type: inline-size;
+}
+:host([hidden]) { display: none; }
+* { box-sizing: border-box; }
+.root { display: grid; gap: 0.5rem; background: var(--ipp-bg); }
+.toolbar { display: flex; flex-wrap: wrap; gap: 0.25rem; }
+.toolbar[hidden] { display: none; }
+button.control {
+  font: inherit;
+  font-size: 0.875rem;
+  min-height: 2.75rem;
+  min-width: 2.75rem;
+  padding: 0.25rem 0.75rem;
+  border: 1px solid var(--ipp-border);
+  border-radius: var(--ipp-radius);
+  background: var(--ipp-surface);
+  color: var(--ipp-fg);
+  cursor: pointer;
+}
+button.control[aria-pressed='true'] { background: var(--ipp-accent); color: var(--ipp-accent-fg); border-color: var(--ipp-accent); }
+button.control:disabled { opacity: 0.5; cursor: not-allowed; }
+button:focus-visible { outline: 3px solid var(--ipp-focus); outline-offset: 2px; }
+.status { display: flex; flex-wrap: wrap; gap: 0.25rem 1rem; color: var(--ipp-muted); font-size: 0.875rem; font-variant-numeric: tabular-nums; }
+.message { margin: 0; padding: 1rem; border: 1px dashed var(--ipp-border); border-radius: var(--ipp-radius); }
+.message[data-kind='error'] { border-style: solid; border-color: var(--ipp-error); color: var(--ipp-error); }
+.sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+.board { position: relative; width: 100%; direction: ltr; background: var(--ipp-surface); border-radius: var(--ipp-radius); overflow: hidden; touch-action: manipulation; user-select: none; -webkit-user-select: none; }
+.board[data-loading='true'] .tile, .board[data-loading='true'] .piece { visibility: hidden; }
+.tile {
+  position: absolute;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  background-color: var(--ipp-surface);
+  background-repeat: no-repeat;
+  box-shadow: inset 0 0 0 calc(var(--ipp-gap) / 2) var(--ipp-bg);
+  cursor: pointer;
+  transition: left var(--ipp-duration) ease, top var(--ipp-duration) ease, transform var(--ipp-duration) ease;
+  touch-action: none;
+}
+.tile:focus-visible { outline: 3px solid var(--ipp-focus); outline-offset: -3px; z-index: 3; }
+.tile[aria-pressed='true'] { box-shadow: inset 0 0 0 4px var(--ipp-accent); z-index: 2; }
+.tile.is-correct::after { content: ''; position: absolute; inset: auto 4px 4px auto; width: 10px; height: 10px; border-radius: 50%; background: var(--ipp-correct); box-shadow: 0 0 0 2px var(--ipp-bg); }
+.tile.is-hint, .piece.is-hint .outline { animation: ipp-hint 1s ease 2; }
+.tile.is-hint { box-shadow: inset 0 0 0 4px var(--ipp-hint); }
+.tile.is-dragging { transition: none; z-index: 4; opacity: 0.9; }
+.tile.is-target { box-shadow: inset 0 0 0 4px var(--ipp-accent); }
+.number { position: absolute; inset: 4px auto auto 4px; padding: 0 0.3em; border-radius: 3px; background: rgb(0 0 0 / 0.6); color: #fff; font-size: 0.75rem; line-height: 1.4; pointer-events: none; }
+.marker { position: absolute; background: var(--ipp-accent); pointer-events: none; z-index: 5; }
+.preview { position: absolute; background-repeat: no-repeat; pointer-events: none; z-index: 6; opacity: 0.85; }
+.preview[hidden] { display: none; }
+
+.viewport { position: relative; width: 100%; overflow: auto; border-radius: var(--ipp-radius); background: var(--ipp-tray); overscroll-behavior: contain; }
+.stage { position: relative; background: var(--ipp-tray); }
+.stage .board-area { position: absolute; background: var(--ipp-surface); outline: 1px solid var(--ipp-border); }
+.stage .guides { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.stage .guides path { fill: none; stroke: var(--ipp-border); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.piece { position: absolute; padding: 0; margin: 0; border: 0; background: none; pointer-events: none; transition: left var(--ipp-duration) ease, top var(--ipp-duration) ease; }
+.piece:focus-visible { outline: none; }
+.piece img { display: block; width: 100%; height: 100%; pointer-events: none; -webkit-user-drag: none; }
+.piece .piece-image { display: block; width: 100%; height: 100%; pointer-events: none; }
+.piece svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.piece .outline { fill: transparent; stroke: none; pointer-events: all; cursor: grab; touch-action: none; vector-effect: non-scaling-stroke; }
+.piece:focus-visible .outline { stroke: var(--ipp-focus); stroke-width: 3; }
+.piece.is-dragging { transition: none; }
+.piece.is-dragging .outline { cursor: grabbing; }
+.piece.is-placed .outline { pointer-events: none; cursor: default; }
+.piece.is-placed.highlight .outline { stroke: var(--ipp-correct); stroke-width: 1; }
+.piece.is-hint .outline { stroke: var(--ipp-hint); stroke-width: 3; }
+
+
+.memory { position: relative; display: grid; grid-template-columns: repeat(var(--ipp-cols), minmax(0, 1fr)); gap: var(--ipp-gap, 4px); width: 100%; direction: ltr; padding: 0.25rem; background: var(--ipp-surface); border-radius: var(--ipp-radius); user-select: none; -webkit-user-select: none; }
+.card { aspect-ratio: var(--ipp-card-aspect); padding: 0.25rem; margin: 0; border: 1px solid var(--ipp-border); border-radius: var(--ipp-radius); background-color: var(--ipp-bg); background-repeat: no-repeat; color: var(--ipp-fg); font: inherit; cursor: pointer; overflow: hidden; display: grid; place-items: center; transition: background-color var(--ipp-duration) ease, opacity var(--ipp-duration) ease; touch-action: manipulation; }
+.card[data-state='down'] { background-image: repeating-linear-gradient(45deg, var(--ipp-accent) 0 6px, transparent 6px 12px); background-color: var(--ipp-surface); }
+.card[data-state='matched'] { cursor: default; opacity: 0.75; }
+.card.is-correct { box-shadow: inset 0 0 0 3px var(--ipp-correct); opacity: 1; }
+.card:focus-visible { outline: 3px solid var(--ipp-focus); outline-offset: 2px; }
+.card:disabled { cursor: default; }
+.card-text { font-size: clamp(0.75rem, 3cqi, 1.25rem); font-weight: 600; text-align: center; overflow-wrap: anywhere; }
+.memory[data-loading='true'] .card[data-state='up'], .memory[data-loading='true'] .card[data-state='matched'] { background-image: none; }
+
+.nonogram-tools { display: flex; gap: 0.25rem; }
+.nonogram { --ipp-clue: minmax(2.5rem, auto); display: grid; grid-template-columns: var(--ipp-clue) repeat(var(--ipp-cols), minmax(0, 1fr)); width: 100%; direction: ltr; background: var(--ipp-surface); border-radius: var(--ipp-radius); padding: 0.25rem; user-select: none; -webkit-user-select: none; font-variant-numeric: tabular-nums; }
+.nonogram-row, .nonogram-body { display: contents; }
+.nonogram-corner { grid-column: 1; }
+.clue { display: flex; gap: 0.25em; font-size: clamp(0.625rem, 2.5cqi, 0.875rem); line-height: 1.2; color: var(--ipp-fg); }
+.clue-col { flex-direction: column; justify-content: flex-end; align-items: center; padding-bottom: 0.25rem; }
+.clue-row { justify-content: flex-end; align-items: center; padding-right: 0.375rem; white-space: nowrap; }
+.clue.is-done { color: var(--ipp-muted); text-decoration: line-through; }
+.nonogram-cell { aspect-ratio: 1; position: relative; }
+.cell { position: absolute; inset: 0; width: 100%; height: 100%; padding: 0; margin: 0; border: 1px solid var(--ipp-border); border-radius: 0; background: var(--ipp-bg); cursor: pointer; touch-action: manipulation; }
+.cell[data-state='filled'] { background: var(--ipp-fg); }
+.cell[data-state='crossed']::before, .cell[data-state='crossed']::after { content: ''; position: absolute; inset: 50% 20% auto; height: 2px; background: var(--ipp-muted); transform: rotate(45deg); }
+.cell[data-state='crossed']::after { transform: rotate(-45deg); }
+.cell:focus-visible { outline: 3px solid var(--ipp-focus); outline-offset: -3px; z-index: 3; }
+.cell:disabled { cursor: default; }
+.cell.is-hint { box-shadow: inset 0 0 0 3px var(--ipp-hint); animation: ipp-hint 1s ease 2; }
+.nonogram-picture { grid-column: 2 / -1; grid-row: 2 / span var(--ipp-rows); align-self: stretch; z-index: 4; background-repeat: no-repeat; pointer-events: none; }
+.nonogram-picture[hidden] { display: none; }
+.nonogram:not(.is-complete) .nonogram-picture { opacity: 0.85; }
+.nonogram[data-loading='true'] .nonogram-picture { visibility: hidden; }
+
+.tangram-tools { display: flex; gap: 0.25rem; flex-wrap: wrap; }
+.tangram { display: block; width: 100%; height: auto; background: var(--ipp-tray); border-radius: var(--ipp-radius); user-select: none; -webkit-user-select: none; touch-action: none; }
+.tangram .target path { fill: var(--ipp-surface); stroke: var(--ipp-border); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.tangram .preview { opacity: 0.4; pointer-events: none; }
+.tangram .ghost { fill: none; stroke: var(--ipp-hint); stroke-width: 3; stroke-dasharray: 6 4; vector-effect: non-scaling-stroke; pointer-events: none; }
+.tangram .piece { cursor: grab; outline: none; }
+.tangram .piece.is-dragging { cursor: grabbing; }
+.tangram .piece .outline { fill: transparent; stroke: var(--ipp-border); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.tangram .piece:focus-visible .outline, .tangram .piece.is-selected:focus .outline { stroke: var(--ipp-focus); stroke-width: 3; }
+.tangram .piece.is-placed.highlight .outline { stroke: var(--ipp-correct); stroke-width: 2; }
+.tangram .piece.is-hint .outline { stroke: var(--ipp-hint); stroke-width: 3; animation: ipp-hint 1s ease 2; }
+.tangram[data-loading='true'] .piece image { visibility: hidden; }
+
+@keyframes ipp-hint { 50% { opacity: 0.5; } }
+@media (prefers-reduced-motion: reduce) {
+  :host(:not([data-motion='full'])) .tile, :host(:not([data-motion='full'])) .piece, :host(:not([data-motion='full'])) .card { transition: none; }
+  :host(:not([data-motion='full'])) .is-hint, :host(:not([data-motion='full'])) .is-hint .outline { animation: none; }
+}
+:host([data-motion='reduce']) .tile, :host([data-motion='reduce']) .piece, :host([data-motion='reduce']) .card { transition: none; }
+:host([data-motion='reduce']) .is-hint, :host([data-motion='reduce']) .is-hint .outline { animation: none; }
+@media (forced-colors: active) {
+  .tile:focus-visible, button:focus-visible { outline-color: Highlight; }
+  .cell[data-state='filled'] { background: CanvasText; }
+  .card[data-state='down'] { background-image: none; background-color: GrayText; }
+  .cell[data-state='crossed']::before, .cell[data-state='crossed']::after { background: GrayText; }
+  .piece:focus-visible .outline { stroke: Highlight; }
+  .tangram .target path { fill: Canvas; stroke: CanvasText; }
+}
+`;
+// src/views/media.ts
+function Rn(e, t, n) {
+	let r = (e, t, n) => n === t ? "0%" : Q(e / (n - t) * 100);
+	return {
+		backgroundImage: gn(e),
+		backgroundSize: `${Q(n.width / t.width * 100)} ${Q(n.height / t.height * 100)}`,
+		backgroundPosition: `${r(t.x, t.width, n.width)} ${r(t.y, t.height, n.height)}`
+	};
+}
+function zn(e, t, n) {
+	let r = new Image(), i = !1;
+	return r.onload = () => {
+		i || (i = !0, t(r));
+	}, r.onerror = () => {
+		i || (i = !0, n());
+	}, r.decoding = "async", r.src = e, { cancel() {
+		i = !0, r.onload = null, r.onerror = null, r.removeAttribute("src");
+	} };
+}
+// src/views/grid.ts
+var Bn = 6;
+function Vn(e, t, n) {
+	let r = /* @__PURE__ */ new Map();
+	if (e === "rotation" && "orientations" in n) return t.forEach((e, t) => r.set(e.id, n.orientations[t] ?? 0)), {
+		cells: t.map((e) => e.id),
+		orientation: r
+	};
+	if (e === "strips" && "order" in n) return {
+		cells: n.order,
+		orientation: r
+	};
+	if ("cells" in n && typeof n.cells != "string") return {
+		cells: n.cells,
+		orientation: r
+	};
+	throw Error(`Board does not match mode ${e}`);
+}
+function Hn(e) {
+	let { doc: t, definition: n } = e, { kind: r, rows: i, cols: a, crop: o, source: s } = n, c = new Map(n.tiles.map((e) => [e.id, e])), l = e.asset(n.media.image), u = `ipp-instructions-${Math.random().toString(36).slice(2, 10)}`, d = Z(t, "div", { class: "board-wrap" }), f = Z(t, "p", {
+		class: "sr-only",
+		id: u
+	}, e.messages().instructions[r] ?? ""), p = Z(t, "div", {
+		class: "board",
+		part: "board",
+		role: "group",
+		"aria-label": e.messages().label,
+		"aria-describedby": u,
+		"data-kind": r,
+		"data-loading": "true"
+	});
+	p.style.aspectRatio = `${o.width} / ${o.height}`, d.append(f, p);
+	let m = r === "sliding" ? n.rules.empty : void 0, h = /* @__PURE__ */ new Map();
+	for (let e of n.tiles) {
+		if (e.id === m) continue;
+		let r = Z(t, "button", {
+			type: "button",
+			class: "tile",
+			part: "tile",
+			tabindex: "-1",
+			"data-tile": e.id
+		});
+		Object.assign(r.style, Rn(l, e.rect, s), {
+			width: Q(100 / a),
+			height: Q(100 / i)
+		}), n.assistance.numbers && r.append(Z(t, "span", {
+			class: "number",
+			"aria-hidden": "true"
+		}, String(e.home + 1))), h.set(e.id, r), p.append(r);
+	}
+	let g = Z(t, "div", {
+		class: "marker",
+		hidden: ""
+	}), _ = Z(t, "div", {
+		class: "preview",
+		part: "preview",
+		hidden: ""
+	});
+	Object.assign(_.style, Rn(l, o, s), { inset: "0" }), p.append(g, _);
+	let v = zn(l, () => {
+		p.setAttribute("data-loading", "false");
+	}, () => {
+		e.assetError(l);
+	}), y = Vn(r, n.tiles, e.engine.exportState().board), b = n.tiles[0]?.id ?? "", x = null, S = null, C = /* @__PURE__ */ new Map(), w = null, T = null, E = !1, D = (e) => y.cells.indexOf(e), O = (e) => [Math.floor(e / a), e % a], k = (e, t) => r === "rotation" ? (y.orientation.get(e.id) ?? 0) === 0 : t === e.home;
+	function A(t, n) {
+		let i = e.messages(), [a, o] = O(n), s = r === "strips" ? $(i.strip, {
+			n: t.home + 1,
+			position: n + 1,
+			count: y.cells.length
+		}) : $(i.tile, {
+			n: t.home + 1,
+			row: a + 1,
+			col: o + 1
+		});
+		return r === "rotation" && (s += `, ${$(i.orientation, { degrees: y.orientation.get(t.id) ?? 0 })}`), s;
+	}
+	function j() {
+		(!h.has(b) || D(b) < 0) && (b = y.cells.find((e) => e !== null) ?? b);
+		for (let [t, o] of h) {
+			let s = c.get(t), l = D(t), [u, d] = O(l);
+			if (o.style.left = Q(d * 100 / a), o.style.top = Q(u * 100 / i), r === "rotation") {
+				let e = y.orientation.get(t) ?? 0, n = C.get(t) ?? e, r = ((e - n) % 360 + 540) % 360 - 180;
+				C.set(t, n + r), o.style.transform = `rotate(${n + r}deg)`;
+			}
+			o.setAttribute("aria-label", A(s, l)), o.tabIndex = t === b ? 0 : -1, (r === "swap" || r === "strips") && o.setAttribute("aria-pressed", String(x === t)), o.classList.toggle("is-correct", n.assistance.highlightCorrect && k(s, l)), o.disabled = e.engine.status === "complete";
+		}
+		ee();
+	}
+	function ee() {
+		if (r !== "strips" || S === null || x === null) {
+			g.hidden = !0;
+			return;
+		}
+		g.hidden = !1;
+		let e = D(x), t = S > e ? S + 1 : S;
+		i > 1 ? Object.assign(g.style, {
+			left: "0",
+			width: "100%",
+			height: "4px",
+			top: `calc(${Q(t * 100 / i)} - 2px)`
+		}) : Object.assign(g.style, {
+			top: "0",
+			height: "100%",
+			width: "4px",
+			left: `calc(${Q(t * 100 / a)} - 2px)`
+		});
+	}
+	function M() {
+		x = null, S = null;
+	}
+	function N(t, n) {
+		e.dispatch(t) ? e.announce(n) : e.announce(e.messages().illegal);
+	}
+	function P(t, n) {
+		let i = c.get(t);
+		if (i === void 0 || e.engine.status === "complete") return;
+		let a = e.messages(), o = i.home + 1;
+		if (r === "sliding") N({
+			type: "slide",
+			tile: t
+		}, $(a.moved, { n: o }));
+		else if (r === "rotation") {
+			let r = e.dispatch({
+				type: "rotate",
+				tile: t,
+				direction: n ? "ccw" : "cw"
+			});
+			e.announce(r ? $(a.rotated, {
+				n: o,
+				degrees: y.orientation.get(t) ?? 0
+			}) : a.illegal);
+		} else if (x === null) x = t, S = D(t), j(), e.announce($(a.tileSelected, { n: o }));
+		else if (x === t && (r === "swap" || S === D(t))) M(), j();
+		else if (r === "swap") {
+			let e = c.get(x);
+			M(), N({
+				type: "swap",
+				a: e.id,
+				b: t
+			}, $(a.swapped, {
+				a: e.home + 1,
+				b: o
+			}));
+		} else {
+			let e = c.get(x), n = x === t ? S ?? D(t) : D(t);
+			M(), N({
+				type: "move",
+				strip: e.id,
+				to: n
+			}, $(a.moved, { n: e.home + 1 }));
+		}
+	}
+	function F(e, t) {
+		let [n, r] = O(e), o = {
+			ArrowUp: [-1, 0],
+			ArrowDown: [1, 0],
+			ArrowLeft: [0, -1],
+			ArrowRight: [0, 1]
+		}[t];
+		if (o === void 0) return null;
+		let [s, c] = [n + o[0], r + o[1]];
+		return s >= 0 && s < i && c >= 0 && c < a && y.cells[s * a + c] === null && ([s, c] = [s + o[0], c + o[1]]), s >= 0 && s < i && c >= 0 && c < a ? s * a + c : null;
+	}
+	function I(t) {
+		let n = t.key;
+		if (b = z(t) ?? b, n === "Enter" || n === " ") {
+			t.preventDefault(), P(b, t.shiftKey);
+			return;
+		}
+		if (n === "Escape" && x !== null) {
+			t.preventDefault(), M(), j();
+			return;
+		}
+		if (n === "Home" || n === "End") {
+			t.preventDefault();
+			let e = y.cells.filter((e) => e !== null);
+			L((n === "Home" ? e[0] : e[e.length - 1]) ?? b);
+			return;
+		}
+		if (r === "strips" && x !== null && S !== null) {
+			let r = F(S, n);
+			(r !== null || n.startsWith("Arrow")) && t.preventDefault(), r !== null && (S = r, ee(), e.announce($(e.messages().strip, {
+				n: (c.get(x)?.home ?? 0) + 1,
+				position: r + 1,
+				count: y.cells.length
+			})));
+			return;
+		}
+		let i = F(D(b), n);
+		n.startsWith("Arrow") && t.preventDefault();
+		let a = i === null ? null : y.cells[i];
+		a != null && L(a);
+	}
+	function L(e) {
+		b = e, j(), h.get(e)?.focus();
+	}
+	function R(e, t) {
+		let n = p.getBoundingClientRect(), r = Math.floor((e - n.left) / n.width * a), o = Math.floor((t - n.top) / n.height * i);
+		return o >= 0 && o < i && r >= 0 && r < a ? o * a + r : null;
+	}
+	function z(e) {
+		let t = e.target?.closest("button.tile");
+		return t instanceof HTMLElement && p.contains(t) ? t.dataset.tile ?? null : null;
+	}
+	function B(e) {
+		let t = z(e);
+		t === null || e.button !== 0 || r !== "swap" && r !== "strips" || (T = {
+			id: t,
+			pointer: e.pointerId,
+			x: e.clientX,
+			y: e.clientY,
+			active: !1
+		});
+	}
+	function V(e) {
+		if (T === null || e.pointerId !== T.pointer) return;
+		let t = e.clientX - T.x, n = e.clientY - T.y, a = h.get(T.id);
+		if (a === void 0) return;
+		if (!T.active) {
+			if (Math.hypot(t, n) < Bn) return;
+			T.active = !0, a.setPointerCapture(e.pointerId), a.classList.add("is-dragging"), M();
+		}
+		a.style.transform = r === "strips" ? i > 1 ? `translateY(${n}px)` : `translateX(${t}px)` : `translate(${t}px, ${n}px)`;
+		let o = R(e.clientX, e.clientY);
+		for (let [e, t] of h) t.classList.toggle("is-target", r === "swap" && o !== null && y.cells[o] === e && e !== T.id);
+		r === "strips" && (x = T.id, S = o, ee(), x = null);
+	}
+	function H(t, n) {
+		if (T === null || t.pointerId !== T.pointer) return;
+		let { id: i, active: a } = T;
+		if (T = null, !a) return;
+		E = !0;
+		let o = h.get(i);
+		o?.classList.remove("is-dragging"), o !== void 0 && (o.style.transform = "");
+		for (let e of h.values()) e.classList.remove("is-target");
+		g.hidden = !0, S = null;
+		let s = n ? R(t.clientX, t.clientY) : null, l = c.get(i), u = e.messages();
+		if (s !== null && s !== D(i)) {
+			if (r === "swap") {
+				let e = c.get(y.cells[s] ?? "");
+				e !== void 0 && N({
+					type: "swap",
+					a: i,
+					b: e.id
+				}, $(u.swapped, {
+					a: l.home + 1,
+					b: e.home + 1
+				}));
+			} else N({
+				type: "move",
+				strip: i,
+				to: s
+			}, $(u.moved, { n: l.home + 1 }));
+		}
+	}
+	function te(e) {
+		if (E) {
+			E = !1;
+			return;
+		}
+		let t = z(e);
+		t !== null && (b = t, P(t, e.shiftKey));
+	}
+	let ne = (e) => {
+		H(e, !0);
+	}, U = (e) => {
+		H(e, !1);
+	};
+	return p.addEventListener("keydown", I), p.addEventListener("click", te), p.addEventListener("pointerdown", B), p.addEventListener("pointermove", V), p.addEventListener("pointerup", ne), p.addEventListener("pointercancel", U), j(), {
+		element: d,
+		update(e, t) {
+			y = Vn(r, n.tiles, e), t && M(), j();
+		},
+		showHint(e) {
+			let t = "tile" in e ? e.tile : "strip" in e ? e.strip : "a" in e ? e.a : null, n = t === null ? void 0 : h.get(t);
+			if (n !== void 0) {
+				for (let e of h.values()) e.classList.remove("is-hint");
+				n.classList.add("is-hint"), w !== null && clearTimeout(w), w = setTimeout(() => {
+					n.classList.remove("is-hint");
+				}, 2500), t !== null && L(t);
+			}
+		},
+		setPreview(e) {
+			_.hidden = !e;
+		},
+		focus() {
+			h.get(b)?.focus();
+		},
+		destroy() {
+			w !== null && clearTimeout(w), v.cancel(), p.removeEventListener("keydown", I), p.removeEventListener("click", te), p.removeEventListener("pointerdown", B), p.removeEventListener("pointermove", V), p.removeEventListener("pointerup", ne), p.removeEventListener("pointercancel", U), d.remove();
+		}
+	};
+}
+// src/views/jigsaw.ts
+var Un = "http://www.w3.org/2000/svg", Wn = 4, Gn = 1.5;
+function Kn(e) {
+	let { doc: t, definition: n } = e, r = te(n), i = n.crop, a = Math.min(...n.tiles.map((e) => Math.min(e.rect.width, e.rect.height))), o = Math.max(1, Math.round(a / 8)), s = `ipp-instructions-${Math.random().toString(36).slice(2, 10)}`, c = Z(t, "div", { class: "board-wrap" }), l = Z(t, "p", {
+		class: "sr-only",
+		id: s
+	}, e.messages().instructions.jigsaw ?? ""), u = Z(t, "div", {
+		class: "viewport",
+		part: "viewport"
+	}), d = Z(t, "div", {
+		class: "stage board",
+		part: "board",
+		role: "group",
+		"aria-label": e.messages().label,
+		"aria-describedby": s,
+		"data-kind": "jigsaw",
+		"data-loading": "true"
+	});
+	d.style.aspectRatio = `${r.width} / ${r.height}`, d.style.width = "100%", u.append(d), c.append(l, u);
+	let f = (e) => ({
+		left: Q((e.x - r.x) / r.width * 100),
+		top: Q((e.y - r.y) / r.height * 100),
+		width: Q(e.width / r.width * 100),
+		height: Q(e.height / r.height * 100)
+	}), p = Z(t, "div", {
+		class: "board-area",
+		part: "board-area"
+	});
+	Object.assign(p.style, f(i));
+	let m = t.createElementNS(Un, "svg");
+	m.setAttribute("class", "guides"), m.setAttribute("viewBox", `${r.x} ${r.y} ${r.width} ${r.height}`), m.setAttribute("preserveAspectRatio", "none"), m.setAttribute("aria-hidden", "true");
+	let h = Z(t, "div", {
+		class: "preview",
+		part: "preview",
+		hidden: ""
+	});
+	Object.assign(h.style, Rn(e.asset(n.media.image), i, n.source), f(i), { opacity: "0.4" }), d.append(p, m, h);
+	let g = 0, _ = !1, v = n.media.atlas, y = n.media.resolutions ?? [], b = null, x = v === void 0 ? null : e.asset(v.image), S = [], C = [], w = !1;
+	x !== null && (g++, b = zn(x, (e) => {
+		k(e, x), F();
+	}, () => {
+		I(x);
+	}));
+	let T = [], E = n.tiles.map((e) => {
+		let n = V(e), i = (typeof e.attributes.path == "string" ? e.attributes.path : null) ?? `M${n.x} ${n.y} L${n.x + n.width} ${n.y} L${n.x + n.width} ${n.y + n.height} L${n.x} ${n.y + n.height} Z`, a = t.createElementNS(Un, "path");
+		a.setAttribute("d", i), m.append(a);
+		let o = Z(t, "button", {
+			type: "button",
+			class: "piece",
+			part: "piece",
+			"data-piece": e.id
+		});
+		Object.assign(o.style, {
+			width: Q(n.width / r.width * 100),
+			height: Q(n.height / r.height * 100)
+		});
+		let s = v?.frames[e.id], c = s === void 0 ? M(e, n) : O(s), l = t.createElementNS(Un, "svg");
+		l.setAttribute("viewBox", `${n.x} ${n.y} ${n.width} ${n.height}`), l.setAttribute("preserveAspectRatio", "none"), l.setAttribute("aria-hidden", "true");
+		let u = t.createElementNS(Un, "path");
+		return u.setAttribute("class", "outline"), u.setAttribute("d", i), l.append(u), o.append(c, l), d.append(o), {
+			tile: e,
+			rendered: n,
+			button: o,
+			image: c
+		};
+	}), D = new Map(E.map((e) => [e.tile.id, e]));
+	function O(e) {
+		let n = Z(t, "img", {
+			class: "piece-image",
+			alt: "",
+			draggable: "false",
+			width: String(e.width),
+			height: String(e.height)
+		});
+		return g++, n.addEventListener("load", F, { once: !0 }), S.push({
+			image: n,
+			frame: e
+		}), n;
+	}
+	function k(e, n) {
+		for (let { image: r, frame: i } of S) {
+			let a = Z(t, "canvas", {
+				width: String(i.width),
+				height: String(i.height)
+			}), o = a.getContext("2d");
+			if (o === null) {
+				I(n);
+				return;
+			}
+			o.drawImage(e, i.x, i.y, i.width, i.height, 0, 0, i.width, i.height);
+			try {
+				ee(a, r, n);
+			} catch {
+				a.className = "piece-image", r.replaceWith(a), F();
+			}
+		}
+	}
+	function ee(e, t, n) {
+		e.toBlob((e) => {
+			if (w) return;
+			if (e === null) {
+				I(n);
+				return;
+			}
+			let r = URL.createObjectURL(e);
+			C.push(r), t.addEventListener("error", () => {
+				I(n);
+			}, { once: !0 }), t.src = r;
+		}, "image/png");
+	}
+	function M(r, i) {
+		let a = String(r.attributes.image), o = e.asset(a), s = Z(t, "img", {
+			alt: "",
+			draggable: "false",
+			decoding: "async"
+		});
+		if (g++, s.addEventListener("load", F, { once: !0 }), s.addEventListener("error", () => {
+			I(o);
+		}, { once: !0 }), y.length === 0) return s.src = o, s;
+		let c = y.map((t) => `${e.asset(A(t, a))} ${j(t, i.width, n.source.width)}w`);
+		return T.push({
+			image: s,
+			rendered: i,
+			srcset: [...c, `${o} ${i.width}w`].join(", "),
+			url: o
+		}), s;
+	}
+	function N(e) {
+		for (let { image: t, rendered: n, srcset: i, url: a } of T) {
+			let o = n.width / r.width * Gn;
+			t.sizes = e === null ? `${(o * 100).toFixed(3)}vw` : `${Math.max(1, Math.ceil(o * e))}px`, t.srcset === "" && (t.srcset = i, t.src = a);
+		}
+	}
+	let P = T.length > 0 && typeof ResizeObserver == "function" ? new ResizeObserver((e) => {
+		let t = e[0]?.contentRect.width ?? 0;
+		t > 0 && N(t);
+	}) : null;
+	P === null ? N(null) : P.observe(d);
+	function F() {
+		g--, g === 0 && !_ && d.setAttribute("data-loading", "false");
+	}
+	function I(t) {
+		_ || (_ = !0, e.assetError(t));
+	}
+	let L = U(e.engine.exportState().board), R = /* @__PURE__ */ new Map(), z = 1, B = null, H = null;
+	function ne(e) {
+		typeof e.scrollIntoView == "function" && e.scrollIntoView({
+			block: "nearest",
+			inline: "nearest"
+		});
+	}
+	function U(e) {
+		if (!qn(e)) throw Error("Board does not match the jigsaw mode");
+		return e.pieces;
+	}
+	function re(e, t, n) {
+		return {
+			x: Math.round(Math.min(Math.max(t, r.x), r.x + r.width - e.rendered.width)),
+			y: Math.round(Math.min(Math.max(n, r.y), r.y + r.height - e.rendered.height))
+		};
+	}
+	function W(e, t, n) {
+		e.button.style.left = Q((t - r.x) / r.width * 100), e.button.style.top = Q((n - r.y) / r.height * 100);
+	}
+	function G() {
+		let t = e.engine.status === "complete", r = e.messages();
+		E.forEach((e, i) => {
+			let a = L[i];
+			if (a === void 0) return;
+			let o = R.get(e.tile.id) ?? a;
+			W(e, o.x, o.y), e.button.classList.toggle("is-placed", a.placed), e.button.classList.toggle("highlight", a.placed && n.assistance.highlightCorrect), e.button.tabIndex = a.placed || t ? -1 : 0, e.button.setAttribute("aria-disabled", String(a.placed || t)), e.button.setAttribute("aria-label", $(a.placed ? r.piecePlaced : r.piece, { n: e.tile.home + 1 })), a.placed && (e.button.style.zIndex = "0");
+		});
+	}
+	function ie(e) {
+		e.button.style.zIndex = String(++z);
+	}
+	function ae(t, r, i) {
+		R.delete(t.tile.id);
+		let a = e.messages(), o = e.dispatch({
+			type: "place",
+			piece: t.tile.id,
+			x: r,
+			y: i
+		}), s = n.tiles.indexOf(t.tile);
+		if (!o) {
+			e.announce(a.illegal), G();
+			return;
+		}
+		let c = L[s]?.placed ?? !1;
+		e.announce($(c ? a.placed : a.dropped, { n: t.tile.home + 1 })), c && K(s);
+	}
+	function K(e) {
+		for (let t = 1; t <= E.length; t++) {
+			let n = (e + t) % E.length;
+			if (L[n]?.placed === !1) {
+				E[n]?.button.focus();
+				return;
+			}
+		}
+	}
+	function oe(e) {
+		let t = e.target?.closest("button.piece");
+		return t instanceof HTMLElement && d.contains(t) ? D.get(t.dataset.piece ?? "") : void 0;
+	}
+	function se(t) {
+		let r = oe(t);
+		if (r === void 0) return;
+		let i = n.tiles.indexOf(r.tile), a = L[i];
+		if (a === void 0 || a.placed || e.engine.status === "complete") return;
+		let s = R.get(r.tile.id) ?? a, c = t.shiftKey ? o * 5 : o, l = {
+			ArrowUp: [0, -1],
+			ArrowDown: [0, 1],
+			ArrowLeft: [-1, 0],
+			ArrowRight: [1, 0]
+		}[t.key];
+		if (l !== void 0) {
+			t.preventDefault();
+			let e = re(r, s.x + l[0] * c, s.y + l[1] * c);
+			R.set(r.tile.id, e), ie(r), W(r, e.x, e.y), ne(r.button);
+		} else t.key === "Enter" || t.key === " " ? (t.preventDefault(), R.has(r.tile.id) && ae(r, s.x, s.y)) : t.key === "Escape" && R.has(r.tile.id) && (t.preventDefault(), R.delete(r.tile.id), G());
+	}
+	function q(t) {
+		let i = oe(t);
+		if (i === void 0 || t.button !== 0 || e.engine.status === "complete") return;
+		let a = n.tiles.indexOf(i.tile), o = L[a];
+		if (o === void 0 || o.placed) return;
+		t.preventDefault();
+		let s = R.get(i.tile.id) ?? o, c = r.width / Math.max(1, d.getBoundingClientRect().width);
+		H = {
+			id: i.tile.id,
+			pointer: t.pointerId,
+			startX: t.clientX,
+			startY: t.clientY,
+			fromX: s.x,
+			fromY: s.y,
+			scale: c,
+			active: !1
+		}, d.setPointerCapture(t.pointerId), ie(i), i.button.focus({ preventScroll: !0 });
+	}
+	function J(e) {
+		if (H === null || e.pointerId !== H.pointer) return;
+		let t = D.get(H.id), n = e.clientX - H.startX, r = e.clientY - H.startY;
+		if (!H.active && Math.hypot(n, r) < Wn) return;
+		H.active = !0, t.button.classList.add("is-dragging");
+		let i = re(t, H.fromX + n * H.scale, H.fromY + r * H.scale);
+		R.set(t.tile.id, i), W(t, i.x, i.y);
+	}
+	function ce(e) {
+		if (H === null || e.pointerId !== H.pointer) return;
+		let { id: t, active: n } = H;
+		H = null, d.hasPointerCapture(e.pointerId) && d.releasePointerCapture(e.pointerId);
+		let r = D.get(t);
+		r.button.classList.remove("is-dragging");
+		let i = R.get(t);
+		!n || i === void 0 || e.type === "pointercancel" ? (R.delete(t), G()) : ae(r, i.x, i.y);
+	}
+	return d.addEventListener("keydown", se), d.addEventListener("pointerdown", q), d.addEventListener("pointermove", J), d.addEventListener("pointerup", ce), d.addEventListener("pointercancel", ce), G(), {
+		element: c,
+		update(e, t) {
+			L = U(e), t && R.clear(), G();
+		},
+		showHint(e) {
+			if (e.type !== "place") return;
+			let t = D.get(e.piece);
+			if (t !== void 0) {
+				for (let e of E) e.button.classList.remove("is-hint");
+				t.button.classList.add("is-hint"), ie(t), t.button.focus(), ne(t.button), B !== null && clearTimeout(B), B = setTimeout(() => {
+					t.button.classList.remove("is-hint");
+				}, 2500);
+			}
+		},
+		setPreview(e) {
+			h.hidden = !e;
+		},
+		setZoom(e) {
+			d.style.width = Q(Math.max(1, e) * 100);
+		},
+		focus() {
+			let e = L.findIndex((e) => !e.placed);
+			(E[e] ?? E[0])?.button.focus();
+		},
+		destroy() {
+			B !== null && clearTimeout(B), d.removeEventListener("keydown", se), d.removeEventListener("pointerdown", q), d.removeEventListener("pointermove", J), d.removeEventListener("pointerup", ce), d.removeEventListener("pointercancel", ce), P?.disconnect(), w = !0, b?.cancel();
+			for (let e of C) URL.revokeObjectURL(e);
+			for (let e of E) e.image.removeAttribute("src");
+			c.remove();
+		}
+	};
+}
+function qn(e) {
+	return "pieces" in e && e.pieces.every((e) => "placed" in e);
+}
+// src/views/memory.ts
+var Jn = 1e3;
+function Yn(e) {
+	let { doc: t, definition: n } = e, { rows: r, cols: i, source: a } = n, o = new Map(n.tiles.map((e) => [e.id, e])), s = e.asset(n.media.image), c = n.tiles[0], l = c === void 0 ? "1" : `${c.rect.width} / ${c.rect.height}`, u = Z(t, "div", { class: "board-wrap" }), d = Z(t, "p", {
+		class: "sr-only",
+		id: `ipp-instructions-${Math.random().toString(36).slice(2, 10)}`
+	}), f = Z(t, "div", {
+		class: "memory",
+		part: "board",
+		role: "group",
+		"aria-describedby": d.id,
+		"data-kind": "memory",
+		"data-loading": "true"
+	});
+	f.style.setProperty("--ipp-cols", String(i)), f.style.setProperty("--ipp-card-aspect", l);
+	let p = [];
+	for (let e = 0; e < r * i; e++) {
+		let n = Z(t, "button", {
+			type: "button",
+			class: "card",
+			part: "tile",
+			tabindex: "-1",
+			"data-position": String(e)
+		});
+		p.push(n), f.append(n);
+	}
+	let m = Z(t, "div", {
+		class: "preview",
+		part: "preview",
+		hidden: ""
+	});
+	Object.assign(m.style, Rn(s, n.crop, a), { inset: "0" }), f.append(m), u.append(d, f);
+	let h = zn(s, () => {
+		f.setAttribute("data-loading", "false");
+	}, () => {
+		e.assetError(s);
+	}), g = e.engine.exportState().board, _ = 0, v = !1, y = null, b = (e) => Number(ue(e.id).slice(1)) + 1;
+	function x(t) {
+		let n = e.messages();
+		return t.attributes.face === "text" ? String(t.attributes.text) : $(n.memoryPicture, { n: b(t) });
+	}
+	function S() {
+		let r = e.messages();
+		d.textContent = r.instructions.memory ?? "", f.setAttribute("aria-label", r.label);
+		let i = e.engine.status === "complete";
+		g.cards.forEach((e, c) => {
+			let l = p[c], u = o.get(e);
+			if (l === void 0 || u === void 0) return;
+			let d = g.matched.includes(e), f = d || g.revealed.includes(e) && !(v && g.revealed.length === 2);
+			l.replaceChildren(), l.removeAttribute("style"), l.dataset.state = d ? "matched" : f ? "up" : "down", l.classList.toggle("is-correct", d && n.assistance.highlightCorrect), f && (u.attributes.face === "text" ? l.append(Z(t, "span", {
+				class: "card-text",
+				"aria-hidden": "true"
+			}, String(u.attributes.text))) : Object.assign(l.style, Rn(s, u.rect, a)));
+			let m = c + 1;
+			l.setAttribute("aria-label", f ? $(d ? r.memoryMatchedCard : r.memoryCard, {
+				n: m,
+				face: x(u)
+			}) : $(r.memoryFaceDown, { n: m })), l.tabIndex = c === _ ? 0 : -1, l.disabled = i;
+		});
+	}
+	function C() {
+		y !== null && clearTimeout(y), y = null, v = !1, g.revealed.length === 2 && (y = setTimeout(() => {
+			y = null, v = !0, S();
+		}, Jn));
+	}
+	function w(t) {
+		let n = g.cards[t];
+		if (n === void 0 || e.engine.status === "complete") return;
+		let r = e.messages(), i = g.matched.length;
+		if (!e.dispatch({
+			type: "flip",
+			card: n
+		})) {
+			e.announce(r.illegal);
+			return;
+		}
+		let a = o.get(n);
+		if (a === void 0) return;
+		let s = $(r.memoryCard, {
+			n: t + 1,
+			face: x(a)
+		});
+		g.matched.length > i ? s += ` ${r.memoryMatch}` : g.revealed.length === 2 && (s += ` ${r.memoryMismatch}`), e.announce(s);
+	}
+	function T(e) {
+		_ = Math.max(0, Math.min(p.length - 1, e)), S(), p[_]?.focus();
+	}
+	function E(e) {
+		let t = e.target?.closest("button.card");
+		if (!(t instanceof HTMLElement) || !f.contains(t)) return null;
+		let n = Number(t.dataset.position);
+		return Number.isInteger(n) ? n : null;
+	}
+	function D(e) {
+		let t = E(e);
+		if (t === null) return;
+		_ = t;
+		let n = Math.floor(t / i), a = t % i, o = e.key, s = null;
+		o === "ArrowUp" && n > 0 ? s = t - i : o === "ArrowDown" && n < r - 1 ? s = t + i : o === "ArrowLeft" && a > 0 ? s = t - 1 : o === "ArrowRight" && a < i - 1 ? s = t + 1 : o === "Home" ? s = e.ctrlKey ? 0 : n * i : o === "End" && (s = e.ctrlKey ? p.length - 1 : n * i + i - 1), s !== null || o.startsWith("Arrow") ? (e.preventDefault(), s !== null && T(s)) : (o === "Enter" || o === " ") && (e.preventDefault(), w(t));
+	}
+	function O(e) {
+		let t = E(e);
+		t !== null && e.detail !== 0 && (_ = t, w(t));
+	}
+	return f.addEventListener("keydown", D), f.addEventListener("click", O), C(), S(), {
+		element: u,
+		update(e) {
+			g = e, C(), S();
+		},
+		showHint() {},
+		setPreview(e) {
+			m.hidden = !e;
+		},
+		focus() {
+			p[_]?.focus();
+		},
+		destroy() {
+			y !== null && clearTimeout(y), h.cancel(), f.removeEventListener("keydown", D), f.removeEventListener("click", O), u.remove();
+		}
+	};
+}
+// src/views/tangram.ts
+var Xn = "http://www.w3.org/2000/svg", Zn = 4;
+function Qn(e) {
+	let { doc: t, definition: n } = e, r = te(n), i = pt(n), a = Math.max(1, Math.round(i / 12)), o = e.asset(n.media.image), s = Math.random().toString(36).slice(2, 10), c = Z(t, "div", { class: "board-wrap" }), l = Z(t, "p", {
+		class: "sr-only",
+		id: `ipp-instructions-${s}`
+	}), u = Z(t, "div", {
+		class: "tangram-tools",
+		role: "group"
+	}), d = Z(t, "button", {
+		type: "button",
+		class: "control",
+		"data-tool": "ccw"
+	}), f = Z(t, "button", {
+		type: "button",
+		class: "control",
+		"data-tool": "cw"
+	}), p = Z(t, "button", {
+		type: "button",
+		class: "control",
+		"data-tool": "flip"
+	});
+	u.append(d, f, p);
+	let m = t.createElementNS(Xn, "svg");
+	m.setAttribute("class", "tangram board"), m.setAttribute("part", "board"), m.setAttribute("role", "group"), m.setAttribute("aria-describedby", l.id), m.setAttribute("data-kind", "tangram"), m.setAttribute("data-loading", "true"), m.setAttribute("viewBox", `${r.x} ${r.y} ${r.width} ${r.height}`), c.append(l, u, m);
+	let h = t.createElementNS(Xn, "defs"), g = t.createElementNS(Xn, "g");
+	g.setAttribute("class", "target"), g.setAttribute("aria-hidden", "true");
+	for (let e of ht(n)) {
+		let n = t.createElementNS(Xn, "path");
+		n.setAttribute("d", dt(at(e.piece, i, e.x, e.y, e.rotation, e.flipped))), g.append(n);
+	}
+	let _ = t.createElementNS(Xn, "image");
+	_.setAttribute("class", "preview"), _.setAttribute("part", "preview"), _.setAttribute("href", o), _.setAttribute("aria-hidden", "true");
+	let { crop: v, source: y } = n, b = t.createElementNS(Xn, "svg");
+	b.setAttribute("x", String(v.x)), b.setAttribute("y", String(v.y)), b.setAttribute("width", String(v.width)), b.setAttribute("height", String(v.height)), b.setAttribute("viewBox", `${v.x} ${v.y} ${v.width} ${v.height}`), b.setAttribute("display", "none"), _.setAttribute("x", "0"), _.setAttribute("y", "0"), _.setAttribute("width", String(y.width)), _.setAttribute("height", String(y.height)), b.append(_);
+	let x = t.createElementNS(Xn, "path");
+	x.setAttribute("class", "ghost"), x.setAttribute("aria-hidden", "true"), x.setAttribute("display", "none");
+	let S = t.createElementNS(Xn, "g");
+	m.append(h, g, b, x, S);
+	let C = n.tiles.map((e, n) => {
+		let r = rt(e.id, v.x, v.y, i), a = t.createElementNS(Xn, "clipPath");
+		a.setAttribute("id", `ipp-tangram-${s}-${n}`);
+		let c = t.createElementNS(Xn, "path");
+		c.setAttribute("d", dt(r)), a.append(c), h.append(a);
+		let l = t.createElementNS(Xn, "g");
+		l.setAttribute("class", "piece"), l.setAttribute("part", "piece"), l.setAttribute("role", "button"), l.setAttribute("data-piece", e.id);
+		let u = t.createElementNS(Xn, "image");
+		u.setAttribute("href", o), u.setAttribute("x", "0"), u.setAttribute("y", "0"), u.setAttribute("width", String(y.width)), u.setAttribute("height", String(y.height)), u.setAttribute("preserveAspectRatio", "none"), u.setAttribute("clip-path", `url(#${a.id})`);
+		let d = t.createElementNS(Xn, "path");
+		return d.setAttribute("class", "outline"), d.setAttribute("d", dt(r)), l.append(u, d), S.append(l), {
+			tile: e,
+			index: n,
+			group: l,
+			cx: r.reduce((e, [t]) => e + t, 0) / r.length,
+			cy: r.reduce((e, [, t]) => e + t, 0) / r.length
+		};
+	}), w = new Map(C.map((e) => [e.tile.id, e])), T = zn(o, () => {
+		m.setAttribute("data-loading", "false");
+	}, () => {
+		e.assetError(o);
+	}), E = $n(e.engine.exportState().board), D = /* @__PURE__ */ new Set(), O = /* @__PURE__ */ new Map(), k = null, A = null, j = null;
+	function ee(e, t) {
+		return `translate(${t.x} ${t.y}) rotate(${t.rotation * 45}) scale(${t.flipped ? -1 : 1} 1) translate(${-e.cx} ${-e.cy})`;
+	}
+	function M(e, t) {
+		let n = at(e.tile.id, i, t.x, t.y, t.rotation, t.flipped), a = n.map(([e]) => e), o = n.map(([, e]) => e), s = (e, t, n, r) => e < n ? Math.ceil(n - e) : t > n + r ? Math.floor(n + r - t) : 0;
+		return {
+			...t,
+			x: Math.round(t.x) + s(Math.min(...a), Math.max(...a), r.x, r.width),
+			y: Math.round(t.y) + s(Math.min(...o), Math.max(...o), r.y, r.height)
+		};
+	}
+	function N(t, n, r) {
+		let i = e.messages(), a = i.tangramPieces[t.tile.id] ?? t.tile.id;
+		return r ? $(i.tangramPlaced, { name: a }) : $(n.flipped ? i.tangramPoseFlipped : i.tangramPose, {
+			name: a,
+			degrees: n.rotation * 45
+		});
+	}
+	function P() {
+		let t = e.messages();
+		l.textContent = t.instructions.tangram ?? "", m.setAttribute("aria-label", t.label), u.setAttribute("aria-label", t.tangramTools), d.textContent = t.tangramTurnBack, f.textContent = t.tangramTurn, p.textContent = t.tangramFlip;
+		let r = e.engine.status === "complete";
+		D = new Set(yt(n, E).keys());
+		for (let e of C) {
+			let t = O.get(e.tile.id) ?? E[e.index];
+			if (t === void 0) continue;
+			let i = D.has(e.index) && !O.has(e.tile.id);
+			e.group.setAttribute("transform", ee(e, t)), e.group.classList.toggle("is-placed", i), e.group.classList.toggle("highlight", i && n.assistance.highlightCorrect), e.group.classList.toggle("is-selected", e === k), e.group.setAttribute("tabindex", r ? "-1" : "0"), e.group.setAttribute("aria-disabled", String(r)), e.group.setAttribute("aria-label", N(e, t, i));
+		}
+		for (let e of [
+			d,
+			f,
+			p
+		]) e.disabled = r || k === null;
+	}
+	function F(e) {
+		if (S.lastChild === e.group) return;
+		let t = e.group.matches(":focus");
+		S.append(e.group), t && e.group.focus({ preventScroll: !0 });
+	}
+	function I(e) {
+		k = e, F(e);
+	}
+	function L(t, n) {
+		O.delete(t.tile.id);
+		let r = e.messages();
+		if (!e.dispatch({
+			type: "pose",
+			piece: t.tile.id,
+			...n
+		})) {
+			e.announce(r.illegal), P();
+			return;
+		}
+		let i = E[t.index] ?? n;
+		e.announce(N(t, i, D.has(t.index)));
+	}
+	function R(t, n, r) {
+		let i = O.get(t.tile.id) ?? E[t.index];
+		i !== void 0 && e.engine.status !== "complete" && (I(t), L(t, M(t, {
+			...i,
+			rotation: (i.rotation + n + 8) % 8,
+			flipped: r ? !i.flipped : i.flipped
+		})));
+	}
+	function z(e) {
+		let t = e.target?.closest("g.piece");
+		return t instanceof SVGGElement && m.contains(t) ? w.get(t.dataset.piece ?? "") : void 0;
+	}
+	function B(t) {
+		let n = z(t);
+		if (n === void 0 || e.engine.status === "complete") return;
+		let r = O.get(n.tile.id) ?? E[n.index];
+		if (r === void 0) return;
+		let i = t.shiftKey ? a * 5 : a, o = {
+			ArrowUp: [0, -1],
+			ArrowDown: [0, 1],
+			ArrowLeft: [-1, 0],
+			ArrowRight: [1, 0]
+		}[t.key], s = t.key.toLowerCase();
+		o === void 0 ? t.key === "Enter" || t.key === " " ? (t.preventDefault(), O.has(n.tile.id) && L(n, r)) : t.key === "Escape" && O.has(n.tile.id) ? (t.preventDefault(), O.delete(n.tile.id), P()) : s === "r" && !t.ctrlKey && !t.metaKey && !t.altKey ? (t.preventDefault(), R(n, t.shiftKey ? -1 : 1, !1)) : s !== "f" || t.ctrlKey || t.metaKey || t.altKey || (t.preventDefault(), R(n, 0, !0)) : (t.preventDefault(), I(n), O.set(n.tile.id, M(n, {
+			...r,
+			x: r.x + o[0] * i,
+			y: r.y + o[1] * i
+		})), P());
+	}
+	function V(e) {
+		let t = z(e);
+		t !== void 0 && t !== k && (k = t, P());
+	}
+	function H(t) {
+		let n = z(t);
+		if (n === void 0 || t.button !== 0 || e.engine.status === "complete") return;
+		let i = O.get(n.tile.id) ?? E[n.index];
+		if (i === void 0) return;
+		t.preventDefault();
+		let a = r.width / Math.max(1, m.getBoundingClientRect().width);
+		j = {
+			piece: n,
+			pointer: t.pointerId,
+			startX: t.clientX,
+			startY: t.clientY,
+			from: i,
+			scale: a,
+			active: !1
+		}, m.setPointerCapture(t.pointerId), I(n), n.group.focus({ preventScroll: !0 }), P();
+	}
+	function ne(e) {
+		if (j === null || e.pointerId !== j.pointer) return;
+		let t = e.clientX - j.startX, n = e.clientY - j.startY;
+		!j.active && Math.hypot(t, n) < Zn || (j.active = !0, j.piece.group.classList.add("is-dragging"), O.set(j.piece.tile.id, M(j.piece, {
+			...j.from,
+			x: j.from.x + t * j.scale,
+			y: j.from.y + n * j.scale
+		})), P());
+	}
+	function U(e) {
+		if (j === null || e.pointerId !== j.pointer) return;
+		let { piece: t, active: n } = j;
+		j = null, m.hasPointerCapture(e.pointerId) && m.releasePointerCapture(e.pointerId), t.group.classList.remove("is-dragging");
+		let r = O.get(t.tile.id);
+		!n || r === void 0 || e.type === "pointercancel" ? (O.delete(t.tile.id), P()) : L(t, r);
+	}
+	let re = (e, t) => () => {
+		k !== null && (R(k, e, t), k.group.focus({ preventScroll: !0 }));
+	}, W = re(-1, !1), G = re(1, !1), ie = re(0, !0);
+	return m.addEventListener("keydown", B), m.addEventListener("focusin", V), m.addEventListener("pointerdown", H), m.addEventListener("pointermove", ne), m.addEventListener("pointerup", U), m.addEventListener("pointercancel", U), d.addEventListener("click", W), f.addEventListener("click", G), p.addEventListener("click", ie), P(), {
+		element: c,
+		update(e, t) {
+			E = $n(e), t && O.clear(), P();
+		},
+		showHint(e) {
+			if (e.type !== "pose") return;
+			let t = w.get(e.piece);
+			if (t !== void 0) {
+				for (let e of C) e.group.classList.remove("is-hint");
+				t.group.classList.add("is-hint"), x.setAttribute("d", dt(at(e.piece, i, e.x, e.y, e.rotation, e.flipped))), x.removeAttribute("display"), I(t), t.group.focus(), P(), A !== null && clearTimeout(A), A = setTimeout(() => {
+					t.group.classList.remove("is-hint"), x.setAttribute("display", "none");
+				}, 2500);
+			}
+		},
+		setPreview(e) {
+			e ? b.removeAttribute("display") : b.setAttribute("display", "none");
+		},
+		focus() {
+			(C.find((e) => !D.has(e.index)) ?? C[0])?.group.focus();
+		},
+		destroy() {
+			A !== null && clearTimeout(A), T.cancel(), m.removeEventListener("keydown", B), m.removeEventListener("focusin", V), m.removeEventListener("pointerdown", H), m.removeEventListener("pointermove", ne), m.removeEventListener("pointerup", U), m.removeEventListener("pointercancel", U), d.removeEventListener("click", W), f.removeEventListener("click", G), p.removeEventListener("click", ie), c.remove();
+		}
+	};
+}
+function $n(e) {
+	if (!er(e)) throw Error("Board does not match the tangram mode");
+	return e.pieces;
+}
+function er(e) {
+	return "pieces" in e && e.pieces.every((e) => "rotation" in e);
+}
+// src/views/nonogram.ts
+var tr = {
+	1: "filled",
+	x: "crossed",
+	".": "unknown"
+};
+function nr(e) {
+	let { doc: t, definition: n } = e, { rows: r, cols: i, crop: a, source: o } = n, s = ye(n), c = e.asset(n.media.image), l = Math.random().toString(36).slice(2, 10), u = Z(t, "div", { class: "board-wrap nonogram-wrap" }), d = Z(t, "p", {
+		class: "sr-only",
+		id: `ipp-instructions-${l}`
+	}), f = Z(t, "div", {
+		class: "nonogram-tools",
+		role: "group"
+	}), p = Z(t, "button", {
+		type: "button",
+		class: "control",
+		"data-tool": "filled"
+	}), m = Z(t, "button", {
+		type: "button",
+		class: "control",
+		"data-tool": "crossed"
+	});
+	f.append(p, m);
+	let h = Z(t, "div", {
+		class: "nonogram",
+		part: "board",
+		role: "grid",
+		"aria-describedby": d.id,
+		"aria-rowcount": String(r + 1),
+		"aria-colcount": String(i + 1),
+		"data-kind": "nonogram",
+		"data-loading": "true"
+	});
+	h.style.setProperty("--ipp-cols", String(i)), h.style.setProperty("--ipp-rows", String(r)), u.append(d, f, h);
+	let g = Z(t, "div", {
+		role: "row",
+		class: "nonogram-row nonogram-head",
+		"aria-rowindex": "1"
+	});
+	g.append(Z(t, "div", {
+		role: "presentation",
+		class: "nonogram-corner"
+	}));
+	let _ = [];
+	s.cols.forEach((e, n) => {
+		let r = Z(t, "div", {
+			role: "columnheader",
+			class: "clue clue-col",
+			"aria-colindex": String(n + 2),
+			id: `ipp-col-${l}-${n}`
+		});
+		for (let n of e.length > 0 ? e : [0]) r.append(Z(t, "span", { "aria-hidden": "true" }, String(n)));
+		r.append(Z(t, "span", { class: "sr-only" })), r.style.gridArea = `1 / ${n + 2}`, _.push(r), g.append(r);
+	}), h.append(g);
+	let v = [], y = [], b = Z(t, "div", {
+		role: "presentation",
+		class: "nonogram-body"
+	});
+	for (let e = 0; e < r; e++) {
+		let n = Z(t, "div", {
+			role: "row",
+			class: "nonogram-row",
+			"aria-rowindex": String(e + 2)
+		}), r = Z(t, "div", {
+			role: "rowheader",
+			class: "clue clue-row",
+			"aria-colindex": "1",
+			id: `ipp-row-${l}-${e}`
+		});
+		for (let n of (s.rows[e] ?? []).length > 0 ? s.rows[e] ?? [] : [0]) r.append(Z(t, "span", { "aria-hidden": "true" }, String(n)));
+		r.append(Z(t, "span", { class: "sr-only" })), r.style.gridArea = `${e + 2} / 1`, v.push(r), n.append(r);
+		for (let r = 0; r < i; r++) {
+			let a = Z(t, "div", {
+				role: "gridcell",
+				class: "nonogram-cell",
+				"aria-colindex": String(r + 2)
+			}), o = Z(t, "button", {
+				type: "button",
+				class: "cell",
+				part: "tile",
+				tabindex: "-1",
+				"data-cell": String(e * i + r)
+			});
+			a.style.gridArea = `${e + 2} / ${r + 2}`, a.append(o), y.push(o), n.append(a);
+		}
+		b.append(n);
+	}
+	let x = Z(t, "div", {
+		class: "nonogram-picture",
+		part: "preview",
+		hidden: ""
+	});
+	Object.assign(x.style, Rn(c, a, o)), b.append(x), h.append(b);
+	let S = zn(c, () => {
+		h.setAttribute("data-loading", "false");
+	}, () => {
+		e.assetError(c);
+	}), C = Se(e.engine.exportState().board), w = 0, T = "filled", E = !1, D = null, O = (e) => tr[C[e] ?? "."] ?? "unknown", k = (e) => e.length > 0 ? e.join(" ") : "0";
+	function A() {
+		let t = e.messages();
+		d.textContent = t.instructions.nonogram ?? "", f.setAttribute("aria-label", t.nonogramTool), p.textContent = t.nonogramFill, m.textContent = t.nonogramCross, p.setAttribute("aria-pressed", String(T === "filled")), m.setAttribute("aria-pressed", String(T === "crossed")), h.setAttribute("aria-label", t.label);
+		let a = e.engine.status === "complete", o = X(C.replace(/[x.]/g, "0"), r, i), c = n.assistance.highlightCorrect;
+		_.forEach((e, n) => {
+			let r = c && k(o.cols[n] ?? []) === k(s.cols[n] ?? []);
+			e.classList.toggle("is-done", r), e.lastChild.textContent = $(t.nonogramColumn, {
+				n: n + 1,
+				clue: k(s.cols[n] ?? [])
+			});
+		}), v.forEach((e, n) => {
+			let r = c && k(o.rows[n] ?? []) === k(s.rows[n] ?? []);
+			e.classList.toggle("is-done", r), e.lastChild.textContent = $(t.nonogramRow, {
+				n: n + 1,
+				clue: k(s.rows[n] ?? [])
+			});
+		}), y.forEach((e, n) => {
+			let r = O(n);
+			e.dataset.state = r, e.setAttribute("aria-label", $(t.nonogramCell, {
+				row: Math.floor(n / i) + 1,
+				col: n % i + 1,
+				state: t.nonogramStates[r] ?? r
+			})), e.tabIndex = n === w ? 0 : -1, e.disabled = a;
+		}), x.hidden = !(a || E), h.classList.toggle("is-complete", a);
+	}
+	function j(t, n) {
+		if (e.engine.status === "complete" || t < 0 || t >= y.length) return;
+		let r = e.messages();
+		if (O(t) === n) return;
+		let a = e.dispatch({
+			type: "mark",
+			cell: t,
+			state: n
+		});
+		e.announce(a ? $(r.nonogramCell, {
+			row: Math.floor(t / i) + 1,
+			col: t % i + 1,
+			state: r.nonogramStates[n] ?? n
+		}) : r.illegal);
+	}
+	function ee(e, t) {
+		j(e, O(e) === t ? "unknown" : t);
+	}
+	function M(e) {
+		w = Math.max(0, Math.min(y.length - 1, e)), A(), y[w]?.focus();
+	}
+	function N(e) {
+		let t = e.target?.closest("button.cell");
+		if (!(t instanceof HTMLElement) || !h.contains(t)) return null;
+		let n = Number(t.dataset.cell);
+		return Number.isInteger(n) ? n : null;
+	}
+	function P(e) {
+		let t = N(e);
+		if (t === null) return;
+		w = t;
+		let n = Math.floor(t / i), a = t % i, o = e.key, s = null;
+		o === "ArrowUp" && n > 0 ? s = t - i : o === "ArrowDown" && n < r - 1 ? s = t + i : o === "ArrowLeft" && a > 0 ? s = t - 1 : o === "ArrowRight" && a < i - 1 ? s = t + 1 : o === "Home" ? s = e.ctrlKey ? 0 : n * i : o === "End" && (s = e.ctrlKey ? y.length - 1 : n * i + i - 1), s !== null || o.startsWith("Arrow") ? (e.preventDefault(), s !== null && M(s)) : o === "Enter" || o === " " ? (e.preventDefault(), ee(t, "filled")) : o === "x" || o === "X" ? (e.preventDefault(), ee(t, "crossed")) : (o === "Delete" || o === "Backspace") && (e.preventDefault(), j(t, "unknown"));
+	}
+	function F(e) {
+		let t = N(e);
+		t !== null && (w = t, e.detail !== 0 && ee(t, e.shiftKey ? T === "filled" ? "crossed" : "filled" : T));
+	}
+	function I(e) {
+		let t = N(e);
+		t !== null && (e.preventDefault(), w = t, ee(t, T === "filled" ? "crossed" : "filled"));
+	}
+	let L = () => {
+		T = "filled", A();
+	}, R = () => {
+		T = "crossed", A();
+	};
+	return p.addEventListener("click", L), m.addEventListener("click", R), h.addEventListener("keydown", P), h.addEventListener("click", F), h.addEventListener("contextmenu", I), A(), {
+		element: u,
+		update(e) {
+			C = Se(e), A();
+		},
+		showHint(t) {
+			if (t.type !== "mark") return;
+			let n = y[t.cell];
+			if (n === void 0) return;
+			for (let e of y) e.classList.remove("is-hint");
+			n.classList.add("is-hint"), D !== null && clearTimeout(D), D = setTimeout(() => {
+				n.classList.remove("is-hint");
+			}, 2500), M(t.cell);
+			let r = e.messages();
+			e.announce($(r.hintGiven, { hint: $(r.nonogramCell, {
+				row: Math.floor(t.cell / i) + 1,
+				col: t.cell % i + 1,
+				state: r.nonogramStates[t.state] ?? t.state
+			}) }));
+		},
+		setPreview(e) {
+			E = e, A();
+		},
+		focus() {
+			y[w]?.focus();
+		},
+		destroy() {
+			D !== null && clearTimeout(D), S.cancel(), p.removeEventListener("click", L), m.removeEventListener("click", R), h.removeEventListener("keydown", P), h.removeEventListener("click", F), h.removeEventListener("contextmenu", I), u.remove();
+		}
+	};
+}
+// src/player.ts
+var rr = {
+	jigsaw: Kn,
+	nonogram: nr,
+	memory: Yn,
+	tangram: Qn
+}, ir = 4194304, ar = [
+	1,
+	1.5,
+	2,
+	3,
+	4
+], or = /* @__PURE__ */ new WeakMap();
+function sr(e) {
+	return e.baseURI;
+}
+function cr(e, t = {}) {
+	if (or.has(e)) throw new o("invalid", "This element already hosts an image puzzle player; destroy it first.");
+	let n = e.ownerDocument, r, i, a = !(e instanceof ShadowRoot);
+	e instanceof ShadowRoot ? (r = e, i = e.host) : (i = Z(n, "div", { class: "image-puzzle-player" }), e.append(i), r = i.attachShadow({ mode: "open" }));
+	let s = t.locale, c = bn(s, t.messages), l = t.onListenerError ?? ((e) => {
+		queueMicrotask(() => {
+			throw e;
+		});
+	}), u = Ut({
+		...t.clock ? { clock: t.clock } : {},
+		...t.randomSeed ? { randomSeed: t.randomSeed } : {},
+		onListenerError: l
+	}), d = t.fetch ?? ((e, t) => fetch(e, t)), f = t.persist === void 0 || t.persist === !1 ? null : t.persist === !0 ? {} : t.persist, p = f === null ? null : f.storage === void 0 ? Gt() : f.storage, m = f?.prefix, h = Z(n, "style", {}, Ln), g = Z(n, "div", {
+		class: "root",
+		part: "root"
+	}), _ = Z(n, "div", {
+		class: "toolbar",
+		part: "toolbar",
+		role: "group"
+	}), v = (e) => Z(n, "button", {
+		type: "button",
+		class: "control",
+		part: `control control-${e}`,
+		"data-control": e
+	}), y = {
+		start: v("start"),
+		undo: v("undo"),
+		redo: v("redo"),
+		reset: v("reset"),
+		shuffle: v("shuffle"),
+		hint: v("hint"),
+		preview: v("preview"),
+		zoomOut: v("zoom-out"),
+		zoomIn: v("zoom-in")
+	};
+	_.append(...Object.values(y)), _.hidden = t.controls === !1;
+	let b = Z(n, "div", {
+		class: "status",
+		part: "status"
+	}), x = Z(n, "span", { "data-status": "moves" }), S = Z(n, "span", { "data-status": "time" }), C = Z(n, "span", { "data-status": "progress" }), w = Z(n, "span", { "data-status": "hints" });
+	b.append(x, S, C, w);
+	let T = Z(n, "p", {
+		class: "message",
+		part: "message",
+		role: "status"
+	}), E = Z(n, "div", { class: "slot" }), D = Z(n, "div", {
+		class: "sr-only",
+		"aria-live": "polite",
+		"aria-atomic": "true"
+	});
+	g.append(_, b, T, E, D), r.replaceChildren(h, g);
+	let O = /* @__PURE__ */ new Map(), k = null, A = "empty", j = t.baseUrl ?? sr(n), ee = 0, M = null, N = null, P = !1, F = 0, I = !1, L = !1, R = !1, z = p === null ? null : Yt(u, p, B());
+	function B() {
+		return {
+			...m === void 0 ? {} : { prefix: m },
+			...f?.debounceMs === void 0 ? {} : { debounceMs: f.debounceMs },
+			onError: (e) => {
+				V("error", {
+					code: e.code,
+					message: e.message
+				});
+			}
+		};
+	}
+	function V(e, t) {
+		for (let n of [...O.get(e) ?? []]) try {
+			n(t);
+		} catch (e) {
+			l(e);
+		}
+	}
+	function H(e) {
+		e !== "" && (D.textContent = "", D.textContent = e);
+	}
+	function te() {
+		(t.motion === "reduce" || t.motion === "full") && i.setAttribute("data-motion", t.motion);
+	}
+	function ne(e, t = "") {
+		T.hidden = e === null, T.dataset.kind = e ?? "", T.textContent = t;
+	}
+	function U(e, t = "") {
+		A = e, i.setAttribute("data-state", e), g.setAttribute("aria-busy", String(e === "loading"));
+		let n = c;
+		e === "empty" ? ne("empty", n.empty) : e === "loading" ? ne("loading", n.loading) : e === "error" ? ne("error", $(n.loadError, { message: t })) : ne(null), E.hidden = e === "loading" || k === null, W();
+	}
+	function re() {
+		let e = c;
+		s === void 0 ? g.removeAttribute("lang") : g.lang = s, _.setAttribute("aria-label", e.controls), y.undo.textContent = e.undo, y.redo.textContent = e.redo, y.reset.textContent = e.reset, y.shuffle.textContent = e.shuffle, y.hint.textContent = e.hint, y.preview.textContent = e.preview, y.zoomOut.textContent = e.zoomOut, y.zoomIn.textContent = e.zoomIn;
+	}
+	function W() {
+		let e = u.status === "destroyed" ? null : u.definition, t = e !== null && A !== "loading", n = u.status, r = e?.capabilities;
+		y.start.hidden = !t, y.start.textContent = n === "running" ? c.pause : n === "paused" ? c.resume : c.start, y.start.disabled = n === "complete", y.undo.hidden = !t || r?.undo !== !0, y.undo.disabled = !t || !u.canUndo(), y.redo.hidden = !t || r?.redo !== !0, y.redo.disabled = !t || !u.canRedo(), y.reset.hidden = !t || r?.reset !== !0, y.shuffle.hidden = !t || r?.shuffle !== !0, y.hint.hidden = !t || r?.hint !== !0, y.hint.disabled = n === "complete", y.preview.hidden = !t || !e.assistance.preview, y.preview.setAttribute("aria-pressed", String(P));
+		let i = t && e.kind === "jigsaw";
+		y.zoomOut.hidden = !i, y.zoomIn.hidden = !i, y.zoomOut.disabled = F === 0, y.zoomIn.disabled = F === ar.length - 1, b.hidden = !t, G();
+	}
+	function G() {
+		if (u.status === "destroyed" || u.definition === null) return;
+		let e = u.snapshot();
+		x.textContent = $(c.moves, { n: e.moves }), S.textContent = $(c.time, { time: xn(e.elapsedMs) }), C.textContent = $(c.progress, { percent: Math.floor(e.progress * 100) }), w.hidden = !u.definition.capabilities.hint, w.textContent = $(c.hints, { n: e.hintsUsed });
+	}
+	function ie() {
+		let e = u.status === "running" && !L;
+		e && N === null ? N = setInterval(G, 1e3) : !e && N !== null && (clearInterval(N), N = null);
+	}
+	function ae() {
+		k?.destroy(), k = null, P = !1, F = 0;
+		let e = u.definition;
+		if (e === null) return;
+		let t = {
+			doc: n,
+			definition: e,
+			engine: u,
+			messages: () => c,
+			asset: (e) => hn(e, j),
+			announce: H,
+			dispatch: (e) => u.dispatchAction(e).ok,
+			assetError: (e) => {
+				V("error", {
+					code: "load",
+					message: `Could not load ${e}`
+				}), U("error", `Could not load ${e}`);
+			}
+		};
+		k = (rr[e.kind] ?? Hn)(t), E.replaceChildren(k.element);
+	}
+	let K = [
+		u.subscribe("state-change", (e) => {
+			e.reason === "load" ? ae() : k?.update(e.state.board, e.reason !== "action"), W(), ie(), V("state-change", e);
+		}),
+		u.subscribe("complete", (e) => {
+			H($(c.complete, {
+				moves: e.moves,
+				time: xn(e.elapsedMs)
+			})), V("complete", e);
+		}),
+		u.subscribe("ready", (e) => {
+			V("ready", e);
+		}),
+		u.subscribe("move", (e) => {
+			V("move", e);
+		}),
+		u.subscribe("progress", (e) => {
+			V("progress", e);
+		}),
+		u.subscribe("error", (e) => {
+			V("error", e);
+		})
+	];
+	function oe(e) {
+		let t = e.target?.closest("button[data-control]");
+		if (t instanceof HTMLButtonElement && !t.disabled && u.definition !== null) switch (t.dataset.control) {
+			case "start":
+				u.status === "running" ? u.pause() : u.start();
+				break;
+			case "undo":
+				u.undo();
+				break;
+			case "redo":
+				u.redo();
+				break;
+			case "reset":
+				u.reset();
+				break;
+			case "shuffle":
+				u.shuffle();
+				break;
+			case "hint":
+				ue.hint();
+				break;
+			case "preview":
+				P = !P, k?.setPreview(P), W();
+				break;
+			case "zoom-in":
+			case "zoom-out": F = Math.min(ar.length - 1, Math.max(0, F + (t.dataset.control === "zoom-in" ? 1 : -1))), k?.setZoom?.(ar[F] ?? 1), W();
+		}
+	}
+	_.addEventListener("click", oe);
+	function se() {
+		n.visibilityState === "hidden" && u.status === "running" ? (u.pause(), R = !0) : n.visibilityState === "visible" && R && (R = !1, u.status === "paused" && u.start());
+	}
+	let q = t.pauseWhenHidden !== !1;
+	q && n.addEventListener("visibilitychange", se);
+	async function J(e, t) {
+		let n;
+		try {
+			n = await d(e, {
+				signal: t,
+				credentials: "same-origin",
+				headers: { Accept: "application/json" }
+			});
+		} catch (n) {
+			throw t.aborted ? n : new o("load", `Could not fetch ${e}`, { cause: n });
+		}
+		if (!n.ok) throw new o("load", `Fetching ${e} failed with HTTP ${n.status}`);
+		if (Number(n.headers.get("content-length") ?? "0") > 4194304) throw new o("load", `${e} exceeds ${ir} bytes`);
+		let r = await n.text();
+		if (r.length > 4194304) throw new o("load", `${e} exceeds ${ir} bytes`);
+		try {
+			return {
+				data: JSON.parse(r),
+				base: n.url === "" ? e : n.url
+			};
+		} catch (t) {
+			throw new o("load", `${e} is not valid JSON`, { cause: t });
+		}
+	}
+	function ce(e) {
+		return e !== ee || I;
+	}
+	async function le(e, r = {}) {
+		if (I) throw new o("destroyed", "The player was destroyed.");
+		let i = ++ee;
+		M?.abort();
+		let a = new AbortController();
+		M = a, U("loading");
+		let s, c;
+		try {
+			if (typeof e == "string") {
+				let t = new URL(e, sr(n)).href;
+				({data: s, base: c} = await J(t, a.signal));
+			} else s = e, c = r.baseUrl ?? t.baseUrl ?? sr(n);
+		} catch (e) {
+			if (ce(i)) return;
+			let t = e instanceof o ? e : new o("load", String(e), { cause: e });
+			throw V("error", {
+				code: t.code,
+				message: t.message
+			}), U("error", t.message), t;
+		}
+		if (ce(i)) return;
+		M = null;
+		let l = j;
+		j = c;
+		try {
+			u.load(s, r.state);
+		} catch (e) {
+			throw j = l, U("error", e instanceof Error ? e.message : String(e)), e;
+		}
+		if (U("ready"), r.state === void 0 && p !== null) {
+			let e = Jt(u, p, m);
+			!e.restored && e.error?.code === "storage" && V("error", {
+				code: e.error.code,
+				message: e.error.message
+			});
+		}
+	}
+	let ue = {
+		element: i,
+		engine: u,
+		get view() {
+			return A;
+		},
+		load: le,
+		start: () => {
+			u.start();
+		},
+		pause: () => {
+			u.pause();
+		},
+		reset: () => {
+			u.reset();
+		},
+		shuffle: (e) => {
+			u.shuffle(e);
+		},
+		undo: () => u.undo(),
+		redo: () => u.redo(),
+		hint() {
+			let e = u.hint();
+			return e === null ? H(c.noHint) : k?.showHint(e), G(), e;
+		},
+		dispatchAction: (e) => u.dispatchAction(e),
+		exportState: () => u.exportState(),
+		importState: (e) => {
+			u.importState(e);
+		},
+		snapshot: () => u.snapshot(),
+		setLocale(e, n) {
+			s = e, c = bn(s, n ?? t.messages), re(), u.definition !== null && A !== "loading" && ae(), U(A);
+		},
+		subscribe(e, t) {
+			let n = O.get(e);
+			n === void 0 && (n = /* @__PURE__ */ new Set(), O.set(e, n));
+			let r = t;
+			return n.add(r), () => {
+				O.get(e)?.delete(r);
+			};
+		},
+		suspend() {
+			I || L || (L = !0, u.status === "running" && (u.pause(), R = !0), ie(), p !== null && u.definition !== null && qt(u, p, m), q && n.removeEventListener("visibilitychange", se));
+		},
+		resume() {
+			!I && L && (L = !1, q && n.addEventListener("visibilitychange", se), R && u.status === "paused" && n.visibilityState !== "hidden" && (R = !1, u.start()), ie());
+		},
+		destroy() {
+			if (!I) {
+				I = !0, ee++, M?.abort(), z?.(), z = null, N !== null && clearInterval(N), N = null, q && n.removeEventListener("visibilitychange", se), _.removeEventListener("click", oe), k?.destroy(), k = null;
+				for (let e of K) e();
+				O.clear(), u.destroy(), r.replaceChildren(), i.removeAttribute("data-state"), a && i.remove(), or.delete(e);
+			}
+		}
+	};
+	return or.set(e, ue), te(), re(), U("empty"), (t.definition !== void 0 || t.src !== void 0) && le(t.definition ?? t.src, t.state === void 0 ? {} : { state: t.state }).catch(() => void 0), ue;
+}
+// src/element.ts
+var lr = "image-puzzle-player", ur = {
+	ready: "puzzle-ready",
+	move: "puzzle-move",
+	"state-change": "puzzle-state-change",
+	progress: "puzzle-progress",
+	complete: "puzzle-complete",
+	error: "puzzle-error"
+}, dr = [
+	"definition",
+	"state",
+	"options",
+	"src",
+	"locale"
+];
+function fr(e = lr) {
+	if (typeof customElements > "u" || typeof HTMLElement > "u") return;
+	let t = customElements.get(e);
+	if (t !== void 0) return t;
+	class n extends HTMLElement {
+		static observedAttributes = [
+			"src",
+			"locale",
+			"theme-class"
+		];
+		#e = null;
+		#t = null;
+		#n = void 0;
+		#r = {};
+		#i = void 0;
+		#a = !1;
+		#o = null;
+		#s(e) {
+			this.#o?.(), this.#o = e === null || e === "" ? null : wn(this, e);
+		}
+		constructor() {
+			super(), this.shadowRoot === null && this.attachShadow({ mode: "open" });
+		}
+		connectedCallback() {
+			for (let e of dr) if (Object.prototype.hasOwnProperty.call(this, e)) {
+				let t = this[e];
+				Reflect.deleteProperty(this, e), this[e] = t;
+			}
+			this.#e === null ? this.#c() : this.#e.resume(), this.#o === null && this.#s(this.getAttribute("theme-class")), this.#f();
+		}
+		disconnectedCallback() {
+			queueMicrotask(() => {
+				this.isConnected || (this.#e?.suspend(), this.#s(null));
+			});
+		}
+		attributeChangedCallback(e, t, n) {
+			t !== n && (e === "locale" ? this.#e?.setLocale(n ?? void 0, this.#r.messages) : e === "theme-class" ? this.#s(n) : this.#f());
+		}
+		get definition() {
+			return this.#t;
+		}
+		set definition(e) {
+			this.#t = e ?? null, this.#f();
+		}
+		get state() {
+			return this.#n;
+		}
+		set state(e) {
+			this.#n = e ?? void 0, this.#f(!0);
+		}
+		get options() {
+			return this.#r;
+		}
+		set options(e) {
+			this.#r = { ...e };
+		}
+		get src() {
+			return this.getAttribute("src");
+		}
+		set src(e) {
+			e === null ? this.removeAttribute("src") : this.setAttribute("src", e);
+		}
+		get locale() {
+			return this.getAttribute("locale");
+		}
+		set locale(e) {
+			e === null ? this.removeAttribute("locale") : this.setAttribute("locale", e);
+		}
+		get player() {
+			return this.#c();
+		}
+		get engine() {
+			return this.#c().engine;
+		}
+		load(e, t = {}) {
+			let n = this.#c(), r = e ?? this.#l();
+			if (r === null) return Promise.reject(new o("invalid", "No definition or src to load."));
+			let i = t.state ?? this.#d();
+			return this.#i = e === void 0 ? this.#u() : void 0, n.load(r, {
+				...t,
+				...i === void 0 ? {} : { state: i }
+			});
+		}
+		start() {
+			this.#c().start();
+		}
+		pause() {
+			this.#c().pause();
+		}
+		reset() {
+			this.#c().reset();
+		}
+		shuffle(e) {
+			this.#c().shuffle(e);
+		}
+		undo() {
+			return this.#c().undo();
+		}
+		redo() {
+			return this.#c().redo();
+		}
+		hint() {
+			return this.#c().hint();
+		}
+		dispatchAction(e) {
+			return this.#c().dispatchAction(e);
+		}
+		exportState() {
+			return this.#c().exportState();
+		}
+		importState(e) {
+			this.#c().importState(e);
+		}
+		snapshot() {
+			return this.#c().snapshot();
+		}
+		dispose() {
+			this.#e?.destroy(), this.#e = null, this.#i = void 0;
+		}
+		#c() {
+			if (this.#e === null) {
+				let e = this.shadowRoot, t = this.getAttribute("locale"), n = this.getAttribute("motion"), r = cr(e, {
+					...this.hasAttribute("persist") ? { persist: !0 } : {},
+					...this.hasAttribute("no-controls") ? { controls: !1 } : {},
+					...n === "reduce" || n === "full" ? { motion: n } : {},
+					...this.#r,
+					...t === null ? {} : { locale: t }
+				});
+				for (let [e, t] of Object.entries(ur)) r.subscribe(e, (e) => {
+					this.dispatchEvent(new CustomEvent(t, {
+						detail: e,
+						bubbles: !0,
+						composed: !0
+					}));
+				});
+				this.#e = r;
+			}
+			return this.#e;
+		}
+		#l() {
+			return this.#t ?? this.getAttribute("src");
+		}
+		#u() {
+			let e = this.getAttribute("src");
+			return this.#t ?? (e === null ? null : new URL(e, this.ownerDocument.baseURI).href);
+		}
+		#d() {
+			let e = this.#n;
+			return this.#n = void 0, e;
+		}
+		#f(e = !1) {
+			e && (this.#i = void 0), !this.#a && (this.#a = !0, queueMicrotask(() => {
+				if (this.#a = !1, !this.isConnected || this.#e === null) return;
+				let e = this.#u();
+				if (e === null || e === this.#i) return;
+				this.#i = e;
+				let t = this.#d();
+				this.#e.load(this.#l(), t === void 0 ? {} : { state: t }).catch(() => void 0);
+			}));
+		}
+	}
+	return customElements.define(e, n), n;
+}
+// src/binding.ts
+var pr = [
+	"ready",
+	"move",
+	"state-change",
+	"progress",
+	"complete",
+	"error"
+];
+function mr(e) {
+	return {
+		...e.controls === void 0 ? {} : { controls: e.controls },
+		...e.persist === void 0 ? {} : { persist: e.persist },
+		...e.motion === void 0 ? {} : { motion: e.motion },
+		...e.pauseWhenHidden === void 0 ? {} : { pauseWhenHidden: e.pauseWhenHidden },
+		...e.fetch === void 0 ? {} : { fetch: e.fetch },
+		...e.clock === void 0 ? {} : { clock: e.clock },
+		...e.randomSeed === void 0 ? {} : { randomSeed: e.randomSeed },
+		...e.onListenerError === void 0 ? {} : { onListenerError: e.onListenerError },
+		...e.locale === void 0 ? {} : { locale: e.locale },
+		...e.messages === void 0 ? {} : { messages: e.messages }
+	};
+}
+function hr(e, t, n) {
+	let r = cr(e, mr(t)), i = [
+		r.subscribe("ready", (e) => n().ready?.(e)),
+		r.subscribe("move", (e) => n().move?.(e)),
+		r.subscribe("state-change", (e) => n()["state-change"]?.(e)),
+		r.subscribe("progress", (e) => n().progress?.(e)),
+		r.subscribe("complete", (e) => n().complete?.(e)),
+		r.subscribe("error", (e) => n().error?.(e))
+	], a, o = t.locale, s = t.messages, c, l, u = null, d = !1;
+	function f(e) {
+		if (d) return;
+		let t = e.definition ?? e.src;
+		if (t !== void 0 && t !== a) {
+			let n = a === void 0;
+			a = t, r.load(t, {
+				...n && e.initialState !== void 0 && e.initialState !== null ? { state: e.initialState } : {},
+				...e.baseUrl === void 0 ? {} : { baseUrl: e.baseUrl }
+			}).catch(() => void 0);
+		}
+		(e.locale !== o || e.messages !== s) && (o = e.locale, s = e.messages, r.setLocale(o, s)), e.theme !== c && (c = e.theme, c === void 0 ? r.element.removeAttribute("theme") : r.element.setAttribute("theme", c)), e.themeClass !== l && (l = e.themeClass, u?.(), u = l === void 0 || l === "" ? null : wn(r.element, l));
+	}
+	return f(t), {
+		player: r,
+		update: f,
+		destroy() {
+			if (!d) {
+				d = !0, u?.();
+				for (let e of i) e();
+				r.destroy();
+			}
+		}
+	};
+}
+fr(), In();
+export { Pn as CONFIGURATOR_CHANGE_EVENT, Nn as CONFIGURATOR_TAG, lr as DEFAULT_TAG, ur as ELEMENT_EVENTS, Lt as HISTORY_LIMIT, c as IllegalActionError, s as InvalidDocumentError, ir as MAX_DEFINITION_BYTES, pr as PLAYER_EVENTS, o as PuzzleError, hr as bindPlayer, ln as buildConfigDocument, dn as configuratorEn, fn as configuratorIt, Mn as createConfigurator, Ut as createEngine, cr as createPlayer, In as defineImagePuzzleConfigurator, fr as defineImagePuzzlePlayer, yn as dictionaries, _n as en, wn as followThemeClass, $ as format, xn as formatTime, vn as it, sn as parseBuildConfig, At as parseDefinition, mn as resolveConfiguratorMessages, bn as resolveMessages, Cn as themeTokens };
+
+//# sourceMappingURL=image-puzzle-player.bundle.js.map

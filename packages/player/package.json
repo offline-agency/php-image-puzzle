@@ -1,0 +1,51 @@
+{
+  "name": "@offline-agency/image-puzzle-player",
+  "version": "0.0.0-dev",
+  "description": "Browser player and <image-puzzle-player> Web Component for image-puzzle game definitions (sliding, swap, rotation, strips, jigsaw).",
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": [
+    "./dist/define.js",
+    "./dist/browser.js",
+    "./dist/image-puzzle-player.bundle.js",
+    "./dist/image-puzzle-player.iife.js"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/offline-agency/php-image-puzzle.git",
+    "directory": "packages/player"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./define": {
+      "types": "./dist/define.d.ts",
+      "import": "./dist/define.js"
+    },
+    "./bundle": {
+      "types": "./dist/browser.d.ts",
+      "import": "./dist/image-puzzle-player.bundle.js"
+    },
+    "./iife": "./dist/image-puzzle-player.iife.js",
+    "./global": {
+      "types": "./global.d.ts"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "global.d.ts",
+    "README.md"
+  ],
+  "dependencies": {
+    "@offline-agency/image-puzzle-engine": "0.0.0-dev"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json && vite build",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "test:browser": "playwright test"
+  }
+}

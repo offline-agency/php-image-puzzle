@@ -6,12 +6,13 @@ use ImagePuzzle\EdgeStyle\RoundedCornersStyle;
 use ImagePuzzle\ExportOptions;
 use ImagePuzzle\PieceContext;
 use ImagePuzzle\PuzzleGenerator;
+use ImagePuzzle\Tests\Support\Fixtures;
 
 test('apply returns image with same dimensions', function (): void {
     $style = new RoundedCornersStyle(4);
     $width = 20;
     $height = 16;
-    $image = imagecreatetruecolor($width, $height);
+    $image = Fixtures::canvas($width, $height);
     expect($image)->not->toBeFalse();
     imagesavealpha($image, true);
     $context = new PieceContext(0, 0, 0, 0, $width, $height, 100, 100, 4, 4);
@@ -22,7 +23,7 @@ test('apply returns image with same dimensions', function (): void {
 
 test('apply does not crash with small piece', function (): void {
     $style = new RoundedCornersStyle(2);
-    $image = imagecreatetruecolor(4, 4);
+    $image = Fixtures::canvas(4, 4);
     expect($image)->not->toBeFalse();
     $context = new PieceContext(0, 0, 0, 0, 4, 4, 32, 32, 2, 2);
     $result = $style->apply($image, $context);
@@ -36,7 +37,7 @@ test('radius zero throws', function (): void {
 
 test('radius one is valid', function (): void {
     $style = new RoundedCornersStyle(1);
-    $image = imagecreatetruecolor(10, 10);
+    $image = Fixtures::canvas(10, 10);
     expect($image)->not->toBeFalse();
     imagesavealpha($image, true);
     $context = new PieceContext(0, 0, 0, 0, 10, 10, 100, 100, 4, 4);
@@ -45,11 +46,11 @@ test('radius one is valid', function (): void {
     expect(imagesy($result))->toBe(10);
 });
 
-test('apply returns same image when radius >= half of smaller dimension', function (): void {
+test('apply clamps radius >= half of smaller dimension instead of skipping', function (): void {
     $style = new RoundedCornersStyle(10);
     $width = 16;
     $height = 20;
-    $image = imagecreatetruecolor($width, $height);
+    $image = Fixtures::canvas($width, $height);
     expect($image)->not->toBeFalse();
     imagesavealpha($image, true);
     $context = new PieceContext(0, 0, 0, 0, $width, $height, 100, 100, 4, 4);
@@ -81,7 +82,7 @@ test('integration with PuzzleGenerator and export', function (): void {
 
 test('mask-based corners: 8x8 piece radius 2 has transparent corner pixels', function (): void {
     $style = new RoundedCornersStyle(2);
-    $image = imagecreatetruecolor(8, 8);
+    $image = Fixtures::canvas(8, 8);
     expect($image)->not->toBeFalse();
     imagesavealpha($image, true);
     imagealphablending($image, false);
@@ -97,17 +98,19 @@ test('mask-based corners: 8x8 piece radius 2 has transparent corner pixels', fun
         $c = imagecolorat($img, $x, $y);
         return ($c >> 24) & 0x7F;
     };
+    // Radius 2, pixel centres: only the outermost corner pixel lies outside each arc.
     expect($alphaAt($result, 0, 0))->toBe(127);
-    expect($alphaAt($result, 1, 0))->toBe(127);
-    expect($alphaAt($result, 0, 1))->toBe(127);
+    expect($alphaAt($result, 1, 0))->toBe(0);
+    expect($alphaAt($result, 0, 1))->toBe(0);
     expect($alphaAt($result, 7, 0))->toBe(127);
     expect($alphaAt($result, 0, 7))->toBe(127);
+    expect($alphaAt($result, 7, 7))->toBe(127);
 });
 
 test('clearMaskCache can be called and apply still works after', function (): void {
     RoundedCornersStyle::clearMaskCache();
     $style = new RoundedCornersStyle(2);
-    $image = imagecreatetruecolor(8, 8);
+    $image = Fixtures::canvas(8, 8);
     expect($image)->not->toBeFalse();
     $context = new PieceContext(0, 0, 0, 0, 8, 8, 32, 32, 2, 2);
     $result = $style->apply($image, $context);

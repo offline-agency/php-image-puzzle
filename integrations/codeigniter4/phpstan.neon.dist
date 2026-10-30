@@ -1,0 +1,21 @@
+# Analysed inside a fresh CodeIgniter 4 application by tools/codeigniter/run.sh,
+# where this file is copied to the application root. Level max, no baseline.
+includes:
+    - vendor/codeigniter/phpstan-codeigniter/extension.neon
+
+parameters:
+    level: max
+    paths:
+        - app/Config/ImagePuzzle.php
+        - app/Config/Services.php
+        - app/Config/Routes.php
+        - app/Controllers/Puzzles.php
+        - app/Libraries/PuzzleService.php
+        - app/Views/puzzles
+        - tests/ImagePuzzle
+    scanFiles:
+        - vendor/codeigniter4/framework/system/Helpers/form_helper.php
+        - vendor/codeigniter4/framework/system/Helpers/url_helper.php
+    bootstrapFiles:
+        - vendor/codeigniter4/framework/system/Test/bootstrap.php
+    tmpDir: build/phpstan

@@ -1,0 +1,318 @@
+# Game modes, definitions and state
+
+The PHP core generates **game definitions** that browsers (or a server) play
+with one shared rules engine. A definition is immutable; the player's progress
+lives in a separate **state** document. Both are versioned JSON validated by
+[`docs/schemas/game/v1`](schemas/game/v1).
+
+| Kind | Actions | Board (`initial`, `state.board`) | Hint | Notes |
+| --- | --- | --- | --- | --- |
+| `sliding` | `{"type":"slide","tile":id}` | `{"cells":[id\|null,…]}` row-major, one `null` | no | Tile next to the gap moves into it |
+| `swap` | `{"type":"swap","a":id,"b":id}` | `{"cells":[id,…]}` row-major | yes | Completion compares IDs, never pixels |
+| `rotation` | `{"type":"rotate","tile":id,"direction":"cw"\|"ccw"}` | `{"orientations":[deg,…]}` per tile | yes | Tiles never move |
+| `strips` | `{"type":"move","strip":id,"to":index}` | `{"order":[id,…]}` | yes | Remove, then insert at `to` |
+| `jigsaw` | `{"type":"place","piece":id,"x":int,"y":int}` | `{"pieces":[{"x","y","placed"},…]}` per tile | yes | Pieces from an export manifest; any topology |
+| `memory` | `{"type":"flip","card":id}` | `{"cards":[id,…],"matched":[id,…],"revealed":[id,…]}` | no | Pairs of cards; see [Memory](#memory) |
+| `nonogram` | `{"type":"mark","cell":index,"state":"filled"\|"crossed"\|"unknown"}` | `{"cells":"1x.…"}` one character per cell | yes | Generated from the image pixels; see [Nonogram](#nonogram) |
+| `tangram` | `{"type":"pose","piece":id,"x":int,"y":int,"rotation":0-7,"flipped":bool}` | `{"pieces":[{"x","y","rotation","flipped"},…]}` per piece | yes | Seven pieces of a square image; see [Tangram](#tangram) |
+
+The grid modes, jigsaw and tangram support undo, redo, reset and shuffle; a nonogram
+has no shuffle (its start is always the empty grid) and memory has no undo,
+redo or hint (they would reveal hidden cards). The `capabilities` of
+each definition are authoritative and players hide controls whose capability
+is `false`. Every `GameKind` ships with rules (`Modes::available()`).
+
+## Creating definitions
+
+```php
+use ImagePuzzle\Game\GameFactory;
+use ImagePuzzle\Game\GameKind;
+use ImagePuzzle\Game\SourceImage;
+
+$factory = new GameFactory();
+$source = SourceImage::fromFile('photo.jpg');            // dimensions + SHA-256
+
+$sliding = $factory->create(GameKind::Sliding, $source, 'photo.jpg', 'easy', seed: 42);
+$strips = $factory->create(GameKind::Strips, $source, 'photo.jpg', 'custom', [
+    'count' => 6,
+    'axis' => 'vertical',
+], seed: 7);
+
+file_put_contents('sliding.json', $sliding->toJson());
+
+// Jigsaw: wrap a version 2 manifest produced by the exporter.
+$manifest = json_decode(file_get_contents('pieces/manifest.json'), true);
+$jigsaw = $factory->jigsawFromManifest($manifest, 'photo.jpg', 'medium', seed: 3, imageBase: 'pieces/');
+```
+
+`media.image` (and jigsaw piece images) are relative paths without dot
+segments, or `https` URLs, resolved against the definition's own URL. Never
+build them from request input.
+
+### Presets (version 1)
+
+Presets fix generation parameters and allowed assistance only; they are not a
+measure of solution length.
+
+| Kind | easy | medium | hard | custom keys |
+| --- | --- | --- | --- | --- |
+| sliding | 3×3, 60 scramble moves | 4×4, 200 | 5×5, 500 | `rows`, `cols` (2–16), `scrambleMoves` |
+| swap | 3×3 | 4×4 | 6×6 | `rows`, `cols` (1–16, ≥ 2 tiles) |
+| rotation | 3×3, 0/180° | 4×4, quarter turns | 6×6, quarter turns | `rows`, `cols`, `orientations` |
+| strips | 4 horizontal | 8 horizontal | 14 vertical | `count` (2–128), `axis` |
+| jigsaw | 3×4, snap 25 % of the smallest cell | 6×8, 15 % | 10×12, 8 % | `snap` argument |
+| memory | 3×4 cards (6 pairs) | 4×4 (8 pairs) | 4×6 (12 pairs), no highlight | `rows`, `cols` (2–8, even product), `labels` |
+| nonogram | 10×10, highlight solved lines | 15×15, highlight | 20×20, no highlight | `rows`, `cols` (2–30), `threshold`, `invert`, `requireUnique` |
+| tangram | `square` target, snap 50 % of the unit, highlight | `square`, 30 % | `square`, 15 %, no preview | `target` (`square`, `arrow`, `chevron`), `snap` (1–90 % of the unit) |
+
+All custom presets also accept `assistance` (`preview`, `numbers`,
+`highlightCorrect` booleans). The full table is exported by
+`Presets::export()` and in `conformance/presets.json`.
+
+### Geometry
+
+Grid modes play on equal cells. Pixels that do not divide evenly are cropped
+symmetrically (the extra pixel goes right/bottom) and recorded in
+`board.crop`; each tile's `rect` is its cell in source pixels. Rotation with
+90/270° additionally crops to square cells. Jigsaw tiles keep the manifest's
+logical cell (`rect`), solved image box (`rendered`), file (`image`) and
+outline (`path`); the browser draws exactly this geometry and never
+regenerates it.
+
+**Orientation convention:** an orientation is the clockwise rotation in
+degrees applied to the tile image when displayed. `0` is upright; `cw` moves
+to the next larger allowed angle and `ccw` to the next smaller, wrapping.
+
+**Jigsaw world:** coordinates are source pixels. The board is `board.crop`,
+the tray (`rules.tray`) starts more than `rules.snap` pixels to its right and
+`rules.area` bounds every piece box. A placement whose box is within `snap`
+pixels of the solved box on both axes snaps and locks; otherwise the box must
+stay inside the area.
+
+## Memory
+
+Find the two cards of every pair. `GameFactory::create(GameKind::Memory, …)`
+divides the image into one region per pair, choosing the region grid whose
+cells are closest to square (`GameFactory::regions()`), and deals two cards
+per region. Cards have stable IDs, `p{k}-a` and `p{k}-b`, listed pair by
+pair; a card's ID never depends on what it shows, so two identical-looking
+regions are still different pairs.
+
+With `labels` (custom preset, one 1–120 byte label per pair), the second
+card of each pair shows its label instead of the picture: a picture/word
+association. Labels may not contain control characters or surrounding spaces.
+
+**State machine** (all transitions are deterministic rules; nothing depends
+on time):
+
+| Situation | `flip` of card X |
+| --- | --- |
+| X is matched | illegal |
+| X is the only face-up card | illegal |
+| no face-up card | X turns face up |
+| one face-up card of the same pair | both move to `matched` |
+| one face-up card of another pair | both stay face up (a mismatch) |
+| two face-up cards (a mismatch) | both turn face down, then X turns face up (X may be one of them) |
+
+The puzzle is complete when every card is matched. How long a mismatch stays
+visible is a player choice: the bundled player turns it face down on screen
+after one second, but the state keeps both cards in `revealed` until the next
+flip, so saving and restoring at any moment gives the same game. `moves`
+counts flips.
+
+**Fairness and privacy:** the player never puts a face-down card's picture or
+label in the DOM, and face-up picture cards are announced as "picture N" so
+the game can be played with a screen reader. A determined player can still
+read the layout from the definition or the saved state in the browser: memory
+in the browser is a game, not a secure test.
+
+## Tangram
+
+The standard seven-piece tangram cut from the largest centred square of the
+image whose side is a multiple of 24 pixels (at least 48), so the **unit**
+`u` (a quarter of the side, `rules.unit`) is a multiple of 6 and every solved
+vertex and centroid is a whole pixel. `GameFactory::create(GameKind::Tangram, …)`.
+
+**Coordinate convention:** x to the right, y down (image coordinates), in
+units of the square of side 4 with the origin at its top-left corner. Tiles,
+in this order, with their solved vertices:
+
+| Tile ID | Shape | Vertices (units) |
+| --- | --- | --- |
+| `large-a` | large triangle | (0,0) (4,0) (2,2) |
+| `large-b` | large triangle | (0,0) (2,2) (0,4) |
+| `medium` | medium triangle | (4,2) (4,4) (2,4) |
+| `small-a` | small triangle | (4,0) (4,2) (3,1) |
+| `small-b` | small triangle | (2,2) (3,3) (1,3) |
+| `square` | square | (2,2) (3,1) (4,2) (3,3) |
+| `parallelogram` | parallelogram | (0,4) (1,3) (3,3) (2,4) |
+
+Each tile records its `shape`, the solved bounding box as `rect` and the
+solved outline as `path`, so the SVG and PDF exporters print and cut the seven
+pieces like jigsaw pieces (the image is never re-cut in the browser).
+
+**Pose:** a piece's centroid (vertex mean) sits at integer world pixels
+`(x, y)`; `flipped` mirrors it across the vertical axis through the centroid,
+then `rotation` turns it clockwise by `rotation × 45°`. Rotations use exact
+cosine/sine values (1, 0, √½) in the same order of operations in PHP and
+TypeScript (`Tangram::polygon()`, `tangramPolygon()`), so both compute
+identical doubles; the conformance fixtures check every result.
+
+**Targets:** `rules.target` names a target from a small validated library
+(`Tangram::TARGETS`); anything else is rejected with the list of supported
+targets.
+
+| Target | Kind | Arrangement |
+| --- | --- | --- |
+| `square` | picture | the solved square: each slot takes only its own piece in its solved orientation, so the image is reassembled |
+| `arrow` | silhouette | `large-b` moved 4 units right: an arrow pointing right |
+| `chevron` | silhouette | `large-a` moved 4 units down: an arrow pointing down |
+
+A silhouette slot accepts any piece of the same shape in any of the eight
+rotations, mirrored or not (both large triangles fit both large slots). Each
+target is checked by `Tangram::validate()` (and the test suite, at several
+units): seven pieces, pairwise overlap no larger than `1e-6 × u` by a
+separating-axis test, total area 16 u². **Only the library's arrangement of a
+silhouette is recognised:** a different tiling that happens to cover the same
+outline is not accepted, and the documentation never claims otherwise.
+
+**Rules:** `rules.tray` (4 × 2 cells of 3 u, below the target) is where the
+scramble puts each piece, at a random rotation and side; `rules.area`
+bounds every vertex of every piece. A `pose` moves, turns and/or mirrors one
+piece and must keep it inside the area. When every vertex of the posed piece
+lies within `rules.snap` pixels of a free slot that it fits, the piece snaps
+exactly onto the slot (keeping its own orientation when that orientation
+fits, so the picture does not suddenly mirror); a pose that changes nothing
+after snapping is illegal. The puzzle is complete when every piece lies on a
+distinct slot it fits, vertex for vertex within **1e-6 px**: overlaps,
+gaps and a piece off by one pixel are never complete. Progress is the number
+of pieces on such slots out of 7.
+
+**Players:** the bundled player draws the target outline, clips the source
+image to each piece's solved outline and moves it with its pose. Pieces are
+focusable: arrow keys move (Shift for larger steps) and Enter drops, R / Shift+R
+turn by 45°, F mirrors; pointer users drag pieces and use the turn and mirror
+buttons on the last piece they touched.
+
+## Nonogram
+
+A nonogram is generated from the image pixels, so it needs the decoded image:
+
+```php
+$pixels = (new ImagePuzzle\ImageLoader())->loadFromFile('photo.jpg');
+$nonogram = $factory->nonogram($source, $pixels, 'photo.jpg', 'custom', [
+    'rows' => 15,
+    'cols' => 15,
+    'requireUnique' => true,
+]);
+```
+
+`DefinitionBuilder` and `image-puzzle generate --kind nonogram` do this for
+you. Generation, in `NonogramGenerator`:
+
+1. **Crop**: the largest centred region of square cells for `rows × cols`,
+   recorded in `board.crop`.
+2. **Resample**: each cell's luma is the mean of up to 8×8 evenly spaced
+   pixel samples (Rec. 709 integer weights; transparent pixels are composited
+   over white). Integer arithmetic, so every GD build gives the same grid.
+3. **Threshold**: cells darker than `threshold` (1–255) are filled; `"auto"`
+   (the preset default) uses Otsu's method on the cell lumas. `invert: true`
+   fills the light cells instead.
+4. **Uniqueness**: `NonogramSolver` classifies the clues. It solves lines
+   exactly (every placement of the runs consistent with the known cells),
+   propagates to a fixpoint and then branches, stopping at the second
+   solution. Its budget is 20 000 line solves, counted rather than timed, so
+   the verdict is the same on every machine. When the grid is not proven
+   unique, the threshold is nudged by ±10, ±20 and ±30 (grids already tried
+   are skipped) and the first unique grid wins.
+
+`rules.uniqueness` records the honest verdict:
+
+| Value | Meaning |
+| --- | --- |
+| `unique` | The solver proved exactly one grid fits the clues. |
+| `multiple` | The solver found two different grids that fit. |
+| `unverified` | The budget ran out first: nothing is claimed. |
+
+With `requireUnique: true`, generation fails instead of returning
+`multiple` or `unverified`. An image that gives no filled cell at any tried
+threshold is rejected. The rules never re-run the solver: a definition from
+an untrusted source keeps whatever label it carries (the clues are still
+checked against `rules.solution`); re-classify with
+`(new NonogramSolver($rowClues, $colClues))->classify()` if you need to.
+
+**Completion** compares clues, not the stored solution: any grid whose filled
+cells produce every row and column clue is solved, so a `multiple` puzzle
+accepts each of its solutions. Crossed (`x`) and unknown (`.`) cells both
+count as empty. The hint fixes the first cell, row-major, that disagrees with
+`rules.solution`.
+
+**Limits** (measured on PHP 8.5.12, arm64, 2026-10-25): 2×2 to 30×30 cells.
+A 30×30 grid from a picture is generated and proven unique in about 5 ms; a
+grid that exhausts the budget takes about 0.45 s per distinct threshold,
+so the worst case is seven budgets (about 3 s) and under 2 MiB of extra
+memory.
+
+**Player**: the clues are the column and row headers of an ARIA grid. Arrow
+keys move between cells (Home/End within a row, Ctrl+Home/End to the corners),
+Enter or Space fills or clears a cell, X crosses it out and Delete clears it.
+A pointer click applies the chosen tool (Fill or Cross out); right-click or
+Shift+click applies the other one. The picture is revealed on completion.
+
+## Randomness
+
+Scrambles depend only on the definition and a seed (0 … 2³²−1), never on
+process order. The generator is shared with the TypeScript engine:
+
+1. `state = FNV-1a-32(stream) XOR seed`, with stream
+   `image-puzzle/scramble/<kind>`.
+2. Each draw is one mulberry32 step on `state`.
+3. `int(n) = floor(u · n / 2³²)` for the 32-bit draw `u` (`n ≤ 2²⁰`).
+4. `shuffle` is Fisher–Yates from the last index down drawing `int(i + 1)`.
+
+Per kind:
+
+- **sliding**: from the solved board, `scrambleMoves` times pick
+  `int(count)` among the tiles next to the gap (ascending cell order),
+  excluding the tile moved in the previous step; continue past the requested
+  length while the board is solved. Solvable by construction.
+- **swap / strips**: shuffle the tile IDs; if the result is solved, exchange
+  the first two.
+- **rotation**: each tile draws `allowed[int(len)]`; if all are upright, the
+  first tile takes `allowed[1]`.
+- **jigsaw**: per piece, `x = tray.x + int(tray.width − w + 1)` then
+  `y = tray.y + int(tray.height − h + 1)`.
+
+Golden vectors (`conformance/prng.json`) and per-mode transition fixtures
+(`conformance/mode-*.json`) are generated from PHP with `composer
+conformance`; a test fails when they drift.
+
+## State, history and validation
+
+`GameState` holds the board, `moves` (actions plus undo/redo), `elapsedMs`
+(active time measured by the client; it does not advance while paused),
+`hintsUsed`, `completed` and up to 100 past/future boards.
+
+`GameState::fromArray($definition, $data)` rejects another puzzle's state,
+unknown versions, unknown fields, malformed or unreachable boards (for
+sliding: the cell permutation parity must equal the parity of the gap's
+distance from its home), a `completed` flag that disagrees with the board, and
+corrupt history. Validation happens before anything is replaced, so a failed
+import never alters the current game. Limits: definitions ≤ 4 MiB and 4096
+tiles, states ≤ 8 MiB, JSON depth 32, IDs `^[a-z][a-z0-9_-]{0,31}$`.
+
+`GameEngine` applies the same transitions on the server (`start`, `apply`,
+`undo`, `redo`, `reset`, `shuffle`, `hint`). A client "complete" event is an
+interaction signal, not proof: re-validate the submitted state (or replay the
+actions) on the server before trusting it.
+
+## Definition identity
+
+`id = "gd1-" + sha256(canonical JSON of every field except $schema and id)`.
+Canonical JSON sorts object keys by byte order, keeps list order, has no
+whitespace and leaves slashes/Unicode unescaped. The ID therefore changes with
+the source digest, configuration, preset version, seed, schema version and
+generator algorithm (`generator.algorithm`, bumped whenever identical inputs
+would produce different tiles or scrambles). Version 1 is the first format, so
+there is nothing to migrate yet; later versions will migrate explicitly or
+reject.

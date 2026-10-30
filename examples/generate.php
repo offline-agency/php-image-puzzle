@@ -34,7 +34,14 @@ $positional = [];
 $configPath = null;
 $rounded = null;
 
+$argv = $_SERVER['argv'] ?? [];
+if (!is_array($argv)) {
+    $argv = [];
+}
 foreach (array_slice($argv, 1) as $arg) {
+    if (!is_string($arg)) {
+        continue;
+    }
     if (str_starts_with($arg, '--config=')) {
         $configPath = substr($arg, strlen('--config='));
     } elseif (str_starts_with($arg, '--rounded')) {
@@ -72,10 +79,10 @@ try {
     $puzzle = $generator->generateFromFile($inputPath, $rows, $cols);
     $result = $puzzle->export($outputDir);
 } catch (\Throwable $e) {
-    fwrite(STDERR, "Error: " . $e->getMessage() . "\n");
+    fwrite(STDERR, 'Error: ' . $e->getMessage() . "\n");
     exit(1);
 }
 
 $files = $result->getFiles();
-echo "Exported " . (count($files) - 1) . " pieces to " . $result->getOutputDirectory() . "\n";
-echo "Manifest: " . $result->getManifestPath() . "\n";
+echo 'Exported ' . (count($files) - 1) . ' pieces to ' . $result->getOutputDirectory() . "\n";
+echo 'Manifest: ' . $result->getManifestPath() . "\n";

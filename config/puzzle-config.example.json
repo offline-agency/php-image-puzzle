@@ -1,13 +1,23 @@
 {
+  "$schema": "https://raw.githubusercontent.com/offline-agency/php-image-puzzle/HEAD/docs/schemas/v2/puzzle-config.schema.json",
+  "configVersion": 2,
   "input": "path/to/image.jpg",
   "rows": 4,
   "cols": 6,
   "edge": {
     "type": "jigsaw"
   },
+  "geometry": {
+    "seed": 1,
+    "samples": 4,
+    "topology": "rect"
+  },
   "output": {
     "directory": "output/puzzle",
     "manifestFilename": "manifest.json",
-    "format": "png"
+    "filenamePattern": "piece_{row}_{col}.png",
+    "format": "png",
+    "overwrite": false,
+    "publishMode": "in_place"
   }
 }

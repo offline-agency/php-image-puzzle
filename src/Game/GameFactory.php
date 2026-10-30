@@ -1,0 +1,382 @@
+<?php
+
+declare(strict_types=1);
+
+namespace ImagePuzzle\Game;
+
+use GdImage;
+use ImagePuzzle\Exception\InvalidArgumentException;
+use ImagePuzzle\Exception\InvalidDefinitionException;
+use ImagePuzzle\Game\Nonogram\NonogramGenerator;
+use ImagePuzzle\Game\Nonogram\NonogramSolver;
+use ImagePuzzle\Game\Rules\JigsawRules;
+use ImagePuzzle\Game\Rules\MemoryRules;
+use ImagePuzzle\Game\Rules\TangramRules;
+use ImagePuzzle\Game\Tangram\Tangram;
+use ImagePuzzle\Geometry\Bounds;
+
+/**
+ * Builds game definitions from presets or explicit custom parameters.
+ *
+ * Grid modes (sliding, swap, rotation, strips) play on equal cells: the
+ * remainder pixels that do not divide evenly are cropped symmetrically
+ * (extra pixel on the right/bottom) and recorded in board.crop. Rotation with
+ * quarter turns additionally crops to square cells.
+ */
+final class GameFactory
+{
+    private const ASSISTANCE_DEFAULT = ['preview' => true, 'numbers' => false, 'highlightCorrect' => false];
+    private const CUSTOM_KEYS = [
+        'sliding' => ['rows', 'cols', 'scrambleMoves'],
+        'swap' => ['rows', 'cols'],
+        'rotation' => ['rows', 'cols', 'orientations'],
+        'strips' => ['count', 'axis'],
+        'nonogram' => ['rows', 'cols', 'threshold', 'invert', 'requireUnique'],
+        'memory' => ['rows', 'cols', 'labels'],
+        'tangram' => ['target', 'snap'],
+    ];
+
+    /**
+     * @param array<string, mixed> $custom parameters when $preset is "custom" (see docs/GAME_MODES.md)
+     */
+    public function create(GameKind $kind, SourceImage $source, string $image, string $preset = 'medium', array $custom = [], int $seed = 0): GameDefinition
+    {
+        if ($kind === GameKind::Jigsaw) {
+            throw new InvalidArgumentException('Jigsaw definitions are built from an export manifest: use jigsawFromManifest().');
+        }
+        if ($kind === GameKind::Nonogram) {
+            throw new InvalidArgumentException('Nonogram definitions are generated from the image pixels: use nonogram().');
+        }
+        $params = $this->parameters($kind, $preset, $custom);
+        $assistance = self::assistance($params['assistance'] ?? self::ASSISTANCE_DEFAULT);
+
+        return match ($kind) {
+            GameKind::Sliding => $this->grid($kind, $source, $image, $preset, $seed, self::side($params, 'rows', 2, 16), self::side($params, 'cols', 2, 16), $assistance, false, static fn (array $tiles): array => [
+                'empty' => $tiles[count($tiles) - 1]->id,
+                'scrambleMoves' => self::side($params, 'scrambleMoves', 1, 100000),
+            ]),
+            GameKind::Swap => $this->grid($kind, $source, $image, $preset, $seed, self::side($params, 'rows', 1, 16), self::side($params, 'cols', 1, 16), $assistance, false, static fn (): array => []),
+            GameKind::Rotation => $this->rotation($source, $image, $preset, $seed, $params, $assistance),
+            GameKind::Strips => $this->strips($source, $image, $preset, $seed, $params, $assistance),
+            GameKind::Memory => $this->memory($source, $image, $preset, $seed, $params, $assistance),
+            GameKind::Tangram => $this->tangram($source, $image, $preset, $seed, $params, $assistance),
+        };
+    }
+
+    /**
+     * Generates a nonogram from the image pixels (see NonogramGenerator for
+     * the crop, resampling, threshold and uniqueness steps). $pixels must be
+     * the image $source describes, upright.
+     *
+     * @param array<string, mixed> $custom
+     */
+    public function nonogram(SourceImage $source, GdImage $pixels, string $image, string $preset = 'medium', array $custom = [], int $seed = 0, int $budget = NonogramSolver::DEFAULT_BUDGET): GameDefinition
+    {
+        if (imagesx($pixels) !== $source->width || imagesy($pixels) !== $source->height) {
+            throw new InvalidArgumentException('The nonogram pixels do not match the source image size.');
+        }
+        $params = $this->parameters(GameKind::Nonogram, $preset, $custom);
+        $rows = self::side($params, 'rows', NonogramGenerator::MIN_SIDE, NonogramGenerator::MAX_SIDE);
+        $cols = self::side($params, 'cols', NonogramGenerator::MIN_SIDE, NonogramGenerator::MAX_SIDE);
+        $threshold = $params['threshold'] ?? 'auto';
+        if (!is_int($threshold) && $threshold !== 'auto') {
+            throw new InvalidArgumentException('The nonogram threshold must be "auto" or 1-255.');
+        }
+        $crop = NonogramGenerator::crop($source->width, $source->height, $rows, $cols);
+        $invert = isset($params['invert']) && Doc::bool($params, 'invert', 'parameters');
+        $requireUnique = isset($params['requireUnique']) && Doc::bool($params, 'requireUnique', 'parameters');
+        $grid = (new NonogramGenerator($budget))->generate($pixels, $crop, $rows, $cols, $threshold, $invert, $requireUnique);
+        [$rowClues, $colClues] = NonogramGenerator::cluesOf($grid['solution'], $rows, $cols);
+        $rules = [
+            'solution' => $grid['solution'],
+            'clues' => ['rows' => $rowClues, 'cols' => $colClues],
+            'uniqueness' => $grid['uniqueness'],
+            'threshold' => $grid['threshold'],
+            'invert' => $invert,
+        ];
+
+        return GameDefinition::create(GameKind::Nonogram, $seed, $preset, Presets::VERSION, $source->width, $source->height, $source->sha256, $image, $rows, $cols, $crop, [], $rules, self::assistance($params['assistance'] ?? self::ASSISTANCE_DEFAULT));
+    }
+
+    /**
+     * Wraps an export manifest (version 2) as a jigsaw definition. Piece
+     * images stay where the exporter wrote them; $imageBase is prefixed to
+     * each manifest filename (for example "pieces/").
+     *
+     * @param array<string, mixed> $manifest
+     */
+    public function jigsawFromManifest(array $manifest, string $image, string $preset = 'medium', int $seed = 0, ?string $sourceSha256 = null, string $imageBase = '', ?int $snap = null): GameDefinition
+    {
+        if (($manifest['manifestVersion'] ?? null) !== 2) {
+            throw new InvalidDefinitionException('A jigsaw definition needs a version 2 manifest.');
+        }
+        $width = Doc::positive($manifest, 'sourceWidth', 'manifest', 1 << 20);
+        $height = Doc::positive($manifest, 'sourceHeight', 'manifest', 1 << 20);
+        $geometry = Doc::object($manifest['geometry'] ?? null, 'manifest.geometry');
+        $tiles = [];
+        $minSide = PHP_INT_MAX;
+        $maxW = 1;
+        $maxH = 1;
+        foreach (Doc::list($manifest['pieces'] ?? null, 'manifest.pieces', GameDefinition::MAX_TILES) as $i => $value) {
+            $piece = Doc::object($value, "manifest.pieces[{$i}]");
+            $rect = new Bounds(
+                Doc::int($piece, 'x', "manifest.pieces[{$i}]"),
+                Doc::int($piece, 'y', "manifest.pieces[{$i}]"),
+                Doc::positive($piece, 'width', "manifest.pieces[{$i}]"),
+                Doc::positive($piece, 'height', "manifest.pieces[{$i}]"),
+            );
+            $rendered = Tile::rect($piece['rendered'] ?? null, "manifest.pieces[{$i}].rendered");
+            $attributes = ['rendered' => $rendered->toArray(), 'image' => $imageBase . Doc::string($piece, 'filename', "manifest.pieces[{$i}]", 255)];
+            if (isset($piece['path'])) {
+                $attributes['path'] = Doc::string($piece, 'path', "manifest.pieces[{$i}]", 1 << 20);
+            }
+            $tiles[] = new Tile(Doc::id($piece['id'] ?? null, "manifest.pieces[{$i}].id"), $i, $rect, $attributes);
+            $minSide = min($minSide, $rect->width, $rect->height);
+            $maxW = max($maxW, $rendered->width);
+            $maxH = max($maxH, $rendered->height);
+        }
+        if ($tiles === []) {
+            throw new InvalidDefinitionException('The manifest has no pieces.');
+        }
+        $params = $preset === 'custom' ? [] : Presets::get(GameKind::Jigsaw, $preset);
+        $ratio = $params['snapRatio'] ?? 0.15;
+        $snap ??= max(2, min(JigsawRules::MAX_SNAP, (int) round($minSide * (is_float($ratio) ? $ratio : 0.15))));
+        $tray = ['x' => $width + $snap + 1, 'y' => 0, 'width' => max($width, $maxW), 'height' => max($height, $maxH)];
+        $rules = [
+            'topology' => Doc::string($geometry, 'topology', 'manifest.geometry', 16),
+            'snap' => $snap,
+            'area' => ['x' => 0, 'y' => 0, 'width' => $tray['x'] + $tray['width'], 'height' => $tray['height']],
+            'tray' => $tray,
+        ];
+
+        return GameDefinition::create(
+            GameKind::Jigsaw,
+            $seed,
+            $preset,
+            Presets::VERSION,
+            $width,
+            $height,
+            $sourceSha256,
+            $image,
+            Doc::int($manifest, 'rows', 'manifest', 1, 1024),
+            Doc::int($manifest, 'cols', 'manifest', 1, 1024),
+            new Bounds(0, 0, $width, $height),
+            $tiles,
+            $rules,
+            self::assistance($params['assistance'] ?? self::ASSISTANCE_DEFAULT),
+        );
+    }
+
+    /**
+     * Parameter names the "custom" preset accepts for a mode.
+     *
+     * @return list<string>
+     */
+    public static function customKeys(GameKind $kind): array
+    {
+        return $kind === GameKind::Jigsaw ? DefinitionBuilder::JIGSAW_KEYS : [...self::CUSTOM_KEYS[$kind->value] ?? [], 'assistance'];
+    }
+
+    /**
+     * @param array<string, mixed> $custom
+     * @return array<string, mixed>
+     */
+    private function parameters(GameKind $kind, string $preset, array $custom): array
+    {
+        if ($preset === 'custom') {
+            if ($custom === []) {
+                throw new InvalidArgumentException('The custom preset needs explicit parameters.');
+            }
+            Doc::keys($custom, self::customKeys($kind), 'parameters');
+
+            return $custom;
+        }
+        if ($custom !== []) {
+            throw new InvalidArgumentException("Parameters are only accepted with the custom preset, not \"{$preset}\".");
+        }
+
+        return Presets::get($kind, $preset);
+    }
+
+    /**
+     * @param array<string, mixed> $params
+     * @param array{preview: bool, numbers: bool, highlightCorrect: bool} $assistance
+     */
+    private function rotation(SourceImage $source, string $image, string $preset, int $seed, array $params, array $assistance): GameDefinition
+    {
+        $orientations = [];
+        foreach (Doc::list($params['orientations'] ?? null, 'orientations', 4) as $i => $angle) {
+            $orientations[] = Doc::intValue($angle, "orientations[{$i}]");
+        }
+        $square = in_array(90, $orientations, true) || in_array(270, $orientations, true);
+
+        return $this->grid(GameKind::Rotation, $source, $image, $preset, $seed, self::side($params, 'rows', 1, 16), self::side($params, 'cols', 1, 16), $assistance, $square, static fn (): array => ['orientations' => $orientations]);
+    }
+
+    /**
+     * @param array<string, mixed> $params
+     * @param array{preview: bool, numbers: bool, highlightCorrect: bool} $assistance
+     */
+    private function strips(SourceImage $source, string $image, string $preset, int $seed, array $params, array $assistance): GameDefinition
+    {
+        $count = self::side($params, 'count', 2, 128);
+        $axis = Doc::string($params, 'axis', 'parameters', 16);
+        [$rows, $cols] = $axis === 'vertical' ? [1, $count] : [$count, 1];
+
+        return $this->grid(GameKind::Strips, $source, $image, $preset, $seed, $rows, $cols, $assistance, false, static fn (): array => ['axis' => $axis], 's');
+    }
+
+    /**
+     * @param array{preview: bool, numbers: bool, highlightCorrect: bool} $assistance
+     * @param \Closure(list<Tile>): array<string, mixed> $rules
+     */
+    private function grid(GameKind $kind, SourceImage $source, string $image, string $preset, int $seed, int $rows, int $cols, array $assistance, bool $square, \Closure $rules, string $prefix = 't'): GameDefinition
+    {
+        $cw = intdiv($source->width, $cols);
+        $ch = intdiv($source->height, $rows);
+        if ($square) {
+            $cw = $ch = min($cw, $ch);
+        }
+        if ($cw < 1 || $ch < 1) {
+            throw new InvalidArgumentException("A {$source->width}x{$source->height} image cannot hold a {$rows}x{$cols} board.");
+        }
+        $crop = new Bounds(intdiv($source->width - $cw * $cols, 2), intdiv($source->height - $ch * $rows, 2), Doc::positiveValue($cw * $cols, 'crop width'), Doc::positiveValue($ch * $rows, 'crop height'));
+        $tiles = [];
+        for ($i = 0; $i < $rows * $cols; $i++) {
+            $tiles[] = new Tile($prefix . $i, $i, new Bounds($crop->x + ($i % $cols) * $cw, $crop->y + intdiv($i, $cols) * $ch, Doc::positiveValue($cw, 'cell width'), Doc::positiveValue($ch, 'cell height')));
+        }
+
+        return GameDefinition::create($kind, $seed, $preset, Presets::VERSION, $source->width, $source->height, $source->sha256, $image, $rows, $cols, $crop, $tiles, $rules($tiles), $assistance);
+    }
+
+    /**
+     * Memory cards: one image region per pair, the regions as close to square
+     * as the pair count allows. With "labels" (one per pair), the second card
+     * of each pair shows its label instead of the picture.
+     *
+     * @param array<string, mixed> $params
+     * @param array{preview: bool, numbers: bool, highlightCorrect: bool} $assistance
+     */
+    private function memory(SourceImage $source, string $image, string $preset, int $seed, array $params, array $assistance): GameDefinition
+    {
+        $rows = self::side($params, 'rows', MemoryRules::MIN_SIDE, MemoryRules::MAX_SIDE);
+        $cols = self::side($params, 'cols', MemoryRules::MIN_SIDE, MemoryRules::MAX_SIDE);
+        if (($rows * $cols) % 2 !== 0) {
+            throw new InvalidArgumentException("A memory board needs an even number of cards, got {$rows}x{$cols}.");
+        }
+        $pairs = intdiv($rows * $cols, 2);
+        $labels = null;
+        if (isset($params['labels'])) {
+            $labels = [];
+            foreach (Doc::list($params['labels'], 'parameters.labels', $pairs) as $i => $label) {
+                $labels[] = MemoryRules::text($label, "parameters.labels[{$i}]");
+            }
+            if (count($labels) !== $pairs) {
+                throw new InvalidArgumentException("parameters.labels needs one label per pair ({$pairs}), got " . count($labels) . '.');
+            }
+        }
+        [$regionRows, $regionCols] = self::regions($pairs, $source->width, $source->height);
+        $w = intdiv($source->width, $regionCols);
+        $h = intdiv($source->height, $regionRows);
+        if ($w < 1 || $h < 1) {
+            throw new InvalidArgumentException("A {$source->width}x{$source->height} image cannot hold {$pairs} memory pictures.");
+        }
+        $crop = new Bounds(intdiv($source->width - $w * $regionCols, 2), intdiv($source->height - $h * $regionRows, 2), Doc::positiveValue($w * $regionCols, 'crop width'), Doc::positiveValue($h * $regionRows, 'crop height'));
+        $tiles = [];
+        for ($pair = 0; $pair < $pairs; $pair++) {
+            $rect = new Bounds($crop->x + ($pair % $regionCols) * $w, $crop->y + intdiv($pair, $regionCols) * $h, Doc::positiveValue($w, 'region width'), Doc::positiveValue($h, 'region height'));
+            $tiles[] = new Tile("p{$pair}-a", 2 * $pair, $rect, ['pair' => "p{$pair}", 'face' => 'image']);
+            $tiles[] = new Tile("p{$pair}-b", 2 * $pair + 1, $rect, $labels === null ? ['pair' => "p{$pair}", 'face' => 'image'] : ['pair' => "p{$pair}", 'face' => 'text', 'text' => $labels[$pair]]);
+        }
+
+        return GameDefinition::create(GameKind::Memory, $seed, $preset, Presets::VERSION, $source->width, $source->height, $source->sha256, $image, $rows, $cols, $crop, $tiles, ['regions' => ['rows' => $regionRows, 'cols' => $regionCols]], $assistance);
+    }
+
+    /**
+     * Tangram: the largest centred square whose side is a multiple of 24 (so
+     * the unit, a quarter of the side, is a multiple of 6 and every solved
+     * vertex and centroid is an integer pixel), cut into the seven pieces.
+     * "snap" is a percentage of the unit.
+     *
+     * @param array<string, mixed> $params
+     * @param array{preview: bool, numbers: bool, highlightCorrect: bool} $assistance
+     */
+    private function tangram(SourceImage $source, string $image, string $preset, int $seed, array $params, array $assistance): GameDefinition
+    {
+        $target = Doc::string($params, 'target', 'parameters', 32);
+        Tangram::target($target);
+        $percent = self::side($params, 'snap', 1, 90);
+        $side = intdiv(min($source->width, $source->height), 24) * 24;
+        if ($side < 4 * TangramRules::MIN_UNIT) {
+            throw new InvalidArgumentException("A {$source->width}x{$source->height} image is too small for a tangram (needs at least 48x48).");
+        }
+        $unit = intdiv($side, 4);
+        $crop = new Bounds(intdiv($source->width - $side, 2), intdiv($source->height - $side, 2), Doc::positiveValue($side, 'crop width'), Doc::positiveValue($side, 'crop height'));
+        $tiles = [];
+        foreach (Tangram::ids() as $index => $id) {
+            [$x, $y, $w, $h] = Tangram::homeBox($id, $crop->x, $crop->y, $unit);
+            $tiles[] = new Tile($id, $index, new Bounds($x, $y, Doc::positiveValue($w, 'piece width'), Doc::positiveValue($h, 'piece height')), [
+                'shape' => Tangram::PIECES[$id]['shape'],
+                'path' => TangramRules::path(Tangram::home($id, $crop->x, $crop->y, $unit)),
+            ]);
+        }
+        $layout = TangramRules::layout($target, $crop, $unit);
+        $rules = [
+            'target' => $target,
+            'unit' => $unit,
+            'snap' => max(1, intdiv($unit * $percent, 100)),
+            'area' => $layout['area']->toArray(),
+            'tray' => $layout['tray']->toArray(),
+        ];
+
+        return GameDefinition::create(GameKind::Tangram, $seed, $preset, Presets::VERSION, $source->width, $source->height, $source->sha256, $image, 4, 4, $crop, $tiles, $rules, $assistance);
+    }
+
+    /**
+     * Rows and columns of $count equal regions of a width x height image whose
+     * cells are closest to square (fewer rows on a tie).
+     *
+     * @return array{0: int, 1: int}
+     */
+    public static function regions(int $count, int $width, int $height): array
+    {
+        $best = [1, $count];
+        $bestScore = INF;
+        for ($rows = 1; $rows <= $count; $rows++) {
+            if ($count % $rows !== 0) {
+                continue;
+            }
+            $cols = intdiv($count, $rows);
+            $score = abs(log(($width / $cols) / ($height / $rows)));
+            if ($score < $bestScore - 1e-9) {
+                $best = [$rows, $cols];
+                $bestScore = $score;
+            }
+        }
+
+        return $best;
+    }
+
+    /**
+     * @param array<string, mixed> $params
+     */
+    private static function side(array $params, string $key, int $min, int $max): int
+    {
+        return Doc::int($params, $key, 'parameters', $min, $max);
+    }
+
+    /**
+     * @return array{preview: bool, numbers: bool, highlightCorrect: bool}
+     */
+    private static function assistance(mixed $value): array
+    {
+        $assistance = Doc::object($value, 'assistance');
+        Doc::keys($assistance, ['preview', 'numbers', 'highlightCorrect'], 'assistance');
+
+        return [
+            'preview' => Doc::bool($assistance, 'preview', 'assistance'),
+            'numbers' => Doc::bool($assistance, 'numbers', 'assistance'),
+            'highlightCorrect' => Doc::bool($assistance, 'highlightCorrect', 'assistance'),
+        ];
+    }
+}

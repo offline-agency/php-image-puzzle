@@ -4,11 +4,14 @@ declare(strict_types=1);
 
 namespace ImagePuzzle;
 
+/**
+ * Generated puzzle: grid metadata plus lazily rendered pieces.
+ */
 final class Puzzle
 {
     /**
-     * @param list<list<Piece>> $pieces 2D grid indexed by [row][col]
-     * @param Exporter|null $exporter Optional exporter instance; when null, a new Exporter() is used on export().
+     * @param array<int, array<int, Piece>> $pieces indexed by [row][col]; rows of non-rectangular boards differ in length
+     * @param array{topology: string, style: string, seed: int, samples: int, version: int}|null $geometry
      */
     public function __construct(
         private readonly int $rows,
@@ -17,7 +20,8 @@ final class Puzzle
         private readonly int $height,
         private readonly array $pieces,
         private readonly ?string $sourceBasename = null,
-        private readonly ?Exporter $exporter = null,
+        private readonly ?ExporterInterface $exporter = null,
+        private readonly ?array $geometry = null,
     ) {
     }
 
@@ -43,11 +47,13 @@ final class Puzzle
 
     public function getPiece(int $row, int $col): Piece
     {
-        if ($row < 0 || $row >= $this->rows || $col < 0 || $col >= $this->cols) {
+        // Rows of hexagonal and triangular boards hold different numbers of cells.
+        if (!isset($this->pieces[$row][$col])) {
             throw new Exception\InvalidArgumentException(
-                "Invalid piece index: row={$row}, col={$col} (grid is {$this->rows}x{$this->cols})"
+                "Invalid piece index: row={$row}, col={$col} (grid is {$this->rows}x{$this->cols})",
             );
         }
+
         return $this->pieces[$row][$col];
     }
 
@@ -61,6 +67,19 @@ final class Puzzle
                 yield $piece;
             }
         }
+    }
+
+    public function countPieces(): int
+    {
+        return array_sum(array_map('count', $this->pieces));
+    }
+
+    /**
+     * @return array{topology: string, style: string, seed: int, samples: int, version: int}
+     */
+    public function getGeometry(): array
+    {
+        return $this->geometry ?? ['topology' => 'rect', 'style' => 'no_edge', 'seed' => GeometryOptions::DEFAULT_SEED, 'samples' => 1, 'version' => GeometryOptions::VERSION];
     }
 
     public function export(string $directory, ExportOptions $options = new ExportOptions(), ?string $baseDirectory = null): ExportResult

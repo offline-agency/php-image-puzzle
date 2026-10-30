@@ -6,6 +6,7 @@ use ImagePuzzle\Exporter;
 use ImagePuzzle\ExportOptions;
 use ImagePuzzle\Piece;
 use ImagePuzzle\PuzzleGenerator;
+use ImagePuzzle\Tests\Support\Fixtures;
 
 test('getRows getCols getWidth getHeight return puzzle dimensions', function (): void {
     $generator = new PuzzleGenerator();
@@ -23,7 +24,7 @@ test('getSourceBasename returns basename when puzzle created from file', functio
 });
 
 test('getSourceBasename returns null when puzzle created from GdImage', function (): void {
-    $image = imagecreatefrompng(__DIR__ . '/fixtures/sample.png');
+    $image = Fixtures::load(__DIR__ . '/fixtures/sample.png');
     expect($image)->not->toBeFalse();
     $generator = new PuzzleGenerator();
     $puzzle = $generator->generateFromGd($image, 2, 2);

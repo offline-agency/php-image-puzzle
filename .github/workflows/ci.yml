@@ -1,83 +1,421 @@
 name: CI
 
+# Third-party actions are pinned to full commit SHAs (the comment names the
+# release); Dependabot proposes updates. Workflow tokens are read-only.
+
 on:
   push:
-    branches: [main, master]
+    branches: [master, main]
   pull_request:
-    branches: [main, master]
+  workflow_dispatch:
+  # The release workflow runs this suite for the exact commit it is about to
+  # release when no push run validated that commit.
+  workflow_call:
+    inputs:
+      sha:
+        description: Full commit SHA to check out and validate
+        type: string
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ inputs.sha || github.event.pull_request.number || github.sha }}
+  cancel-in-progress: true
+
+env:
+  COMPOSER_NO_INTERACTION: '1'
+  COMPOSER_FUND: '0'
 
 jobs:
-  phpstan:
-    name: PHPStan
-    runs-on: ubuntu-latest
+  quality:
+    name: Static analysis, style and schemas
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          # Empty except when the release workflow validates one exact commit.
+          ref: ${{ inputs.sha }}
+      - uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
+        with:
+          php-version: '8.5'
+          extensions: gd, exif, pcntl, posix, zip
+          coverage: none
+          tools: composer:v2
+      - run: composer validate --strict
+      - run: composer install --no-progress --prefer-dist
+      - run: composer dump-autoload --optimize --strict-psr --dry-run
+      - run: composer format:check
+      - run: composer analyse
+      - run: composer schemas
+      - run: composer audit
+
+  tests:
+    name: Tests (PHP ${{ matrix.php }}, ${{ matrix.dependencies }})
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
         php: ['8.4', '8.5']
+        dependencies: [locked, highest, lowest]
+    env:
+      # The forked-worker suite must run here; a missing pcntl fails the job.
+      REQUIRE_PCNTL: '1'
+      # SVG/PDF exports are rendered and inspected; a missing tool fails the job.
+      REQUIRE_RENDERERS: '1'
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
+      - name: Install SVG and PDF renderers
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends poppler-utils qpdf librsvg2-bin
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          # Empty except when the release workflow validates one exact commit.
+          ref: ${{ inputs.sha }}
+      - uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
         with:
           php-version: ${{ matrix.php }}
-          extensions: gd
-
-      - name: Get Composer cache directory
-        id: composer-cache
-        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
-
-      - name: Cache Composer dependencies
-        uses: actions/cache@v4
-        with:
-          path: ${{ steps.composer-cache.outputs.dir }}
-          key: ${{ runner.os }}-composer-${{ hashFiles('composer.json') }}
-          restore-keys: ${{ runner.os }}-composer-
-
-      - name: Install dependencies
+          extensions: gd, exif, pcntl, posix, zip
+          coverage: none
+          tools: composer:v2
+      - name: Install locked dependencies
+        if: matrix.dependencies == 'locked'
         run: composer install --no-progress --prefer-dist
+      - name: Resolve highest dependencies
+        if: matrix.dependencies == 'highest'
+        run: composer update --no-progress --prefer-dist --prefer-stable
+      - name: Resolve lowest dependencies
+        if: matrix.dependencies == 'lowest'
+        run: composer update --no-progress --prefer-dist --prefer-stable --prefer-lowest
+      - run: vendor/bin/pest
+      - name: Forked-worker suite ran (not skipped)
+        run: vendor/bin/pest --group=process --fail-on-skipped
 
-      - name: Run PHPStan
-        run: composer phpstan
-
-  test:
-    name: Tests
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        php: ['8.4', '8.5']
+  minimal-extensions:
+    name: Tests without exif, pcntl and zip
+    runs-on: ubuntu-24.04
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          php-version: ${{ matrix.php }}
-          extensions: gd
+          persist-credentials: false
+          # Empty except when the release workflow validates one exact commit.
+          ref: ${{ inputs.sha }}
+      # The runner's PHP has pcntl compiled in, so setup-php cannot remove
+      # it; the minimal image (PHP 8.4 + GD) never builds the three.
+      - run: docker compose build --build-arg UID="$(id -u)" --build-arg GID="$(id -g)" minimal
+      - name: Extensions are really absent
+        run: |
+          if docker compose run --rm minimal php -m | grep -Eix 'exif|pcntl|zip'; then
+            echo "an extension that must be absent is loaded" >&2
+            exit 1
+          fi
+      - run: docker compose run --rm minimal sh -c 'composer install --no-progress && vendor/bin/pest'
+
+  coverage:
+    name: Coverage
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          # Empty except when the release workflow validates one exact commit.
+          ref: ${{ inputs.sha }}
+      - uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
+        with:
+          php-version: '8.5'
+          extensions: gd, exif, pcntl, posix, zip
           coverage: pcov
-
-      - name: Get Composer cache directory
-        id: composer-cache
-        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
-
-      - name: Cache Composer dependencies
-        uses: actions/cache@v4
+          tools: composer:v2
+      - run: composer install --no-progress --prefer-dist
+      - run: mkdir -p build && vendor/bin/pest --coverage --min=85 --coverage-clover=build/coverage.xml
+      - name: Upload coverage to Codecov
+        if: (!inputs.sha) && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
+        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
         with:
-          path: ${{ steps.composer-cache.outputs.dir }}
-          key: ${{ runner.os }}-composer-${{ hashFiles('composer.json') }}
-          restore-keys: ${{ runner.os }}-composer-
-
-      - name: Install dependencies
-        run: composer install --no-progress --prefer-dist
-
-      - name: Run tests
-        run: mkdir -p build && vendor/bin/pest --coverage-clover=build/coverage.xml
-
-      - name: Upload coverage reports to Codecov
-        uses: codecov/codecov-action@v5
-        with:
+          files: build/coverage.xml
           token: ${{ secrets.CODECOV_TOKEN }}
-          slug: offline-agency/php-image-puzzle
+          fail_ci_if_error: false
+
+  mutation:
+    name: Mutation testing
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          # Empty except when the release workflow validates one exact commit.
+          ref: ${{ inputs.sha }}
+      - uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
+        with:
+          php-version: '8.5'
+          extensions: gd, exif, pcntl, posix, zip
+          coverage: pcov
+          tools: composer:v2
+      - run: composer install --no-progress --prefer-dist
+      - run: composer mutate
+
+  consumer:
+    name: Dist install in a fresh project (PHP ${{ matrix.php }})
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['8.4', '8.5']
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          # Empty except when the release workflow validates one exact commit.
+          ref: ${{ inputs.sha }}
+      - uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: gd, :exif, :pcntl, :zip
+          coverage: none
+          tools: composer:v2
+      - run: tools/consumer/run.sh --prefer-lowest
+
+  codeigniter:
+    name: CodeIgniter 4 recipe in a fresh application
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          # Empty except when the release workflow validates one exact commit.
+          ref: ${{ inputs.sha }}
+      - uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
+        with:
+          php-version: '8.4'
+          extensions: gd, intl, mbstring, curl
+          coverage: none
+          tools: composer:v2
+      - run: tools/codeigniter/run.sh
+
+  docker:
+    name: Docker images build and run the suite
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          # Empty except when the release workflow validates one exact commit.
+          ref: ${{ inputs.sha }}
+      # The minimal image runs in the minimal-extensions job.
+      - run: docker compose build --build-arg UID="$(id -u)" --build-arg GID="$(id -g)" php84
+      - run: docker compose run --rm php84 sh -c 'composer install --no-progress && vendor/bin/pest'
+
+  js:
+    name: TypeScript packages (lint, types, unit tests, build)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          # Empty except when the release workflow validates one exact commit.
+          ref: ${{ inputs.sha }}
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci --no-fund --no-audit
+      # First: tools/js-consumer type-checks against the built declarations.
+      - run: npm run build
+      - run: npx eslint .
+      - run: npx prettier --check .
+      - run: npm run typecheck
+      - run: npm test
+      # The PHP packages ship copies of the player (integrations: ES module,
+      # core resources/dist: IIFE for ZIP bundles); they must match this build.
+      - run: node tools/sync-player-bundle.mjs --check
+
+  browser:
+    name: Browser tests (Chromium, Firefox, WebKit, mobile emulation)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          # Empty except when the release workflow validates one exact commit.
+          ref: ${{ inputs.sha }}
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24'
+          cache: npm
+      # PHP builds the ZIP bundles that e2e/bundle.spec.ts extracts and opens.
+      - uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
+        with:
+          php-version: '8.5'
+          extensions: gd, zip
+          coverage: none
+          tools: composer:v2
+      - run: composer install --no-progress --prefer-dist
+      - run: npm ci --no-fund --no-audit
+      - run: npm run build
+      # Browser builds matching the locked @playwright/test version.
+      - run: npx playwright install --with-deps chromium firefox webkit
+      - run: npm run test:browser
+      - name: Upload the Playwright report on failure
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: playwright-report
+          path: packages/player/playwright-report
+          retention-days: 7
+
+  js-consumer:
+    name: Packed npm tarballs in a fresh consumer (types, SSR, React/Vue in three browsers)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          # Empty except when the release workflow validates one exact commit.
+          ref: ${{ inputs.sha }}
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci --no-fund --no-audit
+      - run: npx playwright install --with-deps chromium firefox webkit
+      - run: tools/js-consumer/run.sh
+
+  conformance:
+    name: PHP/TypeScript conformance fixtures are current
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          # Empty except when the release workflow validates one exact commit.
+          ref: ${{ inputs.sha }}
+      - uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
+        with:
+          php-version: '8.5'
+          extensions: gd
+          coverage: none
+          tools: composer:v2
+      - run: composer install --no-progress --prefer-dist
+      - run: php tools/conformance.php --check
+
+  integrations:
+    name: ${{ matrix.package }} (PHP ${{ matrix.php }}, ${{ matrix.dependencies }})
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        package: [livewire, filament]
+        php: ['8.4', '8.5']
+        dependencies: [locked, lowest, highest]
+        exclude:
+          - php: '8.4'
+            dependencies: highest
+          - php: '8.5'
+            dependencies: lowest
+    defaults:
+      run:
+        working-directory: integrations/${{ matrix.package }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          # Empty except when the release workflow validates one exact commit.
+          ref: ${{ inputs.sha }}
+      - uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: gd, exif, intl, zip
+          coverage: none
+          tools: composer:v2
+      - run: composer validate --strict
+      - name: Install locked dependencies
+        if: matrix.dependencies == 'locked'
+        run: composer install --no-progress --prefer-dist
+      - name: Resolve highest dependencies
+        if: matrix.dependencies == 'highest'
+        run: composer update --no-progress --prefer-dist --prefer-stable
+      - name: Resolve lowest dependencies
+        if: matrix.dependencies == 'lowest'
+        run: composer update --no-progress --prefer-dist --prefer-stable --prefer-lowest
+      - run: vendor/bin/pint --test
+      - run: vendor/bin/phpstan analyse --memory-limit=1G --no-progress
+      - run: vendor/bin/pest
+      - run: composer audit
+
+  integrations-browser:
+    name: ${{ matrix.package }} in a real Laravel app (Chromium, Firefox, WebKit)
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        package: [livewire, filament]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          # Empty except when the release workflow validates one exact commit.
+          ref: ${{ inputs.sha }}
+      - uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
+        with:
+          php-version: '8.5'
+          extensions: gd, exif, intl, zip
+          coverage: none
+          tools: composer:v2
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24'
+          cache: npm
+      - run: composer install --no-progress --prefer-dist
+        working-directory: integrations/${{ matrix.package }}
+      - run: npm ci --no-fund --no-audit
+      - run: npx tsc -p integrations/${{ matrix.package }}/tsconfig.json
+      - run: npx playwright install --with-deps chromium firefox webkit
+      - run: npx playwright test -c integrations/${{ matrix.package }}/playwright.config.ts
+      - name: Upload the Playwright report on failure
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: playwright-report-${{ matrix.package }}
+          path: integrations/${{ matrix.package }}/playwright-report
+          retention-days: 7
+
+  release-artifacts:
+    name: Release artifacts build from this commit
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          # Empty except when the release workflow validates one exact commit.
+          ref: ${{ inputs.sha }}
+      - uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
+        with:
+          php-version: '8.5'
+          extensions: gd
+          coverage: none
+          tools: composer:v2
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24'
+          cache: npm
+      - run: composer install --no-progress --prefer-dist --no-dev
+      - run: npm ci --no-fund --no-audit
+      - run: npm run build
+      # The same builder the release workflow runs, with a placeholder version:
+      # committed browser assets, npm tarballs, integration archives, checksums.
+      - run: php tools/release/build-artifacts.php --sha="$(git rev-parse HEAD)" --version=0.0.0 --out="$RUNNER_TEMP/release-artifacts"
+      - run: tools/release/smoke-artifacts.sh "$RUNNER_TEMP/release-artifacts" 0.0.0
+
+  gate:
+    name: CI gate
+    if: always()
+    needs: [quality, tests, minimal-extensions, coverage, mutation, consumer, codeigniter, docker, js, browser, js-consumer, conformance, integrations, integrations-browser, release-artifacts]
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Every required job succeeded
+        env:
+          RESULTS: ${{ toJSON(needs.*.result) }}
+        run: |
+          echo "$RESULTS"
+          echo "$RESULTS" | grep -Eq '"(failure|cancelled|skipped)"' && exit 1 || exit 0

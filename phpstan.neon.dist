@@ -1,5 +1,16 @@
+includes:
+    - vendor/phpstan/phpstan-strict-rules/rules.neon
+
+# Level max over every maintained PHP directory. No baseline and no
+# ignoreErrors: fix the code or the types instead.
 parameters:
-    level: 5
+    level: max
     paths:
         - src
+        - tests
+        - tools
+        - examples
+        - bin/image-puzzle
     tmpDir: build/phpstan
+    treatPhpDocTypesAsCertain: false
+    reportUnmatchedIgnoredErrors: true

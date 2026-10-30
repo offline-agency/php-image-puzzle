@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/offline-agency/php-image-puzzle/HEAD/docs/schemas/v2/edge.schema.json",
+  "title": "Edge style",
+  "description": "Authoritative edge-style definition shared by edge-config and puzzle-config. Runtime rule not expressible here: composite top/bottom must name the same profile, and left/right must name the same profile (they describe the same shared boundaries).",
+  "type": "object",
+  "required": ["type"],
+  "properties": {
+    "type": {
+      "enum": ["no_edge", "line", "jigsaw", "arc", "half_circle", "sinus", "rounded_corners", "composite"]
+    },
+    "options": { "$ref": "#/$defs/options" },
+    "top": { "$ref": "#/$defs/side" },
+    "right": { "$ref": "#/$defs/side" },
+    "bottom": { "$ref": "#/$defs/side" },
+    "left": { "$ref": "#/$defs/side" }
+  },
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": { "properties": { "type": { "const": "composite" } } },
+      "then": { "not": { "required": ["options"] } },
+      "else": {
+        "not": {
+          "anyOf": [{ "required": ["top"] }, { "required": ["right"] }, { "required": ["bottom"] }, { "required": ["left"] }]
+        }
+      }
+    },
+    {
+      "if": { "properties": { "type": { "not": { "const": "rounded_corners" } } } },
+      "then": { "not": { "required": ["options"] } }
+    }
+  ],
+  "$defs": {
+    "options": {
+      "type": "object",
+      "description": "Only rounded_corners accepts options.",
+      "properties": {
+        "radius": { "type": "integer", "minimum": 1, "description": "Corner radius in pixels (default 4), clamped to half the shorter side." }
+      },
+      "additionalProperties": false
+    },
+    "side": {
+      "type": "object",
+      "description": "Boundary style for one side of a composite. Missing sides default to no_edge.",
+      "required": ["type"],
+      "properties": {
+        "type": { "enum": ["no_edge", "line", "jigsaw", "arc", "half_circle", "sinus"] }
+      },
+      "additionalProperties": false
+    }
+  }
+}

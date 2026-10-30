@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/offline-agency/php-image-puzzle/HEAD/docs/schemas/game/v1/state.schema.json",
+  "title": "Game state",
+  "description": "Exported/imported player state bound to one definition id. moves counts actions, undo and redo; elapsedMs is active time only; completed must agree with the board (engines recompute it).",
+  "type": "object",
+  "required": ["format", "version", "definitionId", "kind", "board", "moves", "elapsedMs", "hintsUsed", "completed", "history"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "format": { "const": "image-puzzle/game-state" },
+    "version": { "const": 1 },
+    "definitionId": { "type": "string", "pattern": "^gd1-[0-9a-f]{64}$" },
+    "kind": { "enum": ["sliding", "swap", "rotation", "strips", "jigsaw", "memory", "tangram", "nonogram"] },
+    "board": { "$ref": "board.schema.json#/$defs/any" },
+    "moves": { "type": "integer", "minimum": 0 },
+    "elapsedMs": { "type": "integer", "minimum": 0 },
+    "hintsUsed": { "type": "integer", "minimum": 0 },
+    "completed": { "type": "boolean" },
+    "history": {
+      "type": "object",
+      "required": ["past", "future"],
+      "properties": {
+        "past": { "type": "array", "maxItems": 100, "items": { "$ref": "board.schema.json#/$defs/any" } },
+        "future": { "type": "array", "maxItems": 100, "items": { "$ref": "board.schema.json#/$defs/any" } }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

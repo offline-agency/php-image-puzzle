@@ -1,0 +1,463 @@
+{
+    "format": "image-puzzle/build-config",
+    "version": 1,
+    "maxSeed": 4294967295,
+    "maxJigsawSeed": 2147483647,
+    "customKeys": {
+        "sliding": [
+            "rows",
+            "cols",
+            "scrambleMoves",
+            "assistance"
+        ],
+        "swap": [
+            "rows",
+            "cols",
+            "assistance"
+        ],
+        "rotation": [
+            "rows",
+            "cols",
+            "orientations",
+            "assistance"
+        ],
+        "strips": [
+            "count",
+            "axis",
+            "assistance"
+        ],
+        "jigsaw": [
+            "rows",
+            "cols",
+            "topology",
+            "edge",
+            "snap"
+        ],
+        "nonogram": [
+            "rows",
+            "cols",
+            "threshold",
+            "invert",
+            "requireUnique",
+            "assistance"
+        ],
+        "memory": [
+            "rows",
+            "cols",
+            "labels",
+            "assistance"
+        ],
+        "tangram": [
+            "target",
+            "snap",
+            "assistance"
+        ]
+    },
+    "cases": [
+        {
+            "document": {
+                "format": "image-puzzle/build-config",
+                "version": 1,
+                "kind": "swap",
+                "preset": "easy",
+                "seed": 0
+            },
+            "valid": true,
+            "normalized": {
+                "format": "image-puzzle/build-config",
+                "version": 1,
+                "kind": "swap",
+                "preset": "easy",
+                "seed": 0
+            }
+        },
+        {
+            "document": {
+                "format": "image-puzzle/build-config",
+                "version": 1,
+                "kind": "jigsaw",
+                "preset": "custom",
+                "custom": {
+                    "rows": 3,
+                    "cols": 5,
+                    "topology": "hex",
+                    "edge": "jigsaw",
+                    "snap": 12
+                },
+                "seed": 2147483647,
+                "crop": {
+                    "x": 0,
+                    "y": 4,
+                    "width": 300,
+                    "height": 200
+                }
+            },
+            "valid": true,
+            "normalized": {
+                "format": "image-puzzle/build-config",
+                "version": 1,
+                "kind": "jigsaw",
+                "preset": "custom",
+                "custom": {
+                    "rows": 3,
+                    "cols": 5,
+                    "topology": "hex",
+                    "edge": "jigsaw",
+                    "snap": 12
+                },
+                "seed": 2147483647,
+                "crop": {
+                    "x": 0,
+                    "y": 4,
+                    "width": 300,
+                    "height": 200
+                }
+            }
+        },
+        {
+            "document": {
+                "format": "image-puzzle/build-config",
+                "version": 1,
+                "kind": "strips",
+                "preset": "custom",
+                "custom": {
+                    "count": 6,
+                    "axis": "vertical"
+                },
+                "seed": 9
+            },
+            "valid": true,
+            "normalized": {
+                "format": "image-puzzle/build-config",
+                "version": 1,
+                "kind": "strips",
+                "preset": "custom",
+                "custom": {
+                    "count": 6,
+                    "axis": "vertical"
+                },
+                "seed": 9
+            }
+        },
+        {
+            "document": {
+                "$schema": "https://example.test/x.json",
+                "format": "image-puzzle/build-config",
+                "version": 1,
+                "kind": "swap",
+                "preset": "easy",
+                "seed": 0
+            },
+            "valid": true,
+            "normalized": {
+                "format": "image-puzzle/build-config",
+                "version": 1,
+                "kind": "swap",
+                "preset": "easy",
+                "seed": 0
+            }
+        },
+        {
+            "document": "not an object",
+            "valid": false,
+            "error": "config must be an object."
+        },
+        {
+            "document": [],
+            "valid": false,
+            "error": "config.format must be \"image-puzzle/build-config\"."
+        },
+        {
+            "document": {
+                "format": "image-puzzle/game-state",
+                "version": 1,
+                "kind": "swap",
+                "preset": "easy",
+                "seed": 0
+            },
+            "valid": false,
+            "error": "config.format must be \"image-puzzle/build-config\"."
+        },
+        {
+            "document": {
+                "format": "image-puzzle/build-config",
+                "version": 2,
+                "kind": "swap",
+                "preset": "easy",
+                "seed": 0
+            },
+            "valid": false,
+            "error": "Unsupported build configuration version 2; this library reads version 1."
+        },
+        {
+            "document": {
+                "format": "image-puzzle/build-config",
+                "version": "1",
+                "kind": "swap",
+                "preset": "easy",
+                "seed": 0
+            },
+            "valid": false,
+            "error": "config.version must be an integer."
+        },
+        {
+            "document": {
+                "format": "image-puzzle/build-config",
+                "version": 1,
+                "kind": "swap",
+                "preset": "easy",
+                "seed": 0,
+                "extra": true
+            },
+            "valid": false,
+            "error": "config has unknown field(s): extra."
+        },
+        {
+            "document": {
+                "format": "image-puzzle/build-config",
+                "version": 1,
+                "kind": "memory",
+                "preset": "easy",
+                "seed": 0
+            },
+            "valid": true,
+            "normalized": {
+                "format": "image-puzzle/build-config",
+                "version": 1,
+                "kind": "memory",
+                "preset": "easy",
+                "seed": 0
+            }
+        },
+        {
+            "document": {
+                "format": "image-puzzle/build-config",
+                "version": 1,
+                "kind": "tangram",
+                "preset": "custom",
+                "seed": 0,
+                "custom": {
+                    "target": "chevron",
+                    "snap": 40
+                }
+            },
+            "valid": true,
+            "normalized": {
+                "format": "image-puzzle/build-config",
+                "version": 1,
+                "kind": "tangram",
+                "preset": "custom",
+                "custom": {
+                    "target": "chevron",
+                    "snap": 40
+                },
+                "seed": 0
+            }
+        },
+        {
+            "document": {
+                "format": "image-puzzle/build-config",
+                "version": 1,
+                "kind": 7,
+                "preset": "easy",
+                "seed": 0
+            },
+            "valid": false,
+            "error": "config.kind must be a string."
+        },
+        {
+            "document": {
+                "format": "image-puzzle/build-config",
+                "version": 1,
+                "kind": "swap",
+                "preset": "expert",
+                "seed": 0
+            },
+            "valid": false,
+            "error": "config.preset must be one of easy, medium, hard or \"custom\"."
+        },
+        {
+            "document": {
+                "format": "image-puzzle/build-config",
+                "version": 1,
+                "kind": "swap",
+                "preset": "easy",
+                "seed": 0,
+                "custom": {
+                    "rows": 2
+                }
+            },
+            "valid": false,
+            "error": "config.custom requires the \"custom\" preset."
+        },
+        {
+            "document": {
+                "format": "image-puzzle/build-config",
+                "version": 1,
+                "kind": "swap",
+                "preset": "custom",
+                "seed": 0
+            },
+            "valid": false,
+            "error": "config.custom is required with the \"custom\" preset."
+        },
+        {
+            "document": {
+                "format": "image-puzzle/build-config",
+                "version": 1,
+                "kind": "swap",
+                "preset": "custom",
+                "seed": 0,
+                "custom": {
+                    "count": 3
+                }
+            },
+            "valid": false,
+            "error": "config.custom has unknown field(s): count."
+        },
+        {
+            "document": {
+                "format": "image-puzzle/build-config",
+                "version": 1,
+                "kind": "swap",
+                "preset": "custom",
+                "seed": 0,
+                "custom": [
+                    1,
+                    2
+                ]
+            },
+            "valid": false,
+            "error": "config.custom must be an object."
+        },
+        {
+            "document": {
+                "format": "image-puzzle/build-config",
+                "version": 1,
+                "kind": "swap",
+                "preset": "easy",
+                "seed": -1
+            },
+            "valid": false,
+            "error": "config.seed must be between 0 and 4294967295, got -1."
+        },
+        {
+            "document": {
+                "format": "image-puzzle/build-config",
+                "version": 1,
+                "kind": "swap",
+                "preset": "easy",
+                "seed": 4294967296
+            },
+            "valid": false,
+            "error": "config.seed must be between 0 and 4294967295, got 4294967296."
+        },
+        {
+            "document": {
+                "format": "image-puzzle/build-config",
+                "version": 1,
+                "kind": "swap",
+                "preset": "easy",
+                "seed": 1.5
+            },
+            "valid": false,
+            "error": "config.seed must be an integer."
+        },
+        {
+            "document": {
+                "format": "image-puzzle/build-config",
+                "version": 1,
+                "kind": "swap",
+                "preset": "easy",
+                "seed": 4294967295
+            },
+            "valid": true,
+            "normalized": {
+                "format": "image-puzzle/build-config",
+                "version": 1,
+                "kind": "swap",
+                "preset": "easy",
+                "seed": 4294967295
+            }
+        },
+        {
+            "document": {
+                "format": "image-puzzle/build-config",
+                "version": 1,
+                "kind": "jigsaw",
+                "preset": "easy",
+                "seed": 2147483648
+            },
+            "valid": false,
+            "error": "config.seed must be between 0 and 2147483647 for jigsaw, got 2147483648."
+        },
+        {
+            "document": {
+                "format": "image-puzzle/build-config",
+                "version": 1,
+                "kind": "swap",
+                "preset": "easy",
+                "seed": 0,
+                "crop": {
+                    "x": 0,
+                    "y": 0,
+                    "width": 10
+                }
+            },
+            "valid": false,
+            "error": "config.crop.height is required."
+        },
+        {
+            "document": {
+                "format": "image-puzzle/build-config",
+                "version": 1,
+                "kind": "swap",
+                "preset": "easy",
+                "seed": 0,
+                "crop": {
+                    "x": -1,
+                    "y": 0,
+                    "width": 10,
+                    "height": 10
+                }
+            },
+            "valid": false,
+            "error": "config.crop.x must be between 0 and 100000, got -1."
+        },
+        {
+            "document": {
+                "format": "image-puzzle/build-config",
+                "version": 1,
+                "kind": "swap",
+                "preset": "easy",
+                "seed": 0,
+                "crop": {
+                    "x": 0,
+                    "y": 0,
+                    "width": 0,
+                    "height": 10
+                }
+            },
+            "valid": false,
+            "error": "config.crop.width must be between 1 and 100000, got 0."
+        },
+        {
+            "document": {
+                "format": "image-puzzle/build-config",
+                "version": 1,
+                "kind": "swap",
+                "preset": "easy",
+                "seed": 0,
+                "crop": {
+                    "x": 0,
+                    "y": 0,
+                    "width": 10,
+                    "height": 10,
+                    "unit": "px"
+                }
+            },
+            "valid": false,
+            "error": "config.crop has unknown field(s): unit."
+        }
+    ]
+}

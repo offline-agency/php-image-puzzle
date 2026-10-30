@@ -1,0 +1,84 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://raw.githubusercontent.com/offline-agency/php-image-puzzle/HEAD/docs/schemas/v1/puzzle-config.schema.json",
+    "title": "Puzzle config",
+    "description": "Full puzzle generation config: input image, grid, edge style, optional output. Legacy 1.x schema, kept for reading old manifests and configs.",
+    "type": "object",
+    "required": [
+        "input",
+        "rows",
+        "cols",
+        "edge"
+    ],
+    "properties": {
+        "input": {
+            "type": "string",
+            "description": "Path to the source image file."
+        },
+        "rows": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Number of rows in the puzzle grid."
+        },
+        "cols": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Number of columns in the puzzle grid."
+        },
+        "edge": {
+            "type": "object",
+            "required": [
+                "type"
+            ],
+            "properties": {
+                "type": {
+                    "type": "string",
+                    "enum": [
+                        "no_edge",
+                        "line",
+                        "jigsaw",
+                        "arc",
+                        "half_circle",
+                        "sinus",
+                        "rounded_corners"
+                    ]
+                },
+                "options": {
+                    "type": "object",
+                    "properties": {
+                        "radius": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    },
+                    "additionalProperties": true
+                }
+            },
+            "additionalProperties": false
+        },
+        "output": {
+            "type": "object",
+            "description": "Optional export/output settings.",
+            "properties": {
+                "directory": {
+                    "type": "string",
+                    "description": "Output directory for piece images and manifest."
+                },
+                "manifestFilename": {
+                    "type": "string",
+                    "description": "Manifest filename (e.g. manifest.json)."
+                },
+                "format": {
+                    "type": "string",
+                    "enum": [
+                        "png",
+                        "jpeg"
+                    ],
+                    "description": "Image format for piece files."
+                }
+            },
+            "additionalProperties": true
+        }
+    },
+    "additionalProperties": false
+}

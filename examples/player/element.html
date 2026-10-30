@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Image puzzle — Web Component</title>
+    <style>
+      body { font-family: system-ui, sans-serif; margin: 0 auto; padding: 1rem; max-width: 56rem; }
+      image-puzzle-player { --ipp-accent: #6b2fb3; margin-block: 1rem; }
+      image-puzzle-player::part(board) { box-shadow: 0 2px 8px rgb(0 0 0 / 0.2); }
+      #status { font-weight: 600; }
+    </style>
+  </head>
+  <body>
+    <h1>&lt;image-puzzle-player&gt;</h1>
+    <p>
+      The element is registered by the ES module bundle. Each instance has its own engine; events bubble out of
+      the shadow root as <code>puzzle-*</code> CustomEvents.
+    </p>
+    <p id="status" role="status">Solve a puzzle.</p>
+
+    <image-puzzle-player id="sliding" src="assets/sliding.json" persist></image-puzzle-player>
+    <image-puzzle-player id="jigsaw" src="assets/jigsaw.json" locale="it"></image-puzzle-player>
+
+    <script type="module">
+      import '../../packages/player/dist/image-puzzle-player.bundle.js';
+
+      const status = document.getElementById('status');
+      document.addEventListener('puzzle-complete', (event) => {
+        status.textContent = `${event.target.id} solved in ${event.detail.moves} moves.`;
+      });
+      document.addEventListener('puzzle-error', (event) => {
+        status.textContent = `${event.target.id}: ${event.detail.message}`;
+      });
+    </script>
+  </body>
+</html>

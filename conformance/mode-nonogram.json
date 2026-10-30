@@ -1,0 +1,1140 @@
+{
+    "name": "nonogram",
+    "definition": {
+        "id": "gd1-3dbb5b9f48bfc0ab4ec51680b007319861a6c84e362931354a44f4e147ecf1bc",
+        "$schema": "https://raw.githubusercontent.com/offline-agency/php-image-puzzle/HEAD/docs/schemas/game/v1/definition.schema.json",
+        "format": "image-puzzle/game-definition",
+        "version": 1,
+        "kind": "nonogram",
+        "generator": {
+            "algorithm": 1
+        },
+        "seed": 17,
+        "preset": {
+            "name": "custom",
+            "version": 1
+        },
+        "source": {
+            "width": 48,
+            "height": 48,
+            "sha256": "dc5aba6ec1f564efc65d9d34e8c1b514a5ea7689e1f32c987a924cfb35b0de1a"
+        },
+        "media": {
+            "image": "source.png"
+        },
+        "board": {
+            "rows": 6,
+            "cols": 6,
+            "crop": {
+                "x": 0,
+                "y": 0,
+                "width": 48,
+                "height": 48
+            }
+        },
+        "tiles": [],
+        "rules": {
+            "solution": "001100011110111111110011100001111111",
+            "clues": {
+                "rows": [
+                    [
+                        2
+                    ],
+                    [
+                        4
+                    ],
+                    [
+                        6
+                    ],
+                    [
+                        2,
+                        2
+                    ],
+                    [
+                        1,
+                        1
+                    ],
+                    [
+                        6
+                    ]
+                ],
+                "cols": [
+                    [
+                        4
+                    ],
+                    [
+                        3,
+                        1
+                    ],
+                    [
+                        3,
+                        1
+                    ],
+                    [
+                        3,
+                        1
+                    ],
+                    [
+                        3,
+                        1
+                    ],
+                    [
+                        4
+                    ]
+                ]
+            },
+            "uniqueness": "unique",
+            "threshold": 1,
+            "invert": false
+        },
+        "actions": [
+            "mark"
+        ],
+        "capabilities": {
+            "undo": true,
+            "redo": true,
+            "reset": true,
+            "shuffle": false,
+            "hint": true
+        },
+        "assistance": {
+            "preview": true,
+            "numbers": false,
+            "highlightCorrect": false
+        },
+        "initial": {
+            "cells": "...................................."
+        }
+    },
+    "solved": {
+        "cells": "xx11xxx1111x11111111xx111xxxx1111111"
+    },
+    "scrambles": [
+        {
+            "seed": 0,
+            "board": {
+                "cells": "...................................."
+            }
+        },
+        {
+            "seed": 1,
+            "board": {
+                "cells": "...................................."
+            }
+        },
+        {
+            "seed": 2,
+            "board": {
+                "cells": "...................................."
+            }
+        },
+        {
+            "seed": 99,
+            "board": {
+                "cells": "...................................."
+            }
+        },
+        {
+            "seed": 4294967295,
+            "board": {
+                "cells": "...................................."
+            }
+        }
+    ],
+    "legalActions": [
+        {
+            "type": "mark",
+            "cell": 0,
+            "state": "filled"
+        },
+        {
+            "type": "mark",
+            "cell": 0,
+            "state": "crossed"
+        },
+        {
+            "type": "mark",
+            "cell": 1,
+            "state": "filled"
+        },
+        {
+            "type": "mark",
+            "cell": 1,
+            "state": "crossed"
+        },
+        {
+            "type": "mark",
+            "cell": 2,
+            "state": "filled"
+        },
+        {
+            "type": "mark",
+            "cell": 2,
+            "state": "crossed"
+        },
+        {
+            "type": "mark",
+            "cell": 3,
+            "state": "filled"
+        },
+        {
+            "type": "mark",
+            "cell": 3,
+            "state": "crossed"
+        },
+        {
+            "type": "mark",
+            "cell": 4,
+            "state": "filled"
+        },
+        {
+            "type": "mark",
+            "cell": 4,
+            "state": "crossed"
+        },
+        {
+            "type": "mark",
+            "cell": 5,
+            "state": "filled"
+        },
+        {
+            "type": "mark",
+            "cell": 5,
+            "state": "crossed"
+        },
+        {
+            "type": "mark",
+            "cell": 6,
+            "state": "filled"
+        },
+        {
+            "type": "mark",
+            "cell": 6,
+            "state": "crossed"
+        },
+        {
+            "type": "mark",
+            "cell": 7,
+            "state": "filled"
+        },
+        {
+            "type": "mark",
+            "cell": 7,
+            "state": "crossed"
+        },
+        {
+            "type": "mark",
+            "cell": 8,
+            "state": "filled"
+        },
+        {
+            "type": "mark",
+            "cell": 8,
+            "state": "crossed"
+        },
+        {
+            "type": "mark",
+            "cell": 9,
+            "state": "filled"
+        },
+        {
+            "type": "mark",
+            "cell": 9,
+            "state": "crossed"
+        },
+        {
+            "type": "mark",
+            "cell": 10,
+            "state": "filled"
+        },
+        {
+            "type": "mark",
+            "cell": 10,
+            "state": "crossed"
+        },
+        {
+            "type": "mark",
+            "cell": 11,
+            "state": "filled"
+        },
+        {
+            "type": "mark",
+            "cell": 11,
+            "state": "crossed"
+        },
+        {
+            "type": "mark",
+            "cell": 12,
+            "state": "filled"
+        },
+        {
+            "type": "mark",
+            "cell": 12,
+            "state": "crossed"
+        },
+        {
+            "type": "mark",
+            "cell": 13,
+            "state": "filled"
+        },
+        {
+            "type": "mark",
+            "cell": 13,
+            "state": "crossed"
+        },
+        {
+            "type": "mark",
+            "cell": 14,
+            "state": "filled"
+        },
+        {
+            "type": "mark",
+            "cell": 14,
+            "state": "crossed"
+        },
+        {
+            "type": "mark",
+            "cell": 15,
+            "state": "filled"
+        },
+        {
+            "type": "mark",
+            "cell": 15,
+            "state": "crossed"
+        },
+        {
+            "type": "mark",
+            "cell": 16,
+            "state": "filled"
+        },
+        {
+            "type": "mark",
+            "cell": 16,
+            "state": "crossed"
+        },
+        {
+            "type": "mark",
+            "cell": 17,
+            "state": "filled"
+        },
+        {
+            "type": "mark",
+            "cell": 17,
+            "state": "crossed"
+        },
+        {
+            "type": "mark",
+            "cell": 18,
+            "state": "filled"
+        },
+        {
+            "type": "mark",
+            "cell": 18,
+            "state": "crossed"
+        },
+        {
+            "type": "mark",
+            "cell": 19,
+            "state": "filled"
+        },
+        {
+            "type": "mark",
+            "cell": 19,
+            "state": "crossed"
+        },
+        {
+            "type": "mark",
+            "cell": 20,
+            "state": "filled"
+        },
+        {
+            "type": "mark",
+            "cell": 20,
+            "state": "crossed"
+        },
+        {
+            "type": "mark",
+            "cell": 21,
+            "state": "filled"
+        },
+        {
+            "type": "mark",
+            "cell": 21,
+            "state": "crossed"
+        },
+        {
+            "type": "mark",
+            "cell": 22,
+            "state": "filled"
+        },
+        {
+            "type": "mark",
+            "cell": 22,
+            "state": "crossed"
+        },
+        {
+            "type": "mark",
+            "cell": 23,
+            "state": "filled"
+        },
+        {
+            "type": "mark",
+            "cell": 23,
+            "state": "crossed"
+        },
+        {
+            "type": "mark",
+            "cell": 24,
+            "state": "filled"
+        },
+        {
+            "type": "mark",
+            "cell": 24,
+            "state": "crossed"
+        },
+        {
+            "type": "mark",
+            "cell": 25,
+            "state": "filled"
+        },
+        {
+            "type": "mark",
+            "cell": 25,
+            "state": "crossed"
+        },
+        {
+            "type": "mark",
+            "cell": 26,
+            "state": "filled"
+        },
+        {
+            "type": "mark",
+            "cell": 26,
+            "state": "crossed"
+        },
+        {
+            "type": "mark",
+            "cell": 27,
+            "state": "filled"
+        },
+        {
+            "type": "mark",
+            "cell": 27,
+            "state": "crossed"
+        },
+        {
+            "type": "mark",
+            "cell": 28,
+            "state": "filled"
+        },
+        {
+            "type": "mark",
+            "cell": 28,
+            "state": "crossed"
+        },
+        {
+            "type": "mark",
+            "cell": 29,
+            "state": "filled"
+        },
+        {
+            "type": "mark",
+            "cell": 29,
+            "state": "crossed"
+        },
+        {
+            "type": "mark",
+            "cell": 30,
+            "state": "filled"
+        },
+        {
+            "type": "mark",
+            "cell": 30,
+            "state": "crossed"
+        },
+        {
+            "type": "mark",
+            "cell": 31,
+            "state": "filled"
+        },
+        {
+            "type": "mark",
+            "cell": 31,
+            "state": "crossed"
+        },
+        {
+            "type": "mark",
+            "cell": 32,
+            "state": "filled"
+        },
+        {
+            "type": "mark",
+            "cell": 32,
+            "state": "crossed"
+        },
+        {
+            "type": "mark",
+            "cell": 33,
+            "state": "filled"
+        },
+        {
+            "type": "mark",
+            "cell": 33,
+            "state": "crossed"
+        },
+        {
+            "type": "mark",
+            "cell": 34,
+            "state": "filled"
+        },
+        {
+            "type": "mark",
+            "cell": 34,
+            "state": "crossed"
+        },
+        {
+            "type": "mark",
+            "cell": 35,
+            "state": "filled"
+        },
+        {
+            "type": "mark",
+            "cell": 35,
+            "state": "crossed"
+        }
+    ],
+    "cases": [
+        {
+            "name": "play from initial",
+            "board": {
+                "cells": "...................................."
+            },
+            "steps": [
+                {
+                    "action": {
+                        "type": "mark",
+                        "cell": 2,
+                        "state": "filled"
+                    },
+                    "result": "ok",
+                    "board": {
+                        "cells": "..1................................."
+                    },
+                    "complete": false,
+                    "progress": 0,
+                    "hint": {
+                        "type": "mark",
+                        "cell": 3,
+                        "state": "filled"
+                    }
+                },
+                {
+                    "action": {
+                        "type": "mark",
+                        "cell": 3,
+                        "state": "filled"
+                    },
+                    "result": "ok",
+                    "board": {
+                        "cells": "..11................................"
+                    },
+                    "complete": false,
+                    "progress": 0.08333333333333333,
+                    "hint": {
+                        "type": "mark",
+                        "cell": 7,
+                        "state": "filled"
+                    }
+                },
+                {
+                    "action": {
+                        "type": "mark",
+                        "cell": 7,
+                        "state": "filled"
+                    },
+                    "result": "ok",
+                    "board": {
+                        "cells": "..11...1............................"
+                    },
+                    "complete": false,
+                    "progress": 0.08333333333333333,
+                    "hint": {
+                        "type": "mark",
+                        "cell": 8,
+                        "state": "filled"
+                    }
+                },
+                {
+                    "action": {
+                        "type": "mark",
+                        "cell": 8,
+                        "state": "filled"
+                    },
+                    "result": "ok",
+                    "board": {
+                        "cells": "..11...11..........................."
+                    },
+                    "complete": false,
+                    "progress": 0.08333333333333333,
+                    "hint": {
+                        "type": "mark",
+                        "cell": 9,
+                        "state": "filled"
+                    }
+                },
+                {
+                    "action": {
+                        "type": "mark",
+                        "cell": 9,
+                        "state": "filled"
+                    },
+                    "result": "ok",
+                    "board": {
+                        "cells": "..11...111.........................."
+                    },
+                    "complete": false,
+                    "progress": 0.08333333333333333,
+                    "hint": {
+                        "type": "mark",
+                        "cell": 10,
+                        "state": "filled"
+                    }
+                },
+                {
+                    "action": {
+                        "type": "mark",
+                        "cell": 10,
+                        "state": "filled"
+                    },
+                    "result": "ok",
+                    "board": {
+                        "cells": "..11...1111........................."
+                    },
+                    "complete": false,
+                    "progress": 0.16666666666666666,
+                    "hint": {
+                        "type": "mark",
+                        "cell": 12,
+                        "state": "filled"
+                    }
+                },
+                {
+                    "action": {
+                        "type": "mark",
+                        "cell": 12,
+                        "state": "filled"
+                    },
+                    "result": "ok",
+                    "board": {
+                        "cells": "..11...1111.1......................."
+                    },
+                    "complete": false,
+                    "progress": 0.16666666666666666,
+                    "hint": {
+                        "type": "mark",
+                        "cell": 13,
+                        "state": "filled"
+                    }
+                },
+                {
+                    "action": {
+                        "type": "mark",
+                        "cell": 13,
+                        "state": "filled"
+                    },
+                    "result": "ok",
+                    "board": {
+                        "cells": "..11...1111.11......................"
+                    },
+                    "complete": false,
+                    "progress": 0.16666666666666666,
+                    "hint": {
+                        "type": "mark",
+                        "cell": 14,
+                        "state": "filled"
+                    }
+                },
+                {
+                    "action": {
+                        "type": "mark",
+                        "cell": 14,
+                        "state": "filled"
+                    },
+                    "result": "ok",
+                    "board": {
+                        "cells": "..11...1111.111....................."
+                    },
+                    "complete": false,
+                    "progress": 0.16666666666666666,
+                    "hint": {
+                        "type": "mark",
+                        "cell": 15,
+                        "state": "filled"
+                    }
+                },
+                {
+                    "action": {
+                        "type": "mark",
+                        "cell": 15,
+                        "state": "filled"
+                    },
+                    "result": "ok",
+                    "board": {
+                        "cells": "..11...1111.1111...................."
+                    },
+                    "complete": false,
+                    "progress": 0.16666666666666666,
+                    "hint": {
+                        "type": "mark",
+                        "cell": 16,
+                        "state": "filled"
+                    }
+                },
+                {
+                    "action": {
+                        "type": "mark",
+                        "cell": 16,
+                        "state": "filled"
+                    },
+                    "result": "ok",
+                    "board": {
+                        "cells": "..11...1111.11111..................."
+                    },
+                    "complete": false,
+                    "progress": 0.16666666666666666,
+                    "hint": {
+                        "type": "mark",
+                        "cell": 17,
+                        "state": "filled"
+                    }
+                },
+                {
+                    "action": {
+                        "type": "mark",
+                        "cell": 17,
+                        "state": "filled"
+                    },
+                    "result": "ok",
+                    "board": {
+                        "cells": "..11...1111.111111.................."
+                    },
+                    "complete": false,
+                    "progress": 0.25,
+                    "hint": {
+                        "type": "mark",
+                        "cell": 18,
+                        "state": "filled"
+                    }
+                },
+                {
+                    "action": {
+                        "type": "mark",
+                        "cell": 18,
+                        "state": "filled"
+                    },
+                    "result": "ok",
+                    "board": {
+                        "cells": "..11...1111.1111111................."
+                    },
+                    "complete": false,
+                    "progress": 0.25,
+                    "hint": {
+                        "type": "mark",
+                        "cell": 19,
+                        "state": "filled"
+                    }
+                },
+                {
+                    "action": {
+                        "type": "mark",
+                        "cell": 19,
+                        "state": "filled"
+                    },
+                    "result": "ok",
+                    "board": {
+                        "cells": "..11...1111.11111111................"
+                    },
+                    "complete": false,
+                    "progress": 0.25,
+                    "hint": {
+                        "type": "mark",
+                        "cell": 22,
+                        "state": "filled"
+                    }
+                },
+                {
+                    "action": {
+                        "type": "mark",
+                        "cell": 22,
+                        "state": "filled"
+                    },
+                    "result": "ok",
+                    "board": {
+                        "cells": "..11...1111.11111111..1............."
+                    },
+                    "complete": false,
+                    "progress": 0.25,
+                    "hint": {
+                        "type": "mark",
+                        "cell": 23,
+                        "state": "filled"
+                    }
+                },
+                {
+                    "action": {
+                        "type": "mark",
+                        "cell": 23,
+                        "state": "filled"
+                    },
+                    "result": "ok",
+                    "board": {
+                        "cells": "..11...1111.11111111..11............"
+                    },
+                    "complete": false,
+                    "progress": 0.3333333333333333,
+                    "hint": {
+                        "type": "mark",
+                        "cell": 24,
+                        "state": "filled"
+                    }
+                },
+                {
+                    "action": {
+                        "type": "mark",
+                        "cell": 24,
+                        "state": "filled"
+                    },
+                    "result": "ok",
+                    "board": {
+                        "cells": "..11...1111.11111111..111..........."
+                    },
+                    "complete": false,
+                    "progress": 0.3333333333333333,
+                    "hint": {
+                        "type": "mark",
+                        "cell": 29,
+                        "state": "filled"
+                    }
+                },
+                {
+                    "action": {
+                        "type": "mark",
+                        "cell": 29,
+                        "state": "filled"
+                    },
+                    "result": "ok",
+                    "board": {
+                        "cells": "..11...1111.11111111..111....1......"
+                    },
+                    "complete": false,
+                    "progress": 0.4166666666666667,
+                    "hint": {
+                        "type": "mark",
+                        "cell": 30,
+                        "state": "filled"
+                    }
+                },
+                {
+                    "action": {
+                        "type": "mark",
+                        "cell": 30,
+                        "state": "filled"
+                    },
+                    "result": "ok",
+                    "board": {
+                        "cells": "..11...1111.11111111..111....11....."
+                    },
+                    "complete": false,
+                    "progress": 0.5,
+                    "hint": {
+                        "type": "mark",
+                        "cell": 31,
+                        "state": "filled"
+                    }
+                },
+                {
+                    "action": {
+                        "type": "mark",
+                        "cell": 31,
+                        "state": "filled"
+                    },
+                    "result": "ok",
+                    "board": {
+                        "cells": "..11...1111.11111111..111....111...."
+                    },
+                    "complete": false,
+                    "progress": 0.5833333333333334,
+                    "hint": {
+                        "type": "mark",
+                        "cell": 32,
+                        "state": "filled"
+                    }
+                },
+                {
+                    "action": {
+                        "type": "mark",
+                        "cell": 32,
+                        "state": "filled"
+                    },
+                    "result": "ok",
+                    "board": {
+                        "cells": "..11...1111.11111111..111....1111..."
+                    },
+                    "complete": false,
+                    "progress": 0.6666666666666666,
+                    "hint": {
+                        "type": "mark",
+                        "cell": 33,
+                        "state": "filled"
+                    }
+                },
+                {
+                    "action": {
+                        "type": "mark",
+                        "cell": 33,
+                        "state": "filled"
+                    },
+                    "result": "ok",
+                    "board": {
+                        "cells": "..11...1111.11111111..111....11111.."
+                    },
+                    "complete": false,
+                    "progress": 0.75,
+                    "hint": {
+                        "type": "mark",
+                        "cell": 34,
+                        "state": "filled"
+                    }
+                },
+                {
+                    "action": {
+                        "type": "mark",
+                        "cell": 34,
+                        "state": "filled"
+                    },
+                    "result": "ok",
+                    "board": {
+                        "cells": "..11...1111.11111111..111....111111."
+                    },
+                    "complete": false,
+                    "progress": 0.8333333333333334,
+                    "hint": {
+                        "type": "mark",
+                        "cell": 35,
+                        "state": "filled"
+                    }
+                },
+                {
+                    "action": {
+                        "type": "mark",
+                        "cell": 35,
+                        "state": "filled"
+                    },
+                    "result": "ok",
+                    "board": {
+                        "cells": "..11...1111.11111111..111....1111111"
+                    },
+                    "complete": true,
+                    "progress": 1,
+                    "hint": null
+                }
+            ]
+        },
+        {
+            "name": "last move completes",
+            "board": {
+                "cells": "1x11xxx1111x11111111xx111xxxx1111111"
+            },
+            "steps": [
+                {
+                    "action": {
+                        "type": "mark",
+                        "cell": 0,
+                        "state": "crossed"
+                    },
+                    "result": "ok",
+                    "board": {
+                        "cells": "xx11xxx1111x11111111xx111xxxx1111111"
+                    },
+                    "complete": true,
+                    "progress": 1,
+                    "hint": null
+                }
+            ]
+        },
+        {
+            "name": "rejected actions",
+            "board": {
+                "cells": "...................................."
+            },
+            "steps": [
+                {
+                    "action": {
+                        "type": "teleport",
+                        "tile": "zz"
+                    },
+                    "result": "illegal"
+                },
+                {
+                    "action": {
+                        "type": "mark"
+                    },
+                    "result": "invalid"
+                },
+                {
+                    "action": {
+                        "type": "mark",
+                        "cell": 0,
+                        "state": "unknown"
+                    },
+                    "result": "illegal"
+                },
+                {
+                    "action": {
+                        "type": "mark",
+                        "cell": 36,
+                        "state": "filled"
+                    },
+                    "result": "illegal"
+                },
+                {
+                    "action": {
+                        "type": "mark",
+                        "cell": -1,
+                        "state": "filled"
+                    },
+                    "result": "invalid"
+                },
+                {
+                    "action": {
+                        "type": "mark",
+                        "cell": "0",
+                        "state": "filled"
+                    },
+                    "result": "invalid"
+                },
+                {
+                    "action": {
+                        "type": "mark",
+                        "cell": 0,
+                        "state": "grey"
+                    },
+                    "result": "invalid"
+                },
+                {
+                    "action": {
+                        "type": "mark",
+                        "cell": 0,
+                        "state": "filled",
+                        "extra": 1
+                    },
+                    "result": "invalid"
+                }
+            ]
+        }
+    ],
+    "imports": [
+        {
+            "name": "initial",
+            "board": {
+                "cells": "...................................."
+            },
+            "valid": true
+        },
+        {
+            "name": "solved",
+            "board": {
+                "cells": "xx11xxx1111x11111111xx111xxxx1111111"
+            },
+            "valid": true
+        },
+        {
+            "name": "not an object",
+            "board": [
+                1,
+                2
+            ],
+            "valid": false
+        },
+        {
+            "name": "unknown field",
+            "board": {
+                "cells": "....................................",
+                "cheat": true
+            },
+            "valid": false
+        },
+        {
+            "name": "partly marked",
+            "board": {
+                "cells": "1x.................................."
+            },
+            "valid": true
+        },
+        {
+            "name": "wrong but well formed",
+            "board": {
+                "cells": "111111111111111111111111111111111111"
+            },
+            "valid": true
+        },
+        {
+            "name": "too short",
+            "board": {
+                "cells": "..................................."
+            },
+            "valid": false
+        },
+        {
+            "name": "unknown symbol",
+            "board": {
+                "cells": "0..................................."
+            },
+            "valid": false
+        },
+        {
+            "name": "list of cells",
+            "board": {
+                "cells": [
+                    ".",
+                    ".",
+                    ".",
+                    ".",
+                    ".",
+                    ".",
+                    ".",
+                    ".",
+                    ".",
+                    ".",
+                    ".",
+                    ".",
+                    ".",
+                    ".",
+                    ".",
+                    ".",
+                    ".",
+                    ".",
+                    ".",
+                    ".",
+                    ".",
+                    ".",
+                    ".",
+                    ".",
+                    ".",
+                    ".",
+                    ".",
+                    ".",
+                    ".",
+                    ".",
+                    ".",
+                    ".",
+                    ".",
+                    ".",
+                    ".",
+                    "."
+                ]
+            },
+            "valid": false
+        }
+    ]
+}

@@ -1,0 +1,1 @@
+run_id,date_utc,prompt,prompt_version,agent_product,agent_version,model,settings,web_search,framework_versions,package_versions,first_recommendation,shortlist,shortlist_position,sources_cited,asset_generation,play_or_configuration,integration_correct,api_errors,duration_minutes,notes

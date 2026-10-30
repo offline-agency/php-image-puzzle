@@ -1,38 +1,102 @@
 {
     "name": "offline-agency/image-puzzle",
-    "version": "1.0.0",
-    "description": "Split images into a grid of puzzle pieces with optional edge styles; export as PNG and JSON manifest.",
+    "description": "Turn images into playable puzzles with GD: interlocking jigsaw pieces on rectangular, hexagonal or triangular grids, eight game modes, versioned manifests and game definitions, server-side save validation, SVG/PDF/ZIP export and a browser player.",
+    "type": "library",
     "license": "MIT",
+    "keywords": [
+        "puzzle",
+        "jigsaw",
+        "jigsaw-puzzle",
+        "image",
+        "gd",
+        "image-processing",
+        "sliding-puzzle",
+        "nonogram",
+        "tangram",
+        "memory-game",
+        "game",
+        "web-component",
+        "manifest"
+    ],
+    "homepage": "https://github.com/offline-agency/php-image-puzzle",
+    "authors": [
+        {
+            "name": "Offline Agency",
+            "homepage": "https://github.com/offline-agency"
+        }
+    ],
+    "support": {
+        "issues": "https://github.com/offline-agency/php-image-puzzle/issues",
+        "source": "https://github.com/offline-agency/php-image-puzzle",
+        "docs": "https://github.com/offline-agency/php-image-puzzle/tree/HEAD/docs",
+        "security": "https://github.com/offline-agency/php-image-puzzle/security/policy"
+    },
     "require": {
-        "php": "^8.4",
-        "ext-gd": "*"
+        "php": "~8.4.0 || ~8.5.0",
+        "ext-gd": "*",
+        "ext-json": "*"
     },
     "suggest": {
-        "ext-pcntl": "For parallel export (CLI)"
+        "ext-pcntl": "Parallel export in CLI processes (Linux/macOS).",
+        "ext-zip": "Self-contained offline ZIP bundles (image-puzzle bundle, BundleExporter).",
+        "ext-exif": "Not required: type detection falls back to getimagesize(). Needed only for EXIF orientation metadata reading.",
+        "league/flysystem": "Publish puzzles to any Flysystem 3 filesystem, including S3-compatible storage (Storage\\FlysystemTarget)."
     },
     "require-dev": {
-        "phpstan/phpstan": "^2.0",
-        "pestphp/pest": "^4.3",
-        "phpunit/phpunit": "^12.5"
+        "laravel/pint": "^1.32.1",
+        "league/flysystem": "^3.29",
+        "league/flysystem-memory": "^3.29",
+        "opis/json-schema": "^2.6",
+        "pestphp/pest": "^5.3.4",
+        "phpstan/phpstan": "^2.3.2",
+        "phpstan/phpstan-strict-rules": "^2.0",
+        "phpunit/phpunit": "^13.4.4"
     },
+    "bin": [
+        "bin/image-puzzle"
+    ],
     "autoload": {
         "psr-4": {
             "ImagePuzzle\\": "src/"
         }
     },
-    "autoload-dev": {},
+    "autoload-dev": {
+        "psr-4": {
+            "ImagePuzzle\\Tests\\": "tests/",
+            "ImagePuzzle\\Release\\": "tools/release/src/",
+            "ImagePuzzle\\Tools\\": "tools/src/"
+        },
+        "exclude-from-classmap": [
+            "tests/**/*Test.php"
+        ]
+    },
     "scripts": {
         "test": "pest",
-        "qa": "pest",
-        "phpstan": "phpstan analyse"
+        "test:process": "pest --group=process",
+        "test:coverage": "pest --coverage --min=85",
+        "analyse": "phpstan analyse --memory-limit=1G --no-progress",
+        "format": "pint",
+        "format:check": "pint --test",
+        "schemas": "php tools/validate-schemas.php",
+        "conformance": "php tools/conformance.php",
+        "mutate": ["Composer\\Config::disableProcessTimeout", "tools/mutation/run.sh"],
+        "benchmark": "php tools/benchmark.php",
+        "release:test": "php tools/release/run-scenarios.php",
+        "qa": [
+            "@composer validate --strict",
+            "@composer dump-autoload --optimize --strict-psr --dry-run",
+            "@format:check",
+            "@analyse",
+            "@test",
+            "@schemas"
+        ]
     },
     "minimum-stability": "stable",
+    "prefer-stable": true,
     "config": {
+        "sort-packages": true,
         "allow-plugins": {
-            "pestphp/pest-plugin": true,
-            "pestphp/pest-plugin-arch": true,
-            "pestphp/pest-plugin-mutate": true,
-            "pestphp/pest-plugin-profanity": true
+            "pestphp/pest-plugin": true
         }
     }
 }

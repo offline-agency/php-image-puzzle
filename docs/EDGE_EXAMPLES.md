@@ -18,7 +18,7 @@ $puzzle = $generator->generateFromFile('photo.jpg', 4, 6);
 
 Or from a file: `EdgeStyleFactory::fromFile('config/edge-config.json')`.
 
-JSON schemas: [edge-config.schema.json](schemas/edge-config.schema.json), [puzzle-config.schema.json](schemas/puzzle-config.schema.json), [piece.schema.json](schemas/piece.schema.json).
+JSON schemas (version 2): [edge-config.schema.json](schemas/v2/edge-config.schema.json), [puzzle-config.schema.json](schemas/v2/puzzle-config.schema.json), [piece.schema.json](schemas/v2/piece.schema.json).
 
 ---
 

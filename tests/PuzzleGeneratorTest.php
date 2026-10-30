@@ -2,10 +2,15 @@
 
 declare(strict_types=1);
 
+use ImagePuzzle\EdgeStyle\JigsawStyle;
 use ImagePuzzle\Exception\InvalidArgumentException;
 use ImagePuzzle\Exception\UnsupportedImageTypeException;
+use ImagePuzzle\ImageInfo;
+use ImagePuzzle\ImageLoader;
+use ImagePuzzle\ImageLoaderInterface;
 use ImagePuzzle\Puzzle;
 use ImagePuzzle\PuzzleGenerator;
+use ImagePuzzle\Tests\Support\Fixtures;
 
 test('generateFromFile produces correct number of pieces', function (): void {
     $generator = new PuzzleGenerator();
@@ -94,7 +99,7 @@ test('getPiece out of range throws', function (): void {
 });
 
 test('generateFromGd produces puzzle from GdImage', function (): void {
-    $image = imagecreatefrompng(__DIR__ . '/fixtures/sample.png');
+    $image = Fixtures::load(__DIR__ . '/fixtures/sample.png');
     expect($image)->not->toBeFalse();
     $expectedWidth = imagesx($image);
     $expectedHeight = imagesy($image);
@@ -112,7 +117,7 @@ test('generateFromGd produces puzzle from GdImage', function (): void {
 });
 
 test('generateFromGd with invalid rows throws', function (): void {
-    $image = imagecreatefrompng(__DIR__ . '/fixtures/sample.png');
+    $image = Fixtures::load(__DIR__ . '/fixtures/sample.png');
     expect($image)->not->toBeFalse();
     $generator = new PuzzleGenerator();
     expect(fn () => $generator->generateFromGd($image, 0, 2))
@@ -120,7 +125,7 @@ test('generateFromGd with invalid rows throws', function (): void {
 });
 
 test('generateFromGd with invalid cols throws', function (): void {
-    $image = imagecreatefrompng(__DIR__ . '/fixtures/sample.png');
+    $image = Fixtures::load(__DIR__ . '/fixtures/sample.png');
     expect($image)->not->toBeFalse();
     $generator = new PuzzleGenerator();
     expect(fn () => $generator->generateFromGd($image, 2, 0))
@@ -161,7 +166,7 @@ test('generateFromFile 3x4 grid produces 12 pieces', function (): void {
 });
 
 test('generatePiecesFromGd returns only requested pieces', function (): void {
-    $image = imagecreatefrompng(__DIR__ . '/fixtures/sample.png');
+    $image = Fixtures::load(__DIR__ . '/fixtures/sample.png');
     expect($image)->not->toBeFalse();
     $generator = new PuzzleGenerator();
     $pieces = $generator->generatePiecesFromGd($image, 2, 2, [[0, 0], [1, 1]]);
@@ -170,7 +175,6 @@ test('generatePiecesFromGd returns only requested pieces', function (): void {
     expect($pieces[0]->getCol())->toBe(0);
     expect($pieces[1]->getRow())->toBe(1);
     expect($pieces[1]->getCol())->toBe(1);
-    imagedestroy($image);
 });
 
 test('generatePiecesFromFile returns same piece data as full puzzle', function (): void {
@@ -197,12 +201,11 @@ test('generatePiecesFromFile with unreadable path throws', function (): void {
 });
 
 test('generatePiecesFromGd with empty indices returns empty array', function (): void {
-    $image = imagecreatefrompng(__DIR__ . '/fixtures/sample.png');
+    $image = Fixtures::load(__DIR__ . '/fixtures/sample.png');
     expect($image)->not->toBeFalse();
     $generator = new PuzzleGenerator();
     $pieces = $generator->generatePiecesFromGd($image, 2, 2, []);
     expect($pieces)->toBe([]);
-    imagedestroy($image);
 });
 
 test('generateAndExport with invalid path throws', function (): void {
@@ -253,7 +256,7 @@ test('generateAndExport produces same result as three-step flow', function (): v
     expect($resultOneShot->getFiles())->toHaveCount(count($resultThree->getFiles()));
     expect($resultOneShot->getManifest()['rows'])->toBe($resultThree->getManifest()['rows']);
     expect($resultOneShot->getManifest()['cols'])->toBe($resultThree->getManifest()['cols']);
-    expect($resultOneShot->getManifest()['pieces'])->toHaveCount(count($resultThree->getManifest()['pieces']));
+    expect(Fixtures::pieces($resultOneShot->getManifest()))->toHaveCount(count(Fixtures::pieces($resultThree->getManifest())));
     foreach ($resultOneShot->getFiles() as $f) {
         @unlink($f);
     }
@@ -263,3 +266,58 @@ test('generateAndExport produces same result as three-step flow', function (): v
     @rmdir($outDirOneShot);
     @rmdir($outDirThree);
 });
+
+test('an injected ImageLoaderInterface does the inspection and the decoding', function (): void {
+    $loader = new class () implements ImageLoaderInterface {
+        public int $inspected = 0;
+        public int $loaded = 0;
+
+        public function inspect(string $path): ImageInfo
+        {
+            $this->inspected++;
+
+            return (new ImageLoader())->inspect($path);
+        }
+
+        public function loadFromFile(string $path): GdImage
+        {
+            $this->loaded++;
+            [$width, $height] = Fixtures::size($path);
+            $image = Fixtures::canvas($width, $height);
+            imagefilledrectangle($image, 0, 0, $width - 1, $height - 1, Fixtures::color($image, 10, 200, 30));
+
+            return $image;
+        }
+    };
+    $puzzle = (new PuzzleGenerator(imageLoader: $loader))->generateFromFile(__DIR__ . '/fixtures/sample.png', 2, 2);
+    $piece = $puzzle->getPiece(1, 1)->toGdImage();
+
+    expect([$loader->inspected, $loader->loaded])->toBe([1, 1]);
+    expect(Fixtures::rgba($piece, 0, 0))->toBe(['r' => 10, 'g' => 200, 'b' => 30, 'a' => 0]);
+});
+
+test('generateFromGd reads the caller image without modifying or destroying it', function (): void {
+    $image = Fixtures::coordinateImage(48, 36);
+    $before = pixelDigest($image);
+    $puzzle = (new PuzzleGenerator(new JigsawStyle()))->generateFromGd($image, 3, 4);
+    foreach ($puzzle->getPieces() as $piece) {
+        $piece->toGdImage();
+    }
+    unset($puzzle, $piece);
+    gc_collect_cycles();
+
+    expect(imagesx($image))->toBe(48);
+    expect(pixelDigest($image))->toBe($before);
+});
+
+function pixelDigest(GdImage $image): string
+{
+    $pixels = '';
+    for ($y = 0; $y < imagesy($image); $y++) {
+        for ($x = 0; $x < imagesx($image); $x++) {
+            $pixels .= pack('N', Fixtures::pixel($image, $x, $y));
+        }
+    }
+
+    return hash('sha256', $pixels);
+}

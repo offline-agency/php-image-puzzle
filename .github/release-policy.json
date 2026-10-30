@@ -1,0 +1,16 @@
+{
+  "description": "Release automation policy, read by tools/release from the trusted master revision. See docs/release/RUNBOOK.md before changing it.",
+  "repository": "offline-agency/php-image-puzzle",
+  "branch": "master",
+  "anchor": {
+    "tag": "1.0.2",
+    "commit": "b114a4a2d0cc0b144e1c07b713142fd82717c74e"
+  },
+  "validation": {
+    "workflow": ".github/workflows/ci.yml",
+    "event": "push",
+    "job": "CI gate"
+  },
+  "composerPackage": "offline-agency/image-puzzle",
+  "excluded": []
+}

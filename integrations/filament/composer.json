@@ -1,0 +1,99 @@
+{
+    "name": "offline-agency/image-puzzle-filament",
+    "description": "Filament 5 widget, form field and authoring action for offline-agency/image-puzzle: play puzzles in panels, configure them with a visual editor and generate them from uploaded images.",
+    "type": "library",
+    "license": "MIT",
+    "keywords": [
+        "puzzle",
+        "jigsaw",
+        "filament",
+        "livewire",
+        "laravel",
+        "game"
+    ],
+    "homepage": "https://github.com/offline-agency/php-image-puzzle",
+    "support": {
+        "issues": "https://github.com/offline-agency/php-image-puzzle/issues",
+        "source": "https://github.com/offline-agency/php-image-puzzle",
+        "docs": "https://github.com/offline-agency/php-image-puzzle/tree/HEAD/docs/FILAMENT.md"
+    },
+    "require": {
+        "php": "~8.4.0 || ~8.5.0",
+        "ext-intl": "*",
+        "filament/filament": "^5.10.3",
+        "illuminate/contracts": "^13.35",
+        "illuminate/database": "^13.35",
+        "illuminate/queue": "^13.35",
+        "illuminate/support": "^13.35",
+        "offline-agency/image-puzzle": "^2.0",
+        "offline-agency/image-puzzle-livewire": "^2.0"
+    },
+    "require-dev": {
+        "larastan/larastan": "^3.13.2",
+        "laravel/pint": "^1.32.1",
+        "orchestra/testbench": "^11.3",
+        "pestphp/pest": "^5.3.4",
+        "phpstan/phpstan": "^2.3.2",
+        "phpstan/phpstan-strict-rules": "^2.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "ImagePuzzle\\Filament\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "ImagePuzzle\\Filament\\Tests\\": "tests/",
+            "Workbench\\App\\": "workbench/app/",
+            "Workbench\\Database\\Factories\\": "workbench/database/factories/",
+            "Workbench\\Database\\Seeders\\": "workbench/database/seeders/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "ImagePuzzle\\Filament\\ImagePuzzleFilamentServiceProvider"
+            ]
+        }
+    },
+    "repositories": [
+        {
+            "type": "path",
+            "url": "../..",
+            "options": {
+                "symlink": true,
+                "versions": {
+                    "offline-agency/image-puzzle": "2.0.0"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../livewire",
+            "options": {
+                "symlink": true,
+                "versions": {
+                    "offline-agency/image-puzzle-livewire": "2.0.0"
+                }
+            }
+        }
+    ],
+    "scripts": {
+        "test": "pest",
+        "analyse": "phpstan analyse --memory-limit=1G --no-progress",
+        "format": "pint",
+        "format:check": "pint --test",
+        "serve": [
+            "Composer\\Config::disableProcessTimeout",
+            "@php vendor/bin/testbench serve --ansi"
+        ]
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true,
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
+    }
+}

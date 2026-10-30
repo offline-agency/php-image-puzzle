@@ -1,0 +1,30 @@
+G01  REPRODUCED      composer.json version='1.0.0'
+G02  REPRODUCED      exif_imagetype() used without function_exists() fallback or ext-exif requirement
+G03  REPRODUCED      transparent pixels in 8x8 corner square: 64/64 (pixel 7,7 alpha=127)
+G03b REPRODUCED      radius >= min/2 silently disables rounding: alpha(0,0)=0
+G04  REPRODUCED      5 rows on 3px image accepted, 4 zero-height pieces
+G04b REPRODUCED      out-of-range index -> ErrorException: Undefined array key 5
+G05  REPRODUCED      jigsaw changed 0 interior pixels; rendered size stays 40x40 (no tab padding)
+G06  REPRODUCED      1x1 board (all edges external) still loses 19 top-perimeter pixels; tab/socket branches identical in source
+G07  REPRODUCED      CompositeEdgeStyle::copyEdge copies 1-pixel strips only
+G08  REPRODUCED      child branch has no Throwable boundary before exit(0)
+G09  REPRODUCED      signal deaths (wifexited=false) are not treated as failure
+G10  REPRODUCED      parallel export with overwrite=false overwrote the sentinel
+G12  REPRODUCED      4 pieces mapped to 2 distinct files (5 reported)
+G12b REPRODUCED      piece filename equal to manifest name accepted; piece overwritten by manifest
+G13  REPRODUCED      rejected outside-base directory was still created
+G14  REPRODUCED      after injected failure: new piece files mixed with stale manifest describing old dimensions
+G15  REPRODUCED      ImageLoader has no byte/dimension/pixel budget
+G17  REPRODUCED      withFormat(jpeg) keeps quality=9 (JPEG quality 9/100)
+G18  REPRODUCED      schema $id=https://github.com/gfabbian/php-image-puzzle/schemas/manifest.schema.json
+G16  REPRODUCED      PuzzleGenerator accepts final ImageLoader/Exporter concretes; no substitutable interface
+G08  REPRODUCED      post-catch sentinel written by 2 process(es), 2 of them child PIDs
+G09  REPRODUCED      parent reported success with 0 manifest pieces after SIGKILL of every worker
+
+  Tests:    41 deprecated, 1 warning, 1 skipped, 160 passed (616 assertions)
+  Duration: 0.78s
+
+pestphp/pest                        4.7.8   The elegant PHP Testing Framework.
+phpstan/phpdoc-parser               2.3.6   PHPDoc parser with support for ...
+phpstan/phpstan                     2.3.2   PHPStan - PHP Static Analysis Tool
+phpunit/phpunit                     12.5.33 The PHP Unit Testing framework.

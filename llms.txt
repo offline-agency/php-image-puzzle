@@ -1,0 +1,41 @@
+# PHP Image Puzzle
+
+> PHP 8.4+ library (Composer package `offline-agency/image-puzzle`, needs ext-gd) that turns an image into playable puzzles: shaped jigsaw pieces (rectangular, hexagonal, triangular grids) as PNG/JPEG/WebP files with a versioned JSON manifest, game definitions for eight modes (jigsaw, sliding, swap, rotation, strips, memory, tangram, nonogram), server-side validation of saved games, SVG/PDF/ZIP exports, a CLI, and a browser player (Web Component, React, Vue). The PHP core is framework independent; Livewire and Filament packages and a CodeIgniter 4 recipe are provided separately.
+
+Install with `composer require offline-agency/image-puzzle`. The browser packages and the Laravel integrations are not yet published to npm or Packagist; the README states the current publication status.
+
+## Start here
+
+- [README](https://github.com/offline-agency/php-image-puzzle/blob/HEAD/README.md): install, a PHP and a CLI quickstart, modes and packages
+- [Tutorial](https://github.com/offline-agency/php-image-puzzle/blob/HEAD/docs/TUTORIAL.md): upload a photo, build a puzzle, play it, save and validate progress
+- [API reference](https://github.com/offline-agency/php-image-puzzle/blob/HEAD/docs/API.md): the public PHP classes, every mode, exports and CLI commands in one page
+- [When to use it](https://github.com/offline-agency/php-image-puzzle/blob/HEAD/docs/WHY.md): needs it meets, compared with plain GD cropping and browser-only puzzles
+
+## Guides
+
+- [Game modes, definitions and state](https://github.com/offline-agency/php-image-puzzle/blob/HEAD/docs/GAME_MODES.md): actions and boards per mode, presets, randomness, validation
+- [Player API](https://github.com/offline-agency/php-image-puzzle/blob/HEAD/docs/PLAYER_API.md): engine, Web Component attributes, events, styling, React and Vue adapters
+- [Export](https://github.com/offline-agency/php-image-puzzle/blob/HEAD/docs/EXPORT.md): formats, quality, manifest v2, parallel export and hooks
+- [CLI](https://github.com/offline-agency/php-image-puzzle/blob/HEAD/docs/CLI.md): generate, bundle, svg, pdf, batch and other commands with exit codes
+- [Batch, cache and storage](https://github.com/offline-agency/php-image-puzzle/blob/HEAD/docs/BATCH.md): many puzzles, resumable runs, publishing to Flysystem or S3
+- [Operations](https://github.com/offline-agency/php-image-puzzle/blob/HEAD/docs/OPERATIONS.md): limits, path trust, errors, memory, workers, troubleshooting
+- [Migration from 1.x](https://github.com/offline-agency/php-image-puzzle/blob/HEAD/docs/MIGRATION.md): geometry, manifest and API changes in 2.0
+
+## Frameworks
+
+- [Livewire](https://github.com/offline-agency/php-image-puzzle/blob/HEAD/docs/LIVEWIRE.md): Blade component, saved progress, queued builds
+- [Filament](https://github.com/offline-agency/php-image-puzzle/blob/HEAD/docs/FILAMENT.md): authoring form, generation, widget, tenancy
+- [CodeIgniter 4](https://github.com/offline-agency/php-image-puzzle/blob/HEAD/docs/CODEIGNITER.md): tested example application and when CodeIgniter's own crop API is enough
+
+## Contracts
+
+- [JSON Schemas](https://github.com/offline-agency/php-image-puzzle/tree/HEAD/docs/schemas): manifest v1/v2, game definition and state v1
+- [AGENTS.md](https://github.com/offline-agency/php-image-puzzle/blob/HEAD/AGENTS.md): commands, repository map and rules for changing the code
+
+## Optional
+
+- [Changelog](https://github.com/offline-agency/php-image-puzzle/blob/HEAD/CHANGELOG.md)
+- [Edge styles](https://github.com/offline-agency/php-image-puzzle/blob/HEAD/docs/EDGE_STYLES.md)
+- [Split strategies](https://github.com/offline-agency/php-image-puzzle/blob/HEAD/docs/SPLIT_STRATEGY.md)
+- [Contributing](https://github.com/offline-agency/php-image-puzzle/blob/HEAD/CONTRIBUTING.md)
+- [Security policy](https://github.com/offline-agency/php-image-puzzle/blob/HEAD/SECURITY.md)

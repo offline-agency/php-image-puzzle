@@ -104,15 +104,19 @@ test('withFormat returns new instance with format changed', function (): void {
 });
 
 test('withQuality returns new instance with quality changed', function (): void {
+    // PNG quality is a compression level 0..9; 85 is only valid for JPEG/WebP.
+    expect(fn () => (new ExportOptions())->withQuality(85))->toThrow(\ImagePuzzle\Exception\InvalidArgumentException::class);
     $options = new ExportOptions();
-    $modified = $options->withQuality(85);
-    expect($modified->getQuality())->toBe(85);
+    $modified = $options->withQuality(5);
+    expect($modified->getQuality())->toBe(5);
     expect($options->getQuality())->toBe(9);
 });
 
-test('quality boundaries 0 and 100 are accepted', function (): void {
+test('quality boundaries are format specific', function (): void {
     $options0 = new ExportOptions(quality: 0);
-    $options100 = new ExportOptions(quality: 100);
+    $options100 = new ExportOptions(format: ExportOptions::FORMAT_JPEG, quality: 100);
+    expect(fn () => new ExportOptions(quality: 10))->toThrow(\ImagePuzzle\Exception\InvalidArgumentException::class);
+    expect(fn () => new ExportOptions(format: ExportOptions::FORMAT_JPEG, quality: 101))->toThrow(\ImagePuzzle\Exception\InvalidArgumentException::class);
     expect($options0->getQuality())->toBe(0);
     expect($options100->getQuality())->toBe(100);
 });
@@ -139,16 +143,27 @@ test('withManifestFilename returns new instance with manifest filename changed',
 
 test('withOnPieceBeforeSave returns new instance with callback set', function (): void {
     $options = new ExportOptions();
-    $callback = function (): void {};
+    $callback = function (): void {
+    };
     $modified = $options->withOnPieceBeforeSave($callback);
     expect($modified->getOnPieceBeforeSave())->toBe($callback);
     expect($options->getOnPieceBeforeSave())->toBeNull();
 });
 
+/**
+ * @param array<string, mixed> $m
+ * @return array<string, mixed>
+ */
+function identityManifest(array $m): array
+{
+    return $m;
+}
+
 test('withOnPieceAfterSave and withOnManifestBuild return new instance with callback set', function (): void {
     $options = new ExportOptions();
-    $afterSave = function (): void {};
-    $manifestBuild = function (array $m): array { return $m; };
+    $afterSave = function (): void {
+    };
+    $manifestBuild = identityManifest(...);
     $modified = $options->withOnPieceAfterSave($afterSave)->withOnManifestBuild($manifestBuild);
     expect($modified->getOnPieceAfterSave())->toBe($afterSave);
     expect($modified->getOnManifestBuild())->toBe($manifestBuild);

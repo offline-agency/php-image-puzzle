@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/offline-agency/php-image-puzzle/HEAD/docs/schemas/v2/piece.schema.json",
+  "title": "Piece",
+  "description": "One piece of a version 2 manifest. x/y/width/height keep their 1.x meaning (logical cell); rendered is the placement offset and size of the piece image; path is the outline in source pixel coordinates.",
+  "type": "object",
+  "required": ["id", "row", "col", "x", "y", "width", "height", "filename", "rendered"],
+  "properties": {
+    "id": { "type": "string", "pattern": "^r[0-9]+c[0-9]+$" },
+    "row": { "type": "integer", "minimum": 0 },
+    "col": { "type": "integer", "minimum": 0 },
+    "x": { "type": "integer", "minimum": 0, "description": "Logical cell X offset in the source." },
+    "y": { "type": "integer", "minimum": 0, "description": "Logical cell Y offset in the source." },
+    "width": { "type": "integer", "minimum": 1, "description": "Logical cell width." },
+    "height": { "type": "integer", "minimum": 1, "description": "Logical cell height." },
+    "filename": { "type": "string", "minLength": 1, "pattern": "^[^/\\\\]+$" },
+    "rendered": {
+      "type": "object",
+      "required": ["x", "y", "width", "height"],
+      "properties": {
+        "x": { "type": "integer", "minimum": 0 },
+        "y": { "type": "integer", "minimum": 0 },
+        "width": { "type": "integer", "minimum": 1 },
+        "height": { "type": "integer", "minimum": 1 }
+      },
+      "additionalProperties": false
+    },
+    "path": { "type": "string", "pattern": "^M[-0-9. LZ]+$", "description": "SVG path data (M/L/Z) in source pixel coordinates." }
+  },
+  "additionalProperties": false
+}

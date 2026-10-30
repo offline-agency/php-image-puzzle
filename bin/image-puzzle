@@ -1,0 +1,32 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+/*
+ * Command line interface of offline-agency/image-puzzle.
+ * Run "image-puzzle help" for the commands and exit codes.
+ */
+
+if (PHP_SAPI !== 'cli') {
+    fwrite(STDERR, "image-puzzle must be run from the command line.\n");
+    exit(1);
+}
+
+// Installed as a dependency (the vendor/bin proxy sets the autoloader path)
+// or run from a checkout of the package.
+$autoload = $GLOBALS['_composer_autoload_path'] ?? null;
+foreach ([$autoload, __DIR__ . '/../vendor/autoload.php', __DIR__ . '/../../../autoload.php'] as $candidate) {
+    if (is_string($candidate) && is_file($candidate)) {
+        require $candidate;
+        break;
+    }
+}
+if (!class_exists(ImagePuzzle\Cli\Application::class)) {
+    fwrite(STDERR, "image-puzzle: cannot find the Composer autoloader; run composer install.\n");
+    exit(1);
+}
+
+$arguments = $_SERVER['argv'] ?? [];
+$arguments = is_array($arguments) ? array_values(array_filter(array_slice($arguments, 1), 'is_string')) : [];
+exit((new ImagePuzzle\Cli\Application())->run($arguments));

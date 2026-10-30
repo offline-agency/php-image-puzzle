@@ -11,6 +11,7 @@ use ImagePuzzle\EdgeStyle\SinusStyle;
 use ImagePuzzle\ExportOptions;
 use ImagePuzzle\PieceContext;
 use ImagePuzzle\PuzzleGenerator;
+use ImagePuzzle\Tests\Support\Fixtures;
 
 test('LineStyle implements EdgeStyleInterface', function (): void {
     expect(new LineStyle())->toBeInstanceOf(EdgeStyleInterface::class);
@@ -20,7 +21,7 @@ test('LineStyle apply returns same image with unchanged dimensions', function ()
     $style = new LineStyle();
     $width = 16;
     $height = 12;
-    $image = imagecreatetruecolor($width, $height);
+    $image = Fixtures::canvas($width, $height);
     expect($image)->not->toBeFalse();
     imagesavealpha($image, true);
     $context = new PieceContext(0, 0, 0, 0, $width, $height, 100, 100, 4, 4);
@@ -38,7 +39,7 @@ test('JigsawStyle apply returns image with same dimensions', function (): void {
     $style = new JigsawStyle();
     $width = 20;
     $height = 16;
-    $image = imagecreatetruecolor($width, $height);
+    $image = Fixtures::canvas($width, $height);
     expect($image)->not->toBeFalse();
     imagesavealpha($image, true);
     $context = new PieceContext(0, 0, 0, 0, $width, $height, 100, 100, 4, 4);
@@ -48,27 +49,12 @@ test('JigsawStyle apply returns image with same dimensions', function (): void {
     expect(imagesy($result))->toBe($height);
 });
 
-test('JigsawStyle apply sets center of top edge to transparent', function (): void {
-    $style = new JigsawStyle();
-    $width = 20;
-    $height = 16;
-    $image = imagecreatetruecolor($width, $height);
-    expect($image)->not->toBeFalse();
-    imagesavealpha($image, true);
-    imagealphablending($image, false);
-    $opaque = imagecolorallocatealpha($image, 100, 100, 100, 0);
-    if ($opaque !== false) {
-        imagefill($image, 0, 0, $opaque);
-    }
-    imagealphablending($image, true);
-    $context = new PieceContext(0, 0, 0, 0, $width, $height, 100, 100, 4, 4);
-    $result = $style->apply($image, $context);
-    imagesavealpha($result, true);
-    $alphaAt = static function (GdImage $img, int $x, int $y): int {
-        $c = imagecolorat($img, $x, $y);
-        return ($c >> 24) & 0x7F;
-    };
-    expect($alphaAt($result, (int) floor($width / 2), 0))->toBe(127);
+test('JigsawStyle shape comes from shared geometry, not from apply()', function (): void {
+    $image = Fixtures::canvas(16, 16);
+    $context = new PieceContext(0, 0, 0, 0, 16, 16, 100, 100, 4, 4);
+    // apply() adds no raster effect: the outline is produced by the board geometry.
+    expect((new JigsawStyle())->apply($image, $context))->toBe($image);
+    expect((new JigsawStyle())->profile()->name())->toBe('jigsaw');
 });
 
 test('ArcStyle implements EdgeStyleInterface', function (): void {
@@ -79,7 +65,7 @@ test('ArcStyle apply returns image with same dimensions', function (): void {
     $style = new ArcStyle();
     $width = 18;
     $height = 14;
-    $image = imagecreatetruecolor($width, $height);
+    $image = Fixtures::canvas($width, $height);
     expect($image)->not->toBeFalse();
     imagesavealpha($image, true);
     $context = new PieceContext(0, 0, 0, 0, $width, $height, 100, 100, 4, 4);
@@ -97,7 +83,7 @@ test('HalfCircleStyle apply returns image with same dimensions', function (): vo
     $style = new HalfCircleStyle();
     $width = 16;
     $height = 12;
-    $image = imagecreatetruecolor($width, $height);
+    $image = Fixtures::canvas($width, $height);
     expect($image)->not->toBeFalse();
     imagesavealpha($image, true);
     $context = new PieceContext(0, 0, 0, 0, $width, $height, 100, 100, 4, 4);
@@ -115,7 +101,7 @@ test('SinusStyle apply returns image with same dimensions', function (): void {
     $style = new SinusStyle();
     $width = 20;
     $height = 16;
-    $image = imagecreatetruecolor($width, $height);
+    $image = Fixtures::canvas($width, $height);
     expect($image)->not->toBeFalse();
     imagesavealpha($image, true);
     $context = new PieceContext(0, 0, 0, 0, $width, $height, 100, 100, 4, 4);
@@ -125,16 +111,9 @@ test('SinusStyle apply returns image with same dimensions', function (): void {
     expect(imagesy($result))->toBe($height);
 });
 
-test('SinusStyle apply with context width 0 hits length <= 0 branch', function (): void {
-    $style = new SinusStyle();
-    $image = imagecreatetruecolor(1, 1);
-    expect($image)->not->toBeFalse();
-    imagesavealpha($image, true);
-    $context = new PieceContext(0, 0, 0, 0, 0, 1, 1, 1, 1, 1);
-    $result = $style->apply($image, $context);
-    expect($result)->toBe($image);
-    expect(imagesx($result))->toBe(1);
-    expect(imagesy($result))->toBe(1);
+test('a degenerate zero-width piece context is rejected', function (): void {
+    expect(fn () => new PieceContext(0, 0, 0, 0, 0, 1, 1, 1, 1, 1))
+        ->toThrow(ImagePuzzle\Exception\InvalidArgumentException::class, 'Piece context must be at least 1x1');
 });
 
 test('JigsawStyle integration with PuzzleGenerator and export', function (): void {

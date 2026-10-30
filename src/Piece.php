@@ -6,101 +6,107 @@ namespace ImagePuzzle;
 
 use GdImage;
 use ImagePuzzle\EdgeStyle\EdgeStyleInterface;
+use ImagePuzzle\Geometry\Bounds;
+use ImagePuzzle\Geometry\PieceRenderer;
+use ImagePuzzle\Geometry\PieceShape;
 
+/**
+ * One piece: its logical cell, its outline and a lazy renderer.
+ *
+ * The source image is shared, never copied, mutated or destroyed by the
+ * piece. toGdImage() returns a new image owned by the caller.
+ */
 final class Piece
 {
     public function __construct(
-        private readonly int $row,
-        private readonly int $col,
-        private readonly int $x,
-        private readonly int $y,
-        private readonly int $width,
-        private readonly int $height,
+        private readonly PieceShape $shape,
         private readonly GdImage $sourceImage,
         private readonly int $sourceWidth,
         private readonly int $sourceHeight,
         private readonly int $totalRows,
         private readonly int $totalCols,
         private readonly EdgeStyleInterface $edgeStyle,
+        private readonly PieceRenderer $renderer = new PieceRenderer(),
     ) {
+    }
+
+    public function getId(): string
+    {
+        return $this->shape->id;
     }
 
     public function getRow(): int
     {
-        return $this->row;
+        return $this->shape->row;
     }
 
     public function getCol(): int
     {
-        return $this->col;
+        return $this->shape->col;
     }
 
+    /** Logical cell X offset in the source. */
     public function getX(): int
     {
-        return $this->x;
+        return $this->shape->logical->x;
     }
 
+    /** Logical cell Y offset in the source. */
     public function getY(): int
     {
-        return $this->y;
+        return $this->shape->logical->y;
     }
 
+    /** Logical cell width. */
     public function getWidth(): int
     {
-        return $this->width;
+        return $this->shape->logical->width;
     }
 
+    /** Logical cell height. */
     public function getHeight(): int
     {
-        return $this->height;
+        return $this->shape->logical->height;
     }
 
-    public function toGdImage(): GdImage
+    /** Placement and size of the rendered image in source coordinates. */
+    public function getRenderedBounds(): Bounds
     {
-        $piece = $this->createPieceImage();
-        $this->copySourceRegion($piece);
-        $context = new PieceContext(
-            $this->row,
-            $this->col,
-            $this->x,
-            $this->y,
-            $this->width,
-            $this->height,
+        return $this->shape->rendered;
+    }
+
+    public function getShape(): PieceShape
+    {
+        return $this->shape;
+    }
+
+    public function getContext(): PieceContext
+    {
+        $logical = $this->shape->logical;
+
+        return new PieceContext(
+            $this->shape->row,
+            $this->shape->col,
+            $logical->x,
+            $logical->y,
+            $logical->width,
+            $logical->height,
             $this->sourceWidth,
             $this->sourceHeight,
             $this->totalRows,
             $this->totalCols,
+            $this->shape->rendered,
+            $this->shape->id,
+            $this->shape->border,
         );
-        return $this->edgeStyle->apply($piece, $context);
     }
 
-    private function createPieceImage(): GdImage
+    /**
+     * Render the piece. The returned image has the rendered bounds' size and
+     * must be placed at getRenderedBounds()->x/y to reconstruct the source.
+     */
+    public function toGdImage(): GdImage
     {
-        $image = imagecreatetruecolor($this->width, $this->height);
-        if ($image === false) {
-            throw new \RuntimeException('Failed to create piece image');
-        }
-        imagesavealpha($image, true);
-        imagealphablending($image, false);
-        $transparent = imagecolorallocatealpha($image, 0, 0, 0, 127);
-        if ($transparent !== false) {
-            imagefill($image, 0, 0, $transparent);
-        }
-        imagealphablending($image, true);
-        return $image;
-    }
-
-    private function copySourceRegion(GdImage $piece): void
-    {
-        imagecopy(
-            $piece,
-            $this->sourceImage,
-            0,
-            0,
-            $this->x,
-            $this->y,
-            $this->width,
-            $this->height
-        );
+        return $this->edgeStyle->apply($this->renderer->render($this->sourceImage, $this->shape), $this->getContext());
     }
 }

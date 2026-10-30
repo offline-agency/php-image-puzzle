@@ -13,6 +13,7 @@ use ImagePuzzle\EdgeStyle\NoEdgeStyle;
 use ImagePuzzle\EdgeStyle\RoundedCornersStyle;
 use ImagePuzzle\EdgeStyle\SinusStyle;
 use ImagePuzzle\Exception\InvalidArgumentException;
+use ImagePuzzle\Tests\Support\Fixtures;
 
 test('fromArray no_edge returns NoEdgeStyle', function (): void {
     $style = EdgeStyleFactory::fromArray(['edge' => ['type' => 'no_edge']]);
@@ -48,7 +49,7 @@ test('fromArray sinus returns SinusStyle', function (): void {
 test('fromArray rounded_corners without options uses default radius', function (): void {
     $style = EdgeStyleFactory::fromArray(['edge' => ['type' => 'rounded_corners']]);
     expect($style)->toBeInstanceOf(RoundedCornersStyle::class);
-    $image = imagecreatetruecolor(20, 20);
+    $image = Fixtures::canvas(20, 20);
     expect($image)->not->toBeFalse();
     imagesavealpha($image, true);
     $context = new \ImagePuzzle\PieceContext(0, 0, 0, 0, 20, 20, 100, 100, 4, 4);
@@ -64,7 +65,7 @@ test('fromArray rounded_corners with options.radius uses that value', function (
         ],
     ]);
     expect($style)->toBeInstanceOf(RoundedCornersStyle::class);
-    $image = imagecreatetruecolor(30, 30);
+    $image = Fixtures::canvas(30, 30);
     expect($image)->not->toBeFalse();
     imagesavealpha($image, true);
     $context = new \ImagePuzzle\PieceContext(0, 0, 0, 0, 30, 30, 100, 100, 4, 4);
@@ -72,19 +73,30 @@ test('fromArray rounded_corners with options.radius uses that value', function (
     expect($result)->toBeInstanceOf(\GdImage::class);
 });
 
-test('fromArray rounded_corners with options.radius as string casts to int', function (): void {
-    $style = EdgeStyleFactory::fromArray([
+test('fromArray rejects a string radius instead of casting it', function (): void {
+    expect(fn () => EdgeStyleFactory::fromArray([
         'edge' => [
             'type' => 'rounded_corners',
             'options' => ['radius' => '3'],
         ],
-    ]);
-    expect($style)->toBeInstanceOf(RoundedCornersStyle::class);
+    ]))->toThrow(InvalidArgumentException::class, 'edge.options.radius must be an integer');
 });
 
-test('fromArray with options as non-array uses empty options', function (): void {
-    $style = EdgeStyleFactory::fromArray(['edge' => ['type' => 'jigsaw', 'options' => 'not-array']]);
-    expect($style)->toBeInstanceOf(JigsawStyle::class);
+test('fromArray rejects malformed or unsupported options and keys', function (array $edge, string $message): void {
+    expect(fn () => EdgeStyleFactory::fromArray(['edge' => $edge]))->toThrow(InvalidArgumentException::class, $message);
+})->with([
+    'non-array options' => [['type' => 'jigsaw', 'options' => 'not-array'], 'must be an object'],
+    'options on jigsaw' => [['type' => 'jigsaw', 'options' => ['radius' => 2]], 'not supported for edge type'],
+    'unknown option' => [['type' => 'rounded_corners', 'options' => ['size' => 2]], 'unsupported keys: size'],
+    'unknown key' => [['type' => 'line', 'colour' => 'red'], 'unsupported keys: colour'],
+    'sides on non composite' => [['type' => 'line', 'top' => ['type' => 'line']], 'unsupported keys: top'],
+    'side options' => [['type' => 'composite', 'top' => ['type' => 'line', 'options' => []]], 'unsupported keys: options'],
+]);
+
+test('normalize returns a reproducible representation', function (): void {
+    expect(EdgeStyleFactory::normalize(['type' => 'rounded_corners']))->toBe(['type' => 'rounded_corners', 'options' => ['radius' => 4]]);
+    expect(EdgeStyleFactory::normalize(['type' => 'composite', 'left' => ['type' => 'sinus'], 'right' => ['type' => 'sinus']]))
+        ->toBe(['type' => 'composite', 'top' => ['type' => 'no_edge'], 'right' => ['type' => 'sinus'], 'bottom' => ['type' => 'no_edge'], 'left' => ['type' => 'sinus']]);
 });
 
 test('fromArray missing edge throws', function (): void {
@@ -196,14 +208,14 @@ test('fromArray composite returns CompositeEdgeStyle with top right bottom left'
             'type' => 'composite',
             'top' => ['type' => 'line'],
             'right' => ['type' => 'jigsaw'],
-            'bottom' => ['type' => 'jigsaw'],
-            'left' => ['type' => 'line'],
+            'bottom' => ['type' => 'line'],
+            'left' => ['type' => 'jigsaw'],
         ],
     ];
     $style = EdgeStyleFactory::fromArray($config);
     expect($style)->toBeInstanceOf(CompositeEdgeStyle::class)
         ->and($style)->toBeInstanceOf(EdgeStyleInterface::class);
-    $image = imagecreatetruecolor(16, 16);
+    $image = Fixtures::canvas(16, 16);
     expect($image)->not->toBeFalse();
     imagesavealpha($image, true);
     $context = new \ImagePuzzle\PieceContext(0, 0, 0, 0, 16, 16, 100, 100, 2, 2);
@@ -217,11 +229,19 @@ test('fromArray composite with missing side uses no_edge default', function (): 
     $config = [
         'edge' => [
             'type' => 'composite',
-            'top' => ['type' => 'rounded_corners', 'options' => ['radius' => 2]],
+            'left' => ['type' => 'sinus'],
+            'right' => ['type' => 'sinus'],
         ],
     ];
     $style = EdgeStyleFactory::fromArray($config);
     expect($style)->toBeInstanceOf(CompositeEdgeStyle::class);
+});
+
+test('fromArray composite rejects contradictory and raster-only sides', function (): void {
+    expect(fn () => EdgeStyleFactory::fromArray(['edge' => ['type' => 'composite', 'top' => ['type' => 'rounded_corners', 'options' => ['radius' => 2]]]]))
+        ->toThrow(InvalidArgumentException::class);
+    expect(fn () => EdgeStyleFactory::fromArray(['edge' => ['type' => 'composite', 'top' => ['type' => 'jigsaw']]]))
+        ->toThrow(InvalidArgumentException::class, 'same profile');
 });
 
 test('fromArray composite nested composite throws', function (): void {

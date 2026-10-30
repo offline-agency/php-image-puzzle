@@ -1,0 +1,828 @@
+{
+    "name": "swap",
+    "definition": {
+        "id": "gd1-1bec5535c5499abcacf13e0eea065835f66d668d3065a0cddd924cd7f2743099",
+        "$schema": "https://raw.githubusercontent.com/offline-agency/php-image-puzzle/HEAD/docs/schemas/game/v1/definition.schema.json",
+        "format": "image-puzzle/game-definition",
+        "version": 1,
+        "kind": "swap",
+        "generator": {
+            "algorithm": 1
+        },
+        "seed": 12,
+        "preset": {
+            "name": "easy",
+            "version": 1
+        },
+        "source": {
+            "width": 640,
+            "height": 480,
+            "sha256": "4d6255a6c425d543f7f9167565e0c111596081fe6a2e6eb6f238296e9b24e704"
+        },
+        "media": {
+            "image": "source.png"
+        },
+        "board": {
+            "rows": 3,
+            "cols": 3,
+            "crop": {
+                "x": 0,
+                "y": 0,
+                "width": 639,
+                "height": 480
+            }
+        },
+        "tiles": [
+            {
+                "id": "t0",
+                "home": 0,
+                "rect": {
+                    "x": 0,
+                    "y": 0,
+                    "width": 213,
+                    "height": 160
+                }
+            },
+            {
+                "id": "t1",
+                "home": 1,
+                "rect": {
+                    "x": 213,
+                    "y": 0,
+                    "width": 213,
+                    "height": 160
+                }
+            },
+            {
+                "id": "t2",
+                "home": 2,
+                "rect": {
+                    "x": 426,
+                    "y": 0,
+                    "width": 213,
+                    "height": 160
+                }
+            },
+            {
+                "id": "t3",
+                "home": 3,
+                "rect": {
+                    "x": 0,
+                    "y": 160,
+                    "width": 213,
+                    "height": 160
+                }
+            },
+            {
+                "id": "t4",
+                "home": 4,
+                "rect": {
+                    "x": 213,
+                    "y": 160,
+                    "width": 213,
+                    "height": 160
+                }
+            },
+            {
+                "id": "t5",
+                "home": 5,
+                "rect": {
+                    "x": 426,
+                    "y": 160,
+                    "width": 213,
+                    "height": 160
+                }
+            },
+            {
+                "id": "t6",
+                "home": 6,
+                "rect": {
+                    "x": 0,
+                    "y": 320,
+                    "width": 213,
+                    "height": 160
+                }
+            },
+            {
+                "id": "t7",
+                "home": 7,
+                "rect": {
+                    "x": 213,
+                    "y": 320,
+                    "width": 213,
+                    "height": 160
+                }
+            },
+            {
+                "id": "t8",
+                "home": 8,
+                "rect": {
+                    "x": 426,
+                    "y": 320,
+                    "width": 213,
+                    "height": 160
+                }
+            }
+        ],
+        "rules": {},
+        "actions": [
+            "swap"
+        ],
+        "capabilities": {
+            "undo": true,
+            "redo": true,
+            "reset": true,
+            "shuffle": true,
+            "hint": true
+        },
+        "assistance": {
+            "preview": true,
+            "numbers": true,
+            "highlightCorrect": true
+        },
+        "initial": {
+            "cells": [
+                "t8",
+                "t2",
+                "t4",
+                "t7",
+                "t0",
+                "t6",
+                "t5",
+                "t3",
+                "t1"
+            ]
+        }
+    },
+    "solved": {
+        "cells": [
+            "t0",
+            "t1",
+            "t2",
+            "t3",
+            "t4",
+            "t5",
+            "t6",
+            "t7",
+            "t8"
+        ]
+    },
+    "scrambles": [
+        {
+            "seed": 0,
+            "board": {
+                "cells": [
+                    "t6",
+                    "t1",
+                    "t5",
+                    "t8",
+                    "t7",
+                    "t0",
+                    "t3",
+                    "t2",
+                    "t4"
+                ]
+            }
+        },
+        {
+            "seed": 1,
+            "board": {
+                "cells": [
+                    "t0",
+                    "t3",
+                    "t7",
+                    "t2",
+                    "t1",
+                    "t4",
+                    "t6",
+                    "t5",
+                    "t8"
+                ]
+            }
+        },
+        {
+            "seed": 2,
+            "board": {
+                "cells": [
+                    "t7",
+                    "t0",
+                    "t3",
+                    "t1",
+                    "t2",
+                    "t5",
+                    "t8",
+                    "t4",
+                    "t6"
+                ]
+            }
+        },
+        {
+            "seed": 99,
+            "board": {
+                "cells": [
+                    "t1",
+                    "t8",
+                    "t0",
+                    "t7",
+                    "t5",
+                    "t6",
+                    "t3",
+                    "t2",
+                    "t4"
+                ]
+            }
+        },
+        {
+            "seed": 4294967295,
+            "board": {
+                "cells": [
+                    "t6",
+                    "t8",
+                    "t7",
+                    "t4",
+                    "t1",
+                    "t0",
+                    "t2",
+                    "t3",
+                    "t5"
+                ]
+            }
+        }
+    ],
+    "legalActions": [
+        {
+            "type": "swap",
+            "a": "t8",
+            "b": "t2"
+        },
+        {
+            "type": "swap",
+            "a": "t8",
+            "b": "t4"
+        },
+        {
+            "type": "swap",
+            "a": "t8",
+            "b": "t7"
+        },
+        {
+            "type": "swap",
+            "a": "t8",
+            "b": "t0"
+        },
+        {
+            "type": "swap",
+            "a": "t8",
+            "b": "t6"
+        },
+        {
+            "type": "swap",
+            "a": "t8",
+            "b": "t5"
+        },
+        {
+            "type": "swap",
+            "a": "t8",
+            "b": "t3"
+        },
+        {
+            "type": "swap",
+            "a": "t8",
+            "b": "t1"
+        },
+        {
+            "type": "swap",
+            "a": "t2",
+            "b": "t4"
+        },
+        {
+            "type": "swap",
+            "a": "t2",
+            "b": "t7"
+        },
+        {
+            "type": "swap",
+            "a": "t2",
+            "b": "t0"
+        },
+        {
+            "type": "swap",
+            "a": "t2",
+            "b": "t6"
+        },
+        {
+            "type": "swap",
+            "a": "t2",
+            "b": "t5"
+        },
+        {
+            "type": "swap",
+            "a": "t2",
+            "b": "t3"
+        },
+        {
+            "type": "swap",
+            "a": "t2",
+            "b": "t1"
+        },
+        {
+            "type": "swap",
+            "a": "t4",
+            "b": "t7"
+        },
+        {
+            "type": "swap",
+            "a": "t4",
+            "b": "t0"
+        },
+        {
+            "type": "swap",
+            "a": "t4",
+            "b": "t6"
+        },
+        {
+            "type": "swap",
+            "a": "t4",
+            "b": "t5"
+        },
+        {
+            "type": "swap",
+            "a": "t4",
+            "b": "t3"
+        },
+        {
+            "type": "swap",
+            "a": "t4",
+            "b": "t1"
+        },
+        {
+            "type": "swap",
+            "a": "t7",
+            "b": "t0"
+        },
+        {
+            "type": "swap",
+            "a": "t7",
+            "b": "t6"
+        },
+        {
+            "type": "swap",
+            "a": "t7",
+            "b": "t5"
+        },
+        {
+            "type": "swap",
+            "a": "t7",
+            "b": "t3"
+        },
+        {
+            "type": "swap",
+            "a": "t7",
+            "b": "t1"
+        },
+        {
+            "type": "swap",
+            "a": "t0",
+            "b": "t6"
+        },
+        {
+            "type": "swap",
+            "a": "t0",
+            "b": "t5"
+        },
+        {
+            "type": "swap",
+            "a": "t0",
+            "b": "t3"
+        },
+        {
+            "type": "swap",
+            "a": "t0",
+            "b": "t1"
+        },
+        {
+            "type": "swap",
+            "a": "t6",
+            "b": "t5"
+        },
+        {
+            "type": "swap",
+            "a": "t6",
+            "b": "t3"
+        },
+        {
+            "type": "swap",
+            "a": "t6",
+            "b": "t1"
+        },
+        {
+            "type": "swap",
+            "a": "t5",
+            "b": "t3"
+        },
+        {
+            "type": "swap",
+            "a": "t5",
+            "b": "t1"
+        },
+        {
+            "type": "swap",
+            "a": "t3",
+            "b": "t1"
+        }
+    ],
+    "cases": [
+        {
+            "name": "play from initial",
+            "board": {
+                "cells": [
+                    "t8",
+                    "t2",
+                    "t4",
+                    "t7",
+                    "t0",
+                    "t6",
+                    "t5",
+                    "t3",
+                    "t1"
+                ]
+            },
+            "steps": [
+                {
+                    "action": {
+                        "type": "swap",
+                        "a": "t8",
+                        "b": "t0"
+                    },
+                    "result": "ok",
+                    "board": {
+                        "cells": [
+                            "t0",
+                            "t2",
+                            "t4",
+                            "t7",
+                            "t8",
+                            "t6",
+                            "t5",
+                            "t3",
+                            "t1"
+                        ]
+                    },
+                    "complete": false,
+                    "progress": 0.1111111111111111,
+                    "hint": {
+                        "type": "swap",
+                        "a": "t2",
+                        "b": "t1"
+                    }
+                },
+                {
+                    "action": {
+                        "type": "swap",
+                        "a": "t2",
+                        "b": "t1"
+                    },
+                    "result": "ok",
+                    "board": {
+                        "cells": [
+                            "t0",
+                            "t1",
+                            "t4",
+                            "t7",
+                            "t8",
+                            "t6",
+                            "t5",
+                            "t3",
+                            "t2"
+                        ]
+                    },
+                    "complete": false,
+                    "progress": 0.2222222222222222,
+                    "hint": {
+                        "type": "swap",
+                        "a": "t4",
+                        "b": "t2"
+                    }
+                },
+                {
+                    "action": {
+                        "type": "swap",
+                        "a": "t4",
+                        "b": "t2"
+                    },
+                    "result": "ok",
+                    "board": {
+                        "cells": [
+                            "t0",
+                            "t1",
+                            "t2",
+                            "t7",
+                            "t8",
+                            "t6",
+                            "t5",
+                            "t3",
+                            "t4"
+                        ]
+                    },
+                    "complete": false,
+                    "progress": 0.3333333333333333,
+                    "hint": {
+                        "type": "swap",
+                        "a": "t7",
+                        "b": "t3"
+                    }
+                },
+                {
+                    "action": {
+                        "type": "swap",
+                        "a": "t7",
+                        "b": "t3"
+                    },
+                    "result": "ok",
+                    "board": {
+                        "cells": [
+                            "t0",
+                            "t1",
+                            "t2",
+                            "t3",
+                            "t8",
+                            "t6",
+                            "t5",
+                            "t7",
+                            "t4"
+                        ]
+                    },
+                    "complete": false,
+                    "progress": 0.5555555555555556,
+                    "hint": {
+                        "type": "swap",
+                        "a": "t8",
+                        "b": "t4"
+                    }
+                },
+                {
+                    "action": {
+                        "type": "swap",
+                        "a": "t8",
+                        "b": "t4"
+                    },
+                    "result": "ok",
+                    "board": {
+                        "cells": [
+                            "t0",
+                            "t1",
+                            "t2",
+                            "t3",
+                            "t4",
+                            "t6",
+                            "t5",
+                            "t7",
+                            "t8"
+                        ]
+                    },
+                    "complete": false,
+                    "progress": 0.7777777777777778,
+                    "hint": {
+                        "type": "swap",
+                        "a": "t6",
+                        "b": "t5"
+                    }
+                },
+                {
+                    "action": {
+                        "type": "swap",
+                        "a": "t6",
+                        "b": "t5"
+                    },
+                    "result": "ok",
+                    "board": {
+                        "cells": [
+                            "t0",
+                            "t1",
+                            "t2",
+                            "t3",
+                            "t4",
+                            "t5",
+                            "t6",
+                            "t7",
+                            "t8"
+                        ]
+                    },
+                    "complete": true,
+                    "progress": 1,
+                    "hint": null
+                }
+            ]
+        },
+        {
+            "name": "last move completes",
+            "board": {
+                "cells": [
+                    "t1",
+                    "t0",
+                    "t2",
+                    "t3",
+                    "t4",
+                    "t5",
+                    "t6",
+                    "t7",
+                    "t8"
+                ]
+            },
+            "steps": [
+                {
+                    "action": {
+                        "type": "swap",
+                        "a": "t1",
+                        "b": "t0"
+                    },
+                    "result": "ok",
+                    "board": {
+                        "cells": [
+                            "t0",
+                            "t1",
+                            "t2",
+                            "t3",
+                            "t4",
+                            "t5",
+                            "t6",
+                            "t7",
+                            "t8"
+                        ]
+                    },
+                    "complete": true,
+                    "progress": 1,
+                    "hint": null
+                }
+            ]
+        },
+        {
+            "name": "rejected actions",
+            "board": {
+                "cells": [
+                    "t8",
+                    "t2",
+                    "t4",
+                    "t7",
+                    "t0",
+                    "t6",
+                    "t5",
+                    "t3",
+                    "t1"
+                ]
+            },
+            "steps": [
+                {
+                    "action": {
+                        "type": "teleport",
+                        "tile": "t0"
+                    },
+                    "result": "illegal"
+                },
+                {
+                    "action": {
+                        "type": "swap"
+                    },
+                    "result": "invalid"
+                },
+                {
+                    "action": {
+                        "type": "swap",
+                        "a": "t0",
+                        "b": "t0"
+                    },
+                    "result": "illegal"
+                },
+                {
+                    "action": {
+                        "type": "swap",
+                        "a": "t0",
+                        "b": "zz"
+                    },
+                    "result": "illegal"
+                },
+                {
+                    "action": {
+                        "type": "swap",
+                        "a": "t0",
+                        "b": "t1",
+                        "extra": 1
+                    },
+                    "result": "invalid"
+                }
+            ]
+        }
+    ],
+    "imports": [
+        {
+            "name": "initial",
+            "board": {
+                "cells": [
+                    "t8",
+                    "t2",
+                    "t4",
+                    "t7",
+                    "t0",
+                    "t6",
+                    "t5",
+                    "t3",
+                    "t1"
+                ]
+            },
+            "valid": true
+        },
+        {
+            "name": "solved",
+            "board": {
+                "cells": [
+                    "t0",
+                    "t1",
+                    "t2",
+                    "t3",
+                    "t4",
+                    "t5",
+                    "t6",
+                    "t7",
+                    "t8"
+                ]
+            },
+            "valid": true
+        },
+        {
+            "name": "not an object",
+            "board": [
+                1,
+                2
+            ],
+            "valid": false
+        },
+        {
+            "name": "unknown field",
+            "board": {
+                "cells": [
+                    "t8",
+                    "t2",
+                    "t4",
+                    "t7",
+                    "t0",
+                    "t6",
+                    "t5",
+                    "t3",
+                    "t1"
+                ],
+                "cheat": true
+            },
+            "valid": false
+        },
+        {
+            "name": "duplicate id",
+            "board": {
+                "cells": [
+                    "t0",
+                    "t0",
+                    "t2",
+                    "t3",
+                    "t4",
+                    "t5",
+                    "t6",
+                    "t7",
+                    "t8"
+                ]
+            },
+            "valid": false
+        },
+        {
+            "name": "unknown id",
+            "board": {
+                "cells": [
+                    "zz",
+                    "t1",
+                    "t2",
+                    "t3",
+                    "t4",
+                    "t5",
+                    "t6",
+                    "t7",
+                    "t8"
+                ]
+            },
+            "valid": false
+        },
+        {
+            "name": "missing cell",
+            "board": {
+                "cells": [
+                    "t0",
+                    "t1",
+                    "t2",
+                    "t3",
+                    "t4",
+                    "t5",
+                    "t6",
+                    "t7"
+                ]
+            },
+            "valid": false
+        }
+    ]
+}

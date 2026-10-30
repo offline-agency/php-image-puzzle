@@ -1,0 +1,98 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/offline-agency/php-image-puzzle/HEAD/docs/schemas/game/v1/board.schema.json",
+  "title": "Game board",
+  "description": "Per-mode board payloads shared by definition.initial, state.board and state.history.",
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[a-z][a-z0-9_-]{0,31}$" },
+    "sliding": {
+      "type": "object",
+      "required": ["cells"],
+      "properties": { "cells": { "type": "array", "minItems": 4, "maxItems": 256, "items": { "oneOf": [{ "$ref": "#/$defs/id" }, { "type": "null" }] } } },
+      "additionalProperties": false
+    },
+    "swap": {
+      "type": "object",
+      "required": ["cells"],
+      "properties": { "cells": { "type": "array", "minItems": 2, "maxItems": 256, "uniqueItems": true, "items": { "$ref": "#/$defs/id" } } },
+      "additionalProperties": false
+    },
+    "rotation": {
+      "type": "object",
+      "required": ["orientations"],
+      "properties": { "orientations": { "type": "array", "minItems": 1, "maxItems": 256, "items": { "enum": [0, 90, 180, 270] } } },
+      "additionalProperties": false
+    },
+    "strips": {
+      "type": "object",
+      "required": ["order"],
+      "properties": { "order": { "type": "array", "minItems": 2, "maxItems": 128, "uniqueItems": true, "items": { "$ref": "#/$defs/id" } } },
+      "additionalProperties": false
+    },
+    "jigsaw": {
+      "type": "object",
+      "required": ["pieces"],
+      "properties": {
+        "pieces": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 4096,
+          "items": {
+            "type": "object",
+            "required": ["x", "y", "placed"],
+            "properties": { "x": { "type": "integer" }, "y": { "type": "integer" }, "placed": { "type": "boolean" } },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "memory": {
+      "type": "object",
+      "required": ["cards", "matched", "revealed"],
+      "properties": {
+        "cards": { "type": "array", "minItems": 4, "maxItems": 64, "uniqueItems": true, "items": { "$ref": "#/$defs/id" }, "description": "Card IDs by position, row-major." },
+        "matched": { "type": "array", "maxItems": 64, "uniqueItems": true, "items": { "$ref": "#/$defs/id" }, "description": "Matched cards in the order they were matched." },
+        "revealed": { "type": "array", "maxItems": 2, "uniqueItems": true, "items": { "$ref": "#/$defs/id" }, "description": "Unmatched face-up cards; two means a mismatch that the next flip turns face down." }
+      },
+      "additionalProperties": false
+    },
+    "tangram": {
+      "type": "object",
+      "required": ["pieces"],
+      "properties": {
+        "pieces": {
+          "type": "array",
+          "minItems": 7,
+          "maxItems": 7,
+          "description": "Pose of each piece in tile order: centroid at integer pixels (x, y), mirrored first when flipped, then turned clockwise by rotation x 45 degrees.",
+          "items": {
+            "type": "object",
+            "required": ["x", "y", "rotation", "flipped"],
+            "properties": { "x": { "type": "integer" }, "y": { "type": "integer" }, "rotation": { "type": "integer", "minimum": 0, "maximum": 7 }, "flipped": { "type": "boolean" } },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "nonogram": {
+      "type": "object",
+      "required": ["cells"],
+      "properties": { "cells": { "type": "string", "pattern": "^[1x.]{4,900}$", "description": "One character per cell, row-major: 1 filled, x marked empty, . unknown." } },
+      "additionalProperties": false
+    },
+    "any": {
+      "anyOf": [
+        { "$ref": "#/$defs/sliding" },
+        { "$ref": "#/$defs/swap" },
+        { "$ref": "#/$defs/rotation" },
+        { "$ref": "#/$defs/strips" },
+        { "$ref": "#/$defs/jigsaw" },
+        { "$ref": "#/$defs/memory" },
+        { "$ref": "#/$defs/tangram" },
+        { "$ref": "#/$defs/nonogram" }
+      ]
+    }
+  }
+}

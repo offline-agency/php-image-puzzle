@@ -1,0 +1,45 @@
+providers:
+  - BladeUI\Icons\BladeIconsServiceProvider
+  - BladeUI\Heroicons\BladeHeroiconsServiceProvider
+  - RyanChandler\BladeCaptureDirective\BladeCaptureDirectiveServiceProvider
+  - Kirschbaum\PowerJoins\PowerJoinsServiceProvider
+  - Livewire\LivewireServiceProvider
+  - Filament\Support\SupportServiceProvider
+  - Filament\Actions\ActionsServiceProvider
+  - Filament\Forms\FormsServiceProvider
+  - Filament\Infolists\InfolistsServiceProvider
+  - Filament\Notifications\NotificationsServiceProvider
+  - Filament\QueryBuilder\QueryBuilderServiceProvider
+  - Filament\Schemas\SchemasServiceProvider
+  - Filament\Tables\TablesServiceProvider
+  - Filament\Widgets\WidgetsServiceProvider
+  - Filament\FilamentServiceProvider
+  - ImagePuzzle\Livewire\ImagePuzzleServiceProvider
+  - ImagePuzzle\Filament\ImagePuzzleFilamentServiceProvider
+  - Workbench\App\Providers\WorkbenchServiceProvider
+  - Workbench\App\Providers\Filament\AdminPanelProvider
+
+migrations:
+  - workbench/database/migrations
+
+env:
+  - APP_KEY="base64:aW1hZ2UtcHV6emxlLXdvcmtiZW5jaC1kZW1vLWtleSE="  # public demo key for the local workbench only
+  - DB_CONNECTION=sqlite
+  - SESSION_DRIVER=file
+  - CACHE_STORE=file
+  - QUEUE_CONNECTION=sync
+
+workbench:
+  start: '/admin'
+  discovers:
+    web: true
+    views: true
+  build:
+    - asset-publish
+    - filament:assets
+    - create-sqlite-db
+    - db-wipe
+    - migrate-fresh:
+        --seed: true
+        --seeder: Workbench\Database\Seeders\DatabaseSeeder
+    - storage-link

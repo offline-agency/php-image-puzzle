@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/offline-agency/php-image-puzzle/HEAD/docs/schemas/game/v1/build-config.schema.json",
+  "title": "Build configuration",
+  "description": "Reproducible input of DefinitionBuilder: with the same source image it regenerates the same definition. crop is a pixel rectangle of the upright (EXIF-oriented) source. Custom parameters require the custom preset; their values are validated by the generator against the image.",
+  "type": "object",
+  "required": ["format", "version", "kind", "preset", "seed"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "format": { "const": "image-puzzle/build-config" },
+    "version": { "const": 1 },
+    "kind": { "enum": ["sliding", "swap", "rotation", "strips", "jigsaw", "nonogram", "memory", "tangram"] },
+    "preset": { "enum": ["easy", "medium", "hard", "custom"] },
+    "custom": { "type": "object", "minProperties": 1 },
+    "seed": { "type": "integer", "minimum": 0, "maximum": 4294967295 },
+    "crop": {
+      "type": "object",
+      "required": ["x", "y", "width", "height"],
+      "properties": {
+        "x": { "type": "integer", "minimum": 0, "maximum": 100000 },
+        "y": { "type": "integer", "minimum": 0, "maximum": 100000 },
+        "width": { "type": "integer", "minimum": 1, "maximum": 100000 },
+        "height": { "type": "integer", "minimum": 1, "maximum": 100000 }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": { "properties": { "preset": { "const": "custom" } } },
+      "then": { "required": ["custom"] },
+      "else": { "not": { "required": ["custom"] } }
+    },
+    {
+      "if": { "properties": { "kind": { "const": "sliding" } } },
+      "then": { "properties": { "custom": { "propertyNames": { "enum": ["rows", "cols", "scrambleMoves", "assistance"] } } } }
+    },
+    {
+      "if": { "properties": { "kind": { "const": "swap" } } },
+      "then": { "properties": { "custom": { "propertyNames": { "enum": ["rows", "cols", "assistance"] } } } }
+    },
+    {
+      "if": { "properties": { "kind": { "const": "rotation" } } },
+      "then": { "properties": { "custom": { "propertyNames": { "enum": ["rows", "cols", "orientations", "assistance"] } } } }
+    },
+    {
+      "if": { "properties": { "kind": { "const": "strips" } } },
+      "then": { "properties": { "custom": { "propertyNames": { "enum": ["count", "axis", "assistance"] } } } }
+    },
+    {
+      "if": { "properties": { "kind": { "const": "jigsaw" } } },
+      "then": { "properties": { "seed": { "maximum": 2147483647 }, "custom": { "propertyNames": { "enum": ["rows", "cols", "topology", "edge", "snap"] } } } }
+    },
+    {
+      "if": { "properties": { "kind": { "const": "nonogram" } } },
+      "then": { "properties": { "custom": { "propertyNames": { "enum": ["rows", "cols", "threshold", "invert", "requireUnique", "assistance"] } } } }
+    },
+    {
+      "if": { "properties": { "kind": { "const": "memory" } } },
+      "then": { "properties": { "custom": { "propertyNames": { "enum": ["rows", "cols", "labels", "assistance"] } } } }
+    },
+    {
+      "if": { "properties": { "kind": { "const": "tangram" } } },
+      "then": { "properties": { "custom": { "propertyNames": { "enum": ["target", "snap", "assistance"] } } } }
+    }
+  ]
+}

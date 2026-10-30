@@ -1,0 +1,21 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+    - vendor/phpstan/phpstan-strict-rules/rules.neon
+
+# Same policy as the core: level max, no baseline, no ignoreErrors.
+parameters:
+    level: max
+    paths:
+        - src
+        - tests
+        - workbench/app
+        - workbench/database
+    tmpDir: build/phpstan
+    treatPhpDocTypesAsCertain: false
+    reportUnmatchedIgnoredErrors: true
+    strictRules:
+        # Larastan reflects Laravel macros and mixins (Filament's Livewire
+        # testing helpers, Builder/TestResponse macros) as static methods, so
+        # every ordinary instance call to them is reported. All other strict
+        # rules stay enabled.
+        dynamicCallOnStaticMethod: false

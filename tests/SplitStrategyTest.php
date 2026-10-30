@@ -55,13 +55,12 @@ test('PuzzleGenerator with DefaultSplitStrategy produces same result as default'
 });
 
 test('PuzzleGenerator with custom split strategy uses custom segments', function (): void {
-    $customStrategy = new class implements DimensionSplitStrategy {
+    $customStrategy = new class () implements DimensionSplitStrategy {
         public function split(int $totalSize, int $segmentCount): array
         {
-            $base = (int) floor($totalSize / $segmentCount);
-            $splits = array_fill(0, $segmentCount, $base);
-            $splits[$segmentCount - 1] += $totalSize - $base * $segmentCount;
-            return $splits;
+            $base = intdiv($totalSize, $segmentCount);
+
+            return [...array_fill(0, $segmentCount - 1, $base), $totalSize - $base * ($segmentCount - 1)];
         }
     };
     $generator = new PuzzleGenerator(null, null, null, $customStrategy);
@@ -72,7 +71,7 @@ test('PuzzleGenerator with custom split strategy uses custom segments', function
 });
 
 test('PuzzleGenerator with invalid split strategy wrong count throws', function (): void {
-    $badStrategy = new class implements DimensionSplitStrategy {
+    $badStrategy = new class () implements DimensionSplitStrategy {
         public function split(int $totalSize, int $segmentCount): array
         {
             return [10, 10, 12];
@@ -84,7 +83,7 @@ test('PuzzleGenerator with invalid split strategy wrong count throws', function 
 });
 
 test('PuzzleGenerator with invalid split strategy wrong sum throws', function (): void {
-    $badStrategy = new class implements DimensionSplitStrategy {
+    $badStrategy = new class () implements DimensionSplitStrategy {
         public function split(int $totalSize, int $segmentCount): array
         {
             return [1, 2];
