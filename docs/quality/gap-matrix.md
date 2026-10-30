@@ -51,7 +51,7 @@ Pest suite and `pest --group=process --fail-on-skipped`.
 | G25 | Agent commands, API recipes, evaluation method | verified fixed (method only; no evaluation run, by design) |
 | G26 | Measurable adoption explanation | verified fixed (baseline and method only; no result claimed) |
 | G27 | Safe automatic tag and release per merge | verified fixed for the required scenarios; **not active** until `master` exists |
-| G28 | Reproducible development environment | blocker (Docker Desktop VM disk full on this machine; CI `docker` job not run fresh) |
+| G28 | Reproducible development environment | verified fixed |
 
 ## Details
 
@@ -60,7 +60,7 @@ Pest suite and `pest --group=process --fail-on-skipped`.
 - Reproduced: `composer.json version='1.0.0'` on `1.0.2`. Packagist lists
   only `1.0.0` and `dev-main` (observed 2026-10-25), because the `1.0.1`
   and `1.0.2` tags declare `"version": "1.0.0"`.
-- Fix: `ea32bd4` removed the `version` field; `6ccfdb2` added the release
+- Fix: `c07e25f` removed the `version` field; `4357dbc` added the release
   tooling, which refuses a `version` field in the root or integration
   `composer.json` and verifies Packagist after every release.
 - Tests: `tests/Release/DistributionTest.php`: "refuses composer.json
@@ -77,8 +77,8 @@ Pest suite and `pest --group=process --fail-on-skipped`.
 ### G02 Undeclared EXIF dependency
 
 - Reproduced: `exif_imagetype()` used without a fallback or requirement.
-- Fix: `ea32bd4` (signature and `getimagesize` detection; `ext-exif` only
-  suggested, for orientation), `6af8d8a`.
+- Fix: `c07e25f` (signature and `getimagesize` detection; `ext-exif` only
+  suggested, for orientation), `29896c2`.
 - Tests: `tests/ImageFormatsTest.php`: "EXIF orientation is applied
   exactly when requested", "signature and header mismatches are rejected";
   `tests/ImageLoaderTest.php`: "loadFromFile with file that exif_imagetype
@@ -86,13 +86,14 @@ Pest suite and `pest --group=process --fail-on-skipped`.
   1.x leftover; the test covers the fallback).
 - Check: CI `minimal-extensions` runs the suite without exif, pcntl and
   zip and asserts they are absent. Not run locally (this machine has all
-  three; the Docker `minimal` image is blocked, see G28).
+  three); the Docker `minimal` image ran it on 2026-10-30 (933 passed,
+  40 skipped, the three extensions absent).
 
 ### G03 Rounded masks erase square corners
 
 - Reproduced: 64/64 corner pixels transparent; radius >= min/2 disabled
   rounding.
-- Fix: `ea32bd4` (pixel-centre arc mask, clamped radius, bounded cache).
+- Fix: `c07e25f` (pixel-centre arc mask, clamped radius, bounded cache).
 - Tests: `tests/Regression/RoundedCornersRegressionTest.php`: "only pixels
   outside the arc are removed, on all four corners", "radius larger than
   half the shorter side is clamped, not disabled", "pre-existing
@@ -102,7 +103,7 @@ Pest suite and `pest --group=process --fail-on-skipped`.
 
 - Reproduced: 5 rows on a 3 px image accepted; index 5 raised
   `Undefined array key`.
-- Fix: `ea32bd4` (`Geometry\Grid`, `PuzzleGenerator`, `ResourceLimits`).
+- Fix: `c07e25f` (`Geometry\Grid`, `PuzzleGenerator`, `ResourceLimits`).
 - Tests: `tests/Regression/GridValidationRegressionTest.php`: "more rows or
   cols than source pixels is rejected", "zero and negative grids are
   rejected", "invalid custom split strategy output is rejected", "requested
@@ -113,8 +114,8 @@ Pest suite and `pest --group=process --fail-on-skipped`.
 ### G05 No real 2D jigsaw
 
 - Reproduced: jigsaw changed 0 interior pixels; no tab padding.
-- Fix: `ea32bd4` (shared-edge geometry, rasterizer, padded rendering),
-  `c377d48` (other topologies).
+- Fix: `c07e25f` (shared-edge geometry, rasterizer, padded rendering),
+  `1d54b9e` (other topologies).
 - Tests: `tests/Geometry/JigsawGeometryTest.php`: "every pixel centre
   belongs to exactly one piece (winding-number oracle)", "shared boundaries
   are exact complements and the board perimeter is flat", "exact mode
@@ -125,7 +126,7 @@ Pest suite and `pest --group=process --fail-on-skipped`.
 ### G06 Identical sinus tab/socket; modified perimeter
 
 - Reproduced: a 1x1 board lost 19 perimeter pixels; identical branches.
-- Fix: `ea32bd4` (`Geometry\Profile\SinusProfile`).
+- Fix: `c07e25f` (`Geometry\Profile\SinusProfile`).
 - Tests: `tests/Geometry/JigsawGeometryTest.php`, dataset `styles()`
   including `sinus`: "areas sum to the board and tabs protrude while
   sockets indent", "shared boundaries are exact complements and the board
@@ -134,7 +135,7 @@ Pest suite and `pest --group=process --fail-on-skipped`.
 ### G07 Composite styles copy one-pixel strips
 
 - Reproduced: `CompositeEdgeStyle::copyEdge` copied 1 px strips.
-- Fix: `ea32bd4` (whole side profiles), `67d384b`.
+- Fix: `c07e25f` (whole side profiles), `85af13f`.
 - Tests: `tests/CompositeEdgeStyleTest.php`: "composite applies whole side
   geometry: jigsaw horizontal and sinus vertical boundaries", "opposite
   sides must agree because they describe the same shared boundaries", "flat
@@ -143,14 +144,14 @@ Pest suite and `pest --group=process --fail-on-skipped`.
 ### G08 Child exceptions escape into the caller
 
 - Reproduced: the post-catch sentinel was written by 2 child PIDs.
-- Fix: `ea32bd4` (worker envelopes, `terminateChild`), `5a4cfb0`.
+- Fix: `c07e25f` (worker envelopes, `terminateChild`), `19209b0`.
 - Tests: `tests/Process/ParallelWorkerTest.php`: "a throwing callback never
   returns into the caller in a child (PID sentinel)".
 
 ### G09 Signal deaths, wait failures, invalid payloads
 
 - Reproduced: success reported with 0 pieces after SIGKILL of every worker.
-- Fix: `ea32bd4`, `5a4cfb0`, `a595e2f`; `266abd6` for a failing `waitpid`
+- Fix: `c07e25f`, `19209b0`, `f1a7d76`; `68c3875` for a failing `waitpid`
   in the exporter and the batch runner.
 - Tests: `tests/Process/ParallelWorkerTest.php`: "a worker killed by a
   signal fails the export and publishes no manifest", "a nonzero worker
@@ -159,12 +160,12 @@ Pest suite and `pest --group=process --fail-on-skipped`.
   failed wait fails the export, stops the worker and leaves no orphan
   writes"; `tests/Batch/BatchRunnerTest.php`: "fails the running items
   instead of spinning when waiting for workers fails" (failed before
-  `266abd6`).
+  `68c3875`).
 
 ### G10 Parallel export ignores `overwrite=false`
 
 - Reproduced: the sentinel was overwritten.
-- Fix: `ea32bd4`, `5a4cfb0`.
+- Fix: `c07e25f`, `19209b0`.
 - Tests: `tests/Process/ParallelWorkerTest.php`: "parallel export honours
   overwrite=false exactly like sequential export";
   `tests/Export/ExportSafetyTest.php`: "overwrite=false keeps valid
@@ -176,7 +177,7 @@ Pest suite and `pest --group=process --fail-on-skipped`.
 - Not in the phase-0 run. Shown in the `1.0.2` source:
   `b114a4a:src/Exporter.php` lines 182–188 throw on `pcntl_fork() === -1`
   without signalling or reaping the workers already started.
-- Fix: `ea32bd4` (`killAndReap`), `a595e2f` (requires `posix_kill`).
+- Fix: `c07e25f` (`killAndReap`), `f1a7d76` (requires `posix_kill`).
 - Tests: `tests/Process/ParallelWorkerTest.php`: "fork failure after one
   worker started terminates and reaps it with no orphan writes", "repeated
   parallel jobs leave no zombies and no steadily growing memory".
@@ -185,7 +186,7 @@ Pest suite and `pest --group=process --fail-on-skipped`.
 
 - Reproduced: 4 pieces mapped to 2 files; a piece named like the manifest
   was overwritten.
-- Fix: `ea32bd4` (`Export\OutputPlan` preflight), `5a4cfb0`.
+- Fix: `c07e25f` (`Export\OutputPlan` preflight), `19209b0`.
 - Tests: `tests/Export/ExportSafetyTest.php`: "duplicate destinations are
   rejected with no writes", "case-insensitive duplicates and manifest
   collisions are rejected", "NUL and control characters in names are
@@ -194,7 +195,7 @@ Pest suite and `pest --group=process --fail-on-skipped`.
 ### G13 Directory checks after `mkdir`, symlinks
 
 - Reproduced: a rejected outside-base directory was still created.
-- Fix: `ea32bd4` (`Export\PathGuard` before any `mkdir`), `5a4cfb0`.
+- Fix: `c07e25f` (`Export\PathGuard` before any `mkdir`), `19209b0`.
 - Tests: `tests/Export/ExportSafetyTest.php`: "outside-base targets are
   rejected before any directory is created", "symlinked directories
   pointing outside the base are rejected", "pre-existing destination
@@ -205,8 +206,8 @@ Pest suite and `pest --group=process --fail-on-skipped`.
 ### G14 Non-transactional writes, stale manifest
 
 - Reproduced: new pieces next to a stale manifest after a failure.
-- Fix: `ea32bd4` (staging, verification, per-file atomic publication,
-  generation mode), `5a4cfb0`.
+- Fix: `c07e25f` (staging, verification, per-file atomic publication,
+  generation mode), `19209b0`.
 - Tests: `tests/Export/ExportSafetyTest.php`: "a failure while staging
   leaves the previous export untouched", "a manifest failure leaves the
   previous export untouched", "a publication failure leaves no manifest
@@ -221,8 +222,8 @@ Pest suite and `pest --group=process --fail-on-skipped`.
 ### G15 No resource budgets; full decode per worker
 
 - Reproduced: `ImageLoader` had no byte, dimension or pixel budget.
-- Fix: `ea32bd4` (`ResourceLimits` checked before decoding), `d1c265a`
-  (per-worker memory reporting, `tools/benchmark.php`), `4a62285` (the
+- Fix: `c07e25f` (`ResourceLimits` checked before decoding), `1a3fcbc`
+  (per-worker memory reporting, `tools/benchmark.php`), `5a18b2d` (the
   parent decodes once before forking; workers share the image
   copy-on-write).
 - Tests: `tests/Regression/GridValidationRegressionTest.php`: "piece budget
@@ -231,20 +232,20 @@ Pest suite and `pest --group=process --fail-on-skipped`.
   `tests/Process/ParallelWorkerTest.php`: "worker count is capped by the
   aggregate memory budget", "each worker reports its own memory usage",
   "the source is decoded once, before the workers start, and shared by all
-  of them" (failed before `4a62285`); `tests/Cli/ApplicationTest.php`:
+  of them" (failed before `5a18b2d`); `tests/Cli/ApplicationTest.php`:
   "exits with 5 when a resource limit is exceeded".
-- Measurement: `composer benchmark`, before and after `4a62285`, in
+- Measurement: `composer benchmark`, before and after `5a18b2d`, in
   [verification.md](verification.md#performance-and-memory).
 
 ### G16 Concrete final injection, GD ownership, eager lists
 
 - Reproduced: `PuzzleGenerator` accepted final concretes only.
-- Fix: `ea32bd4` (`ImageLoaderInterface`, `ExporterInterface`, generator
+- Fix: `c07e25f` (`ImageLoaderInterface`, `ExporterInterface`, generator
   based pieces, ownership contract on `PuzzleGenerator`).
 - Tests: `tests/PuzzleGeneratorTest.php`: "an injected
   ImageLoaderInterface does the inspection and the decoding",
   "generateFromGd reads the caller image without modifying or destroying
-  it" (added in `5a17398`; they pass on the `ea32bd4` code);
+  it" (added in `9e1d8b2`; they pass on the `c07e25f` code);
   `tests/PuzzleTest.php`: "puzzle from generator with injected exporter
   uses that exporter on export", "getPieces yields pieces in row-major
   order"; `tests/PuzzleGeneratorTest.php`: "generatePiecesFromGd returns
@@ -253,8 +254,8 @@ Pest suite and `pest --group=process --fail-on-skipped`.
 ### G17 Quality default 9, JPEG alpha, GIF/orientation
 
 - Reproduced: JPEG kept quality 9/100.
-- Fix: `ea32bd4` (per-format quality, `Export\ImageEncoder`), `6af8d8a`,
-  `d02c984`.
+- Fix: `c07e25f` (per-format quality, `Export\ImageEncoder`), `29896c2`,
+  `8069cf7`.
 - Tests: `tests/ExportOptionsTest.php`: "quality boundaries are format
   specific"; `tests/Export/ExportSafetyTest.php`: "JPEG export flattens
   transparency onto the configured background";
@@ -265,7 +266,7 @@ Pest suite and `pest --group=process --fail-on-skipped`.
 ### G18 Schema ID drift, composite config, hook/schema disagreement
 
 - Reproduced: schema `$id` pointed at another repository.
-- Fix: `67d384b`, `9d19add`, `ff555bf`.
+- Fix: `85af13f`, `e9415a2`, `0f46e32`.
 - Tests: `tests/EdgeStyleFactoryTest.php`: "fromArray composite rejects
   contradictory and raster-only sides"; `tests/ExportTest.php`: "export
   onManifestBuild can extend the manifest through extensions only",
@@ -277,19 +278,20 @@ Pest suite and `pest --group=process --fail-on-skipped`.
 
 ### G19 One PHP, tooling and resolution policy
 
-- Fix: `ea32bd4` (`php: ~8.4.0 || ~8.5.0`, lock file, aligned tools),
-  `c6d5a17` (matrix), `5489af3`.
+- Fix: `c07e25f` (`php: ~8.4.0 || ~8.5.0`, lock file, aligned tools),
+  `4395c24` (matrix), `fc509ec`.
 - Policy: PHP 8.4 and 8.5, tested with locked, highest and lowest
   dependencies; integrations follow the core version
   ([ADR 0004](../adr/0004-lockstep-distribution.md)).
 - Checks: CI `tests` (8.4/8.5 x locked/highest/lowest), `consumer`
   (`--prefer-lowest` install in a fresh project), `integrations`. This
-  session ran PHP 8.5 locally; PHP 8.4 runs in CI and in Docker (G28).
+  session ran PHP 8.5 locally and PHP 8.4.27 in the Docker `php84` image
+  (G28).
 - Limit: no job pins the oldest patch release (8.4.0).
 
 ### G20 PHPStan level 5 on `src` only
 
-- Fix: `7fd41ec`. `phpstan.neon.dist`: level max, strict rules, `src`,
+- Fix: `c7fb930`. `phpstan.neon.dist`: level max, strict rules, `src`,
   `tests`, `tools`, `examples`, `bin`; no baseline, no `ignoreErrors`. The
   integrations use the same policy.
 - Check: `vendor/bin/phpstan analyse --memory-limit=2G` (core) and the
@@ -297,18 +299,19 @@ Pest suite and `pest --group=process --fail-on-skipped`.
 
 ### G21 Oracles, CI gates, process coverage
 
-- Fix: `5a4cfb0`, `c6d5a17`, `a595e2f`, `ea32bd4`.
+- Fix: `19209b0`, `4395c24`, `f1a7d76`, `c07e25f`.
 - Tests: `tests/Process/ParallelWorkerTest.php`: "parallel output is
   byte-identical to sequential output"; `tests/Export/SequentialFallbackTest.php`:
   "parallel export without process control is sequential and
   byte-identical"; geometry oracles (G05).
 - CI: `gate` requires every job; `tests` fails when the process group is
-  skipped; `coverage` (minimum 85 %) and `mutation`. Coverage and mutation
-  need pcov/the Docker image and were not run fresh here (G28).
+  skipped; `coverage` (minimum 85 %) and `mutation`. Fresh run in the
+  `php85` image on 2026-10-30: 92.5 % lines, mutation score 82.19 %
+  ([verification](verification.md)).
 
 ### G22 README banner, contributor file, stale links
 
-- Fix: `be135d2`; link checker added with this change.
+- Fix: `b48ed2c`; link checker added with this change.
 - Tests: `tests/Docs/CodeBlocksTest.php`: "keeps every documented PHP block
   valid against the shipped API"; `tests/Docs/SnippetsTest.php`: "runs the
   documented snippets"; `tests/Docs/LinksTest.php`: "resolves every
@@ -319,14 +322,14 @@ Pest suite and `pest --group=process --fail-on-skipped`.
 ### G23 Discovery metadata
 
 - Fixed in the repository: `composer.json` description, keywords,
-  homepage and support links (`be135d2`); `composer validate --strict`.
+  homepage and support links (`b48ed2c`); `composer validate --strict`.
 - Blocker: the GitHub description, topics and homepage are repository
   settings. Command:
   [RUNBOOK: repository metadata](../release/RUNBOOK.md#repository-metadata).
 
 ### G24 Visual demonstration and CodeIgniter example
 
-- Fix: `b18b409`, `ea9b80a`, `ff1bd08`.
+- Fix: `1b19bcb`, `3c88fef`, `964431a`.
 - Tests: `tests/Docs/ShowcaseTest.php`: "reassembles the source exactly and
   matches the committed images"; `tests/Docs/ExampleScriptsTest.php`:
   "builds a demo site for every mode with examples/demo/build.php";
@@ -335,8 +338,8 @@ Pest suite and `pest --group=process --fail-on-skipped`.
 
 ### G25 Agent commands, API recipes, evaluation method
 
-- Fix: `be135d2` (`AGENTS.md`, `llms.txt`, `docs/API.md`, checked
-  snippets), `84bcfc8` (evaluation method).
+- Fix: `b48ed2c` (`AGENTS.md`, `llms.txt`, `docs/API.md`, checked
+  snippets), `beadcb3` (evaluation method).
 - Tests: `tests/Docs/SnippetsTest.php`, `tests/Docs/CodeBlocksTest.php`.
 - Limit: the agent-recommendation evaluation has a method, prompts and an
   empty log ([agent evaluation](../adoption/agent-evaluation/README.md));
@@ -344,14 +347,14 @@ Pest suite and `pest --group=process --fail-on-skipped`.
 
 ### G26 Measurable adoption explanation
 
-- Fix: `84bcfc8`: dated baseline with sources, hypotheses, the experiment
+- Fix: `beadcb3`: dated baseline with sources, hypotheses, the experiment
   and a checkpoint template ([docs/adoption](../adoption/README.md)).
 - Limit: no causal result is claimed; the experiment starts after the
   first release and the GitHub metadata (G23).
 
 ### G27 Safe automatic tag and release per merge
 
-- Fix: `6ccfdb2`, `e053ac8` (adversarial review).
+- Fix: `4357dbc`, `939d234` (adversarial review).
 - Tests: `tests/Release/ScenariosTest.php` (30 scenarios against a fake
   GitHub API and temporary Git repositories), `VersioningTest.php`,
   `DistributionTest.php`, `WorkflowTest.php`; `composer release:test`;
@@ -362,18 +365,18 @@ Pest suite and `pest --group=process --fail-on-skipped`.
 
 ### G28 Reproducible development environment
 
-- Fix: `5489af3` (`Dockerfile`, `compose.yaml` with `php85`, `php84`,
-  `minimal` and `node`), `266abd6` (build with host user IDs that already
+- Fix: `fc509ec` (`Dockerfile`, `compose.yaml` with `php85`, `php84`,
+  `minimal` and `node`), `68c3875` (build with host user IDs that already
   exist in Debian, such as macOS group 20).
 - Earlier in this session the `php84` image built and ran the suite; the
-  run was not clean because of volume ownership, which `266abd6` and
+  run was not clean because of volume ownership, which `68c3875` and
   removing this project's stale volumes addressed.
-- Blocker: the Docker Desktop VM disk on this machine is full (70.3 GB,
-  0 bytes available; 30 GB of reclaimable volumes that belong to other
-  projects). In the final run the images built from cache, but `composer
-  install` inside them failed ("less than 100MiB of free space"), so the
-  suites could not run. Procedure: free
-  space (`docker system df`, then remove what you no longer need), then
-  `docker compose build && docker compose run --rm php84 sh -c 'composer
-  install && vendor/bin/pest'` and the same for `minimal`. The CI `docker`
-  job runs the same commands.
+- Check (2026-10-30, after space was freed on the Docker Desktop VM):
+  `docker compose build`, then `docker compose run --rm php84 sh -c
+  'composer install && vendor/bin/pest --parallel'` (963 passed, 10
+  skipped) and the same for `minimal` (933 passed, 40 skipped). The CI
+  `docker` and `minimal-extensions` jobs run the same images.
+- Determinism across GD builds: `examples/showcase.php` scales without
+  `imagescale()`, whose bicubic filter differs between GD builds, so the
+  committed README images match a fresh run in every image
+  (`tests/Docs/ShowcaseTest.php`).

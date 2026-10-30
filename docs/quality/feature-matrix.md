@@ -52,7 +52,7 @@ Firefox, WebKit and two mobile emulations.
 
 ### F01 Sliding, swap, rotation and strips
 
-- Commit: `0a0b7ce`. Rules: `src/Game/Rules`, mirrored in
+- Commit: `43c10c6`. Rules: `src/Game/Rules`, mirrored in
   `packages/engine/src/rules`.
 - Tests: `tests/Game/ModeRulesTest.php`: "sliding scrambles are
   reproducible, unsolved and reachable by construction", "swap completion
@@ -64,7 +64,7 @@ Firefox, WebKit and two mobile emulations.
 
 ### F02 Memory
 
-- Commit: `f705df7`.
+- Commit: `4683c12`.
 - Tests: `tests/Game/MemoryTest.php`: "deals two cards per pair with stable
   IDs and one image region per pair", "shows a text label on the second
   card of each pair", "matches a pair, keeps a mismatch face up and turns it
@@ -76,7 +76,7 @@ Firefox, WebKit and two mobile emulations.
 
 ### F03 Hexagonal and triangular jigsaw
 
-- Commit: `c377d48`.
+- Commit: `1d54b9e`.
 - Tests: `tests/Geometry/PolygonTopologyTest.php`: "every internal boundary
   is shared by exactly two cells in opposite directions", "shared
   boundaries are exact complements and outlines are simple", "exact mode
@@ -87,7 +87,7 @@ Firefox, WebKit and two mobile emulations.
 
 ### F04 Image-backed tangram
 
-- Commit: `b05fd51`.
+- Commit: `8b86a5a`.
 - Tests: `tests/Game/TangramTest.php`: "partitions the square into seven
   pieces of total area 16 units without overlap", "validates every target
   in the library", "is complete only when every piece lies exactly on its
@@ -96,7 +96,7 @@ Firefox, WebKit and two mobile emulations.
 
 ### F05 Nonogram
 
-- Commit: `d4f11cd`.
+- Commit: `4a1355b`.
 - Tests: `tests/Game/NonogramTest.php`: "agrees with brute force on every
   3x3 grid", "stops at the budget and never calls an undecided grid unique",
   "generates the pictured grid and proves it unique", "labels an undecided
@@ -104,7 +104,7 @@ Firefox, WebKit and two mobile emulations.
 
 ### F06 Shared headless engine and conformance
 
-- Commit: `9741c89`.
+- Commit: `59a4d4f`.
 - Tests: `packages/engine/test/conformance.test.ts`: "accepts the PHP
   definition and verifies its id", "produces the same solved board and
   scrambles per seed", "lists the same legal actions in the same order",
@@ -115,7 +115,7 @@ Firefox, WebKit and two mobile emulations.
 
 ### F07 Plain JavaScript player
 
-- Commit: `74fc66c`. No-bundler page: `examples/player/index.html` (IIFE);
+- Commit: `c9b1b0b`. No-bundler page: `examples/player/index.html` (IIFE);
   ESM: `examples/player/element.html`.
 - Tests: `packages/player/e2e/plain.spec.ts`: "save, restore and destroy
   from the host page", "switching puzzles quickly keeps only the last one",
@@ -125,7 +125,7 @@ Firefox, WebKit and two mobile emulations.
 
 ### F08 Web Component player
 
-- Commit: `74fc66c`.
+- Commit: `c9b1b0b`.
 - Tests: `packages/player/test/element.test.ts`: "loads its src attribute
   on connection and dispatches composed, bubbling events", "honours
   properties assigned before the element was upgraded", "suspends while
@@ -138,7 +138,7 @@ Firefox, WebKit and two mobile emulations.
 
 ### F09 Livewire player
 
-- Commit: `ad5766d`.
+- Commit: `9a48239`.
 - Tests: `integrations/livewire/tests/PuzzlePlayerTest.php`:
   `test_renders_the_element_inside_wire_ignore_with_the_authorized_definition_url`,
   `test_rejects_tampered_foreign_and_oversized_states_without_storing_them`;
@@ -150,7 +150,7 @@ Firefox, WebKit and two mobile emulations.
 
 ### F10 Filament widget, field and configuration editor
 
-- Commit: `92a779e`.
+- Commit: `514f318`.
 - Tests: `integrations/filament/tests/AccessTest.php`:
   `testTheWidgetPlaysAConfiguredPuzzle`,
   `testOtherTenantsAndGuestsAreRejectedOnEveryRoute`;
@@ -162,7 +162,7 @@ Firefox, WebKit and two mobile emulations.
 
 ### F11 Vue player
 
-- Commit: `350879a`.
+- Commit: `83ebe6d`.
 - Tests: `packages/vue/test/vue.test.ts`: "validates emitted payloads and
   forwards them unchanged", "remounts with new creation options when the
   key changes"; shared contract: "disposes the player, its DOM and its
@@ -172,7 +172,7 @@ Firefox, WebKit and two mobile emulations.
 
 ### F12 React player
 
-- Commit: `350879a`.
+- Commit: `83ebe6d`.
 - Tests: `packages/react/test/react.test.tsx`: "survives the Strict Mode
   setup/cleanup/setup cycle without duplicates or leaks", "exposes load,
   reset and state operations through the ref";
@@ -182,7 +182,7 @@ Firefox, WebKit and two mobile emulations.
 
 ### F13 Self-contained ZIP bundle
 
-- Commits: `0377423`, `e35385d`.
+- Commits: `5c3729d`, `cd8f1a5`.
 - Tests: `packages/player/e2e/bundle.spec.ts`: "extracted bundles play over
   HTTP using only their own files", "extracted bundles play from file://";
   `tests/Export/BundleExporterTest.php`: "builds a page that needs no
@@ -191,7 +191,7 @@ Firefox, WebKit and two mobile emulations.
 
 ### F14 Composer-installed CLI
 
-- Commits: `0377423`, `bca000d`.
+- Commits: `5c3729d`, `46d30a6`.
 - Tests: `tests/Cli/ApplicationTest.php`: "builds every mode it
   advertises", "returns the exit codes as process status";
   `tools/consumer/cli.php` generates and validates every mode through
@@ -199,7 +199,7 @@ Firefox, WebKit and two mobile emulations.
 
 ### F15 Versioned difficulty presets
 
-- Commit: `0a0b7ce`. `Game\Presets::VERSION` is recorded in every
+- Commit: `43c10c6`. `Game\Presets::VERSION` is recorded in every
   definition; `conformance/presets.json` binds the TypeScript side.
 - Tests: `tests/Game/GameDefinitionTest.php`: "the id changes with the
   source digest, seed, preset and configuration", "tampered, stale or
@@ -209,7 +209,7 @@ Firefox, WebKit and two mobile emulations.
 
 ### F16 Saved games, undo/redo, reset
 
-- Commits: `0a0b7ce`, `9741c89`, `21fb192`.
+- Commits: `43c10c6`, `59a4d4f`, `918d87a`.
 - Tests: `tests/Game/GameEngineTest.php`: "state export and import
   round-trip and match the schema", "incompatible or corrupt imported state
   is rejected", "actions, undo and redo update board, history and
@@ -219,7 +219,7 @@ Firefox, WebKit and two mobile emulations.
 
 ### F17 SVG outlines and printable PDF
 
-- Commit: `0377423`.
+- Commit: `5c3729d`.
 - Tests: `tests/Export/VectorExportTest.php`: "reassembles the source
   picture when rendered", "matches the alpha mask of every raster piece",
   "prints the board at the requested physical size and position", "draws
@@ -228,7 +228,7 @@ Firefox, WebKit and two mobile emulations.
 
 ### F18 WebP and multiple resolutions
 
-- Commit: `870eada`.
+- Commit: `3fce93e`.
 - Tests: `tests/Game/PieceImagesTest.php`: "writes smaller sets with the
   same IDs, file names and geometry", "reports a missing WebP encoder as a
   capability error before writing anything";
@@ -238,7 +238,7 @@ Firefox, WebKit and two mobile emulations.
 
 ### F19 Spritesheet/atlas
 
-- Commit: `870eada`.
+- Commit: `3fce93e`.
 - Tests: `tests/Game/PieceImagesTest.php`: "packs deterministically, in
   input order, with padding between frames", "packs the full pieces into an
   atlas whose frames hold their exact pixels";
@@ -248,7 +248,7 @@ Firefox, WebKit and two mobile emulations.
 
 ### F20 Batch generation, progress, cancellation
 
-- Commits: `f705ef6`, `266abd6`.
+- Commits: `50baa25`, `68c3875`.
 - Tests: `tests/Batch/BatchRunnerTest.php`: "builds every item and reports
   progress", "can be signalled from another process through a file",
   "resume verified items and rebuild the others", "builds items in parallel
@@ -259,7 +259,7 @@ Firefox, WebKit and two mobile emulations.
 
 ### F21 Generated-asset cache
 
-- Commit: `f705ef6`.
+- Commit: `50baa25`.
 - Tests: `tests/Cache/AssetCacheTest.php`: "change with the source, the
   configuration, the output options and the engine", "drop a corrupt,
   extended or mislabelled entry and rebuild it", "serialise concurrent
@@ -267,7 +267,7 @@ Firefox, WebKit and two mobile emulations.
 
 ### F22 Stream/storage output
 
-- Commit: `f705ef6`.
+- Commit: `50baa25`.
 - Tests: `tests/Storage/StorageTest.php`: "writes, overwrites, streams,
   reads and deletes objects", "never moves the reference when an upload
   fails part-way", "publishes through Flysystem and wraps its errors",
@@ -278,7 +278,7 @@ Firefox, WebKit and two mobile emulations.
 
 ### F23 Shared configurator and Filament authoring
 
-- Commits: `a9196db`, `92a779e`.
+- Commits: `e4d61c0`, `514f318`.
 - Tests: `packages/player/test/configurator.test.ts`: "loads a saved
   configuration and reports edits as documents", "rejects a crop too small
   for the board"; `packages/player/e2e/configurator.spec.ts`: "dragging the
@@ -291,7 +291,7 @@ Firefox, WebKit and two mobile emulations.
 
 ### F24 Distribution linked to automatic releases
 
-- Commits: `6ccfdb2`, `e053ac8`. Lockstep versions:
+- Commits: `4357dbc`, `939d234`. Lockstep versions:
   [ADR 0004](../adr/0004-lockstep-distribution.md).
 - Evidence: `tools/release/build-artifacts.php` packs the player bundles,
   the four npm packages and the Livewire/Filament archives;
@@ -309,7 +309,7 @@ Firefox, WebKit and two mobile emulations.
 
 ### F25 Accessible controls and mobile interactions
 
-- Commits: `74fc66c`, `a9196db`, `f705df7`, `b05fd51`, `d4f11cd`.
+- Commits: `c9b1b0b`, `e4d61c0`, `4683c12`, `8b86a5a`, `4a1355b`.
 - Tests: `packages/player/e2e/a11y.spec.ts`: "Web Component page: no axe
   violations" and one axe run per mode; `packages/player/e2e/plain.spec.ts`:
   "Italian labels and reduced motion", "swap: drag one tile onto another,
@@ -322,7 +322,7 @@ Firefox, WebKit and two mobile emulations.
 
 ### F26 Cross-adapter compatibility and upgrade contract
 
-- Commits: `350879a`, `74fc66c`.
+- Commits: `83ebe6d`, `c9b1b0b`.
 - Tests: `packages/player/test/adapter-contract.ts` (run for the binding,
   React and Vue): "mounts one player and reports ready once for the loaded
   definition", "switches puzzles on a new definition, but not on a new

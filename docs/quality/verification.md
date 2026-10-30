@@ -1,7 +1,9 @@
 # Verification
 
-Fresh local run of 2026-10-25 on commit `a5f68c5` (branch
-`feat/remediation-modes-releases`). Every command ran from a clean shell,
+Fresh local run of 2026-10-25 on commit `a0c3dd1` (branch
+`feat/remediation-modes-releases`), repeated on 2026-10-30 for the fixes
+made after the first CI run of the pull request (Docker, coverage and
+mutation rows, and the suites those fixes touch). Every command ran from a clean shell,
 one after the other, with `CI=1`; each line gives the exit code. Historical
 CI runs are not counted as evidence here. Status per defect and feature:
 [gap-matrix.md](gap-matrix.md), [feature-matrix.md](feature-matrix.md).
@@ -19,8 +21,8 @@ CI runs are not counted as evidence here. Status per defect and feature:
 | Renderers | `rsvg-convert`, `pdftoppm`, `qpdf` (rendered SVG and PDF checks) |
 | Workflow lint | actionlint 1.7.12 |
 
-PHP 8.4 was not run locally; CI runs the PHP 8.4/8.5 matrix with locked,
-highest and lowest dependencies.
+PHP 8.4.27 ran in the Docker `php84` image (2026-10-30). CI runs the PHP
+8.4/8.5 matrix with locked, highest and lowest dependencies.
 
 ## Results
 
@@ -49,10 +51,11 @@ highest and lowest dependencies.
 | Livewire | `pint --test`, `phpstan`, `pest`, browser | 0, 0, 0, 0 | 24 passed; 15 browser tests passed |
 | Filament | `pint --test`, `phpstan`, `pest`, browser | 0, 0, 0, 0 | 41 passed; 22 browser tests passed |
 | Workflows | `actionlint -ignore 'for "concurrency" section'` | 0 | clean |
-| Docker images | `docker compose build php84 php85 minimal` | 0 | built (from cache) |
-| Docker suite | `docker compose run --rm php84 …`, `minimal …` | 1, 1 | not run: `composer install` fails, the disk has less than 100 MiB free |
-| Coverage | `pest --coverage --min=85` in the `php85` image | 1 | not run (same) |
-| Mutation | `composer mutate` in the `php85` image | 1 | not run (same) |
+| Docker images | `docker compose build php84 php85 minimal` | 0 | built |
+| Docker suite, PHP 8.4 | `docker compose run --rm php84 sh -c 'composer install && vendor/bin/pest --parallel'` | 0 | 963 passed, 10 skipped (SVG/PDF renderers and absent-extension tests; the image has no `rsvg-convert`, `pdftoppm`, `qpdf`) |
+| Docker suite, minimal | `docker compose run --rm minimal sh -c 'composer install && vendor/bin/pest'` | 0 | 933 passed, 40 skipped; `php -m` lists none of exif, pcntl, zip |
+| Coverage | `pest --coverage --min=85` in the `php85` image | 0 | 92.5 % lines |
+| Mutation | `composer mutate` in the `php85` image | 0 | score 82.19 % (4,992 mutations tested, 1,082 uncovered; minimum 60 %) |
 | Benchmark | `php tools/benchmark.php` | 0 | see below |
 
 Skips:
@@ -69,13 +72,7 @@ Skips:
 
 ## Not verified here
 
-- Docker suites, line/branch coverage and mutation testing. The Docker
-  Desktop VM disk on this machine is full (70.3 GB, 0 bytes available).
-  pcov exists only in the image, so no coverage or mutation figure is
-  claimed. The CI `docker`, `coverage` (minimum 85 %) and `mutation` jobs
-  run them. Procedure: [gap matrix, G28](gap-matrix.md#g28-reproducible-development-environment).
-- Running without exif, pcntl and zip (CI `minimal-extensions` and the
-  Docker `minimal` image).
+- Branch coverage: pcov measures lines only.
 - The release workflow on GitHub. It is not active (no `master` branch). No
   tag, release or merge was made.
 
@@ -86,7 +83,7 @@ maxima). This was one machine and one session, so read the figures as
 indications, not guarantees. "Sum worker RSS" adds up each worker's
 maximum RSS; shared copy-on-write pages count once per worker.
 
-| Case | Before `4a62285`: parent MiB / sum worker RSS | After: parent MiB / sum worker RSS |
+| Case | Before `5a18b2d`: parent MiB / sum worker RSS | After: parent MiB / sum worker RSS |
 | --- | --- | --- |
 | 800x600, no edge, 4 workers | 8.0 / 52.0 | 10.0 / 37.7 |
 | 800x600, jigsaw, 4 workers | 10.0 / 60.3 | 12.0 / 49.0 |
