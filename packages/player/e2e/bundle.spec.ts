@@ -72,7 +72,8 @@ test('extracted bundles play over HTTP using only their own files', async ({ pag
     const url = new URL(index.slice(root.length), baseURL).href;
     const folder = url.slice(0, url.lastIndexOf('/') + 1);
     const requests = await openBundle(page, url);
-    expect(requests.filter((request) => !request.startsWith(folder) && !request.startsWith('data:'))).toEqual([]);
+    // data: and blob: URLs are made in the page (atlas frames become blobs).
+    expect(requests.filter((request) => !request.startsWith(folder) && !/^(data|blob):/.test(request))).toEqual([]);
     expect(requests).toContain(`${folder}player/image-puzzle-player.iife.js`);
     await expectPlayable(page);
   }
@@ -83,7 +84,7 @@ test('extracted bundles play from file://', async ({ page }) => {
     const url = pathToFileURL(index).href;
     const folder = url.slice(0, url.lastIndexOf('/') + 1);
     const requests = await openBundle(page, url);
-    expect(requests.filter((request) => !request.startsWith(folder) && !request.startsWith('data:'))).toEqual([]);
+    expect(requests.filter((request) => !request.startsWith(folder) && !/^(data|blob):/.test(request))).toEqual([]);
     await expectPlayable(page);
   }
 });
