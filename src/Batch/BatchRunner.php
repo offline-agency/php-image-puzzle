@@ -233,6 +233,8 @@ final class BatchRunner
         }
         /** @var array<int, int> $running pid => item index */
         $running = [];
+        /** @var array<int, bool> $created item index => output did not exist when its worker started */
+        $created = [];
         try {
             while ($queue !== [] || $running !== []) {
                 if ($stopped === null && $token->isCancelled()) {
@@ -243,6 +245,7 @@ final class BatchRunner
                     $item = $items[$index];
                     $emit(new BatchEvent('item-start', count($results), $total, $item->id));
                     $checkpoint?->markStarted($item);
+                    $created[$index] = !file_exists($item->output);
                     $pid = $this->process->fork();
                     if ($pid === -1) {
                         $finish($index, new ItemResult($item->id, ItemResult::FAILED, error: 'Could not start a worker process.'));
@@ -275,7 +278,7 @@ final class BatchRunner
                             $reaped = $this->process->wait($pid);
                         } while ($reaped['interrupted']);
                         if (file_exists($items[$lost]->output)) {
-                            self::clear($items[$lost]->output, false);
+                            self::clear($items[$lost]->output, $created[$lost] ?? false);
                         }
                         $finish($lost, new ItemResult($items[$lost]->id, ItemResult::FAILED, error: 'Lost track of the worker process (waitpid failed).'));
                     }
@@ -300,8 +303,9 @@ final class BatchRunner
                         ? 'Worker exited with code ' . $this->process->exitCode($waited['status']) . ' without a result.'
                         : "Worker was terminated by signal {$signal}.");
                 }
+                // Like runItem(): a failed item leaves no output directory it created.
                 if (!$result->succeeded() && file_exists($item->output)) {
-                    self::clear($item->output, false);
+                    self::clear($item->output, $created[$index] ?? false);
                 }
                 $finish($index, $result);
             }
